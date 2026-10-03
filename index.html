@@ -349,6 +349,91 @@ input,textarea,select{font:inherit;font-size:16px;color:var(--text)}
 #tabs button{font-size:9.5px;min-width:0;padding:0;letter-spacing:-.03em;white-space:nowrap}
 #tabs button .ti{font-size:20px}
 .wbd .due{font-style:normal;font-size:10px;font-weight:800;color:var(--gold);letter-spacing:0;margin-right:5px}
+/* ===== Look v2: calmer colours, grouped lists instead of boxes ===== */
+:root{
+  --ink:#0f1117; --ink2:#181b24; --ink3:#232733; --line:rgba(255,255,255,.07);
+  --text:#f2f3f7; --dim:#8c92a6; --sakura:#ff9fc0; --sakura2:#e5789f;
+  --matcha:#8bd69b; --sky:#86b8ff; --gold:#f4c46c; --red:#ff7f88; --lav:#b8a6ff; --teal:#6fd4c6;
+}
+html,body{background:var(--ink)}
+#app{background:radial-gradient(120% 45% at 50% -8%,#2a1d33 0%,rgba(15,17,23,0) 70%),var(--ink)}
+.pad{padding:20px 16px 36px}
+.h1{font-size:30px;font-weight:800;letter-spacing:-.025em;margin-bottom:2px}
+.pagesub{margin:2px 2px 4px}
+.sec{font-size:12px;font-weight:800;color:var(--dim);text-transform:uppercase;letter-spacing:.07em;margin:28px 6px 10px}
+.sub{color:var(--dim)}
+/* surfaces: no outlines, soft fills */
+.card,.tile,.tmain,.bdg,.fcin,.qcard,.gopt,.opt,.kc,.pill,.chip,.mini,.btn.ghost,.field,.inputbar,.ubanner,#unitHead,.qzrev,.ptxt{border-color:transparent}
+.card{background:var(--ink2);border-radius:20px}
+.btn{border-radius:16px;box-shadow:0 6px 20px rgba(229,120,159,.18)}
+.btn.ghost{background:var(--ink3);box-shadow:none}
+.btn.ghost[data-ok="0"]{color:var(--red)}.btn.ghost[data-ok="1"]{color:var(--matcha)}
+.chip{background:var(--ink3)}
+.chip.on{background:color-mix(in srgb,var(--sakura) 20%,var(--ink2));color:var(--sakura)}
+.mini{background:var(--ink3)}
+.mini.ok{background:color-mix(in srgb,var(--matcha) 16%,var(--ink2));color:var(--matcha)}
+.field{background:var(--ink3);border:1.5px solid transparent}
+.field:focus{border-color:color-mix(in srgb,var(--sakura) 60%,transparent)}
+.inputbar{background:var(--ink2);border:1.5px solid transparent}
+.inputbar:focus-within{border-color:color-mix(in srgb,var(--sakura) 50%,transparent)}
+.pill{background:var(--ink2)}
+.pill.fire{background:color-mix(in srgb,var(--gold) 14%,var(--ink2));border-color:transparent}
+/* rows become grouped lists, like iPhone Settings */
+.row{background:var(--ink2);border:none;border-radius:0;margin:0;padding:12px 14px;min-height:62px;position:relative}
+.row::after{content:"";position:absolute;left:68px;right:0;top:0;height:1px;background:var(--line)}
+.row:first-child,:not(.row)+.row{border-top-left-radius:20px;border-top-right-radius:20px}
+.row:first-child::after,:not(.row)+.row::after{display:none}
+.row:last-child,.row:has(+ :not(.row)){border-bottom-left-radius:20px;border-bottom-right-radius:20px;margin-bottom:12px}
+.row .ri{width:40px;height:40px;border-radius:12px;font-size:19px;background:color-mix(in srgb,var(--rc,var(--lav)) 17%,transparent);color:var(--rc,var(--text))}
+.row:nth-child(6n+1){--rc:var(--sakura)}.row:nth-child(6n+2){--rc:var(--sky)}.row:nth-child(6n+3){--rc:var(--matcha)}
+.row:nth-child(6n+4){--rc:var(--gold)}.row:nth-child(6n+5){--rc:var(--lav)}.row:nth-child(6n){--rc:var(--teal)}
+.row .rt b{font-size:15.5px;font-weight:700}
+.row .rt span{font-size:13px}
+.row.done .ri{--rc:var(--matcha)}
+.row.done{border:none}
+.row .chev{font-size:20px;opacity:.6}
+/* tiles get a colour each */
+.tile{background:color-mix(in srgb,var(--tc,var(--lav)) 11%,var(--ink2));border-radius:20px}
+.tile:nth-child(6n+1){--tc:var(--sakura)}.tile:nth-child(6n+2){--tc:var(--sky)}.tile:nth-child(6n+3){--tc:var(--matcha)}
+.tile:nth-child(6n+4){--tc:var(--gold)}.tile:nth-child(6n+5){--tc:var(--lav)}.tile:nth-child(6n){--tc:var(--teal)}
+.tile .ico{width:42px;height:42px;border-radius:13px;display:flex;align-items:center;justify-content:center;background:color-mix(in srgb,var(--tc,var(--lav)) 20%,transparent);color:var(--tc);font-size:22px}
+.numtile .ico{width:36px;height:36px;min-width:36px;font-size:18px}
+/* feature cards */
+.hero,.mehead{background:linear-gradient(145deg,#3b2236 0%,#241b2e 55%,#1b1e2a 100%);border-color:transparent}
+.wod{background:linear-gradient(145deg,#1f2c4a 0%,#1b2130 70%);border-color:transparent}
+.wod .iconbtn{background:rgba(255,255,255,.08)}
+.tdue{background:color-mix(in srgb,var(--sakura) 14%,var(--ink2));border-color:transparent}
+.ubanner{background:linear-gradient(135deg,color-mix(in srgb,var(--uc) 24%,var(--ink2)),var(--ink2) 80%);border:none}
+#unitHead{background:rgba(24,27,36,.88);border:none;box-shadow:0 10px 30px rgba(0,0,0,.35)}
+.unitpill{background:var(--ink2)}
+.donecard{border:none;background:linear-gradient(140deg,#20372a,#181b24)}
+.fix{background:#251f2e;border-color:transparent}.fix.ok{background:#1b2a20;border-color:transparent}
+.err{border-color:transparent}
+.opt{background:var(--ink2);border:2px solid transparent}
+.opt.right{border-color:var(--matcha);background:#1d3324}.opt.wrong{border-color:var(--red);background:#3a1f26}
+.gopt{border:2px solid transparent}.gopt.on{border-color:var(--sakura);background:color-mix(in srgb,var(--sakura) 12%,var(--ink2))}
+.bdg{background:var(--ink2)}.bdg.on{background:linear-gradient(150deg,#3a311b,#1b1e28);border-color:transparent}
+.kc{background:var(--ink2);border:1.5px solid transparent}.kc.weak{border-color:var(--red)}
+.fcin{background:linear-gradient(165deg,#1f2330,#171a23);box-shadow:0 18px 40px rgba(0,0,0,.35)}
+.cd{background:var(--ink3)}.wb{background:var(--ink3)}.stat{background:var(--ink3)}
+.toggle,.urow,.wbrow{border-bottom-color:var(--line)}
+/* chat */
+.m.a .bub{background:var(--ink2)}
+.m.u .bub{background:linear-gradient(140deg,#6a3552,#4b2840)}
+.chathead,.tbar{border-bottom-color:var(--line)}
+/* bottom bar: floating, frosted */
+#tabs{background:rgba(24,27,36,.86);-webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px);border:none;box-shadow:0 10px 30px rgba(0,0,0,.45)}
+#tabs button.on{background:color-mix(in srgb,var(--sakura) 15%,transparent);color:var(--sakura)}
+/* sheets */
+#sheet{background:rgba(0,0,0,.55)}
+#sheet .sh{background:#181b24;border-radius:26px 26px 0 0;padding-top:26px;position:relative}
+#sheet .sh::before{content:"";position:absolute;top:9px;left:50%;transform:translateX(-50%);width:38px;height:5px;border-radius:3px;background:rgba(255,255,255,.18)}
+.tg{background:var(--ink3)}
+.mini.ok,.mini{border:none}
+.chatfoot .chip{background:var(--ink2);border:none}
+.chip.on{border-color:color-mix(in srgb,var(--sakura) 40%,transparent)}
+.howxp{margin-top:8px}.howxp summary{min-height:44px;display:flex;align-items:center;list-style:none}.howxp summary::-webkit-details-marker{display:none}
+.moredecks summary{list-style:none}.moredecks summary::-webkit-details-marker{display:none}
 @keyframes dot{0%,80%,100%{opacity:.25}40%{opacity:1}}
 @keyframes throb{0%,100%{transform:scale(1)}50%{transform:scale(1.06)}}
 @keyframes breathe{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
@@ -377,7 +462,7 @@ input,textarea,select{font:inherit;font-size:16px;color:var(--text)}
 <script>
 "use strict";
 // Bump this on every change so phones can spot a new version and offer to update
-const APP_VERSION="2026.10.07-3";
+const APP_VERSION="2026.10.08-1";
 /* ============ DATA ============ */
 const LV = {
   n5:{label:"N5",name:"Beginner",color:"#9fd67c"},
@@ -2001,8 +2086,8 @@ function vProgress(){
   return`<div class="pad"><div class="h1">Progress</div>
   <div class="card todaycard"><div class="tcring">${ring(d.xp,g,112,10)}<div class="tcin"><b>${d.xp}</b><span>of ${g} XP</span>${d.xp>=g?`<span class="ok">✓ goal</span>`:""}</div></div>
     <div class="tcside"><div><b>🔥 ${st.n}</b><span>day streak${st.n&&!st.today?" · study today!":""}</span></div><div><b>❄️ ${D.freeze}</b><span>streak freeze${D.freeze===1?"":"s"}</span></div><div><b>⏱️ ${fmtMin(d.sec)}</b><span>studied today</span></div></div></div>
-  <p class="sub" style="margin:2px 2px 6px">Daily goal</p><div class="goalgrid">${GOALS.map(([v,t,m])=>`<button class="gopt${g===v?" on":""}" data-act="goalSet" data-v="${v}"><b>${t}</b><span>${v} XP · ${m}</span></button>`).join("")}</div>
-  <p class="sub" style="margin:6px 2px 0">XP is points, not time: flashcard or quiz answer 1–2 · word used in a talk 5 · message 2 (spoken 3) · lesson 15. Your real study time is the ⏱️ number (counted from your taps). A freeze is earned every 7 streak days (max 2) and covers one missed day by itself.</p>
+  <div class="sec">🎯 Daily goal</div><div class="goalgrid">${GOALS.map(([v,t,m])=>`<button class="gopt${g===v?" on":""}" data-act="goalSet" data-v="${v}"><b>${t}</b><span>${v} XP · ${m}</span></button>`).join("")}</div>
+  <details class="howxp"><summary class="sub">How XP and streaks work ›</summary><p class="sub" style="margin:6px 2px 0">XP is points, not time: flashcard or quiz answer 1–2 · word used in a talk 5 · message 2 (spoken 3) · lesson 15. Your real study time is the ⏱️ number (counted from your taps). A freeze is earned every 7 streak days (max 2) and covers one missed day by itself.</p></details>
   <div class="sec">📅 Study calendar</div><div class="card">${calendarHTML()}</div>
   <div class="sec">📊 Last 7 days</div><div class="card">${weekHTML()}</div>
   <div class="sec">🎌 Countdown</div><div class="card">
@@ -2950,7 +3035,7 @@ function vHome(){
   const cu=cur?cur.unit:units.length-1;
   const learned=Object.keys(S.cards).filter(i=>i.startsWith("w:")).length;
   const stI=streakInfo();
-  return`<div class="ptop"><button class="pill" data-act="levelSheet">🇯🇵 ${LV[S.level].label} <span class="caret">▾</span></button><button class="pill" data-act="tab" data-tab="cards">🃏 ${Object.keys(S.cards).length}</button><button class="pill${stI.n?" fire":""}" data-act="tab" data-tab="progress">🔥 ${stI.n}</button><button class="pill" data-act="translate" aria-label="Translator">🗣️</button></div>
+  return`<div class="ptop"><button class="pill" data-act="levelSheet">🇯🇵 ${LV[S.level].label} <span class="caret">▾</span></button><button class="pill" data-act="tab" data-tab="cards">🃏 ${Object.keys(S.cards).length}</button><button class="pill${stI.n?" fire":""}" data-act="tab" data-tab="progress">🔥 ${stI.n}</button></div>
   <div class="pathwrap">
   ${todayStrip()}
   ${!S.about.done?`<button class="row" data-act="aboutEdit" style="margin-top:8px;border-color:#3f5a46"><span class="ri">✍️</span><span class="rt"><b>Help Yuki get to know you</b><span>2 minutes · makes your lessons fit you</span></span></button>`:""}
@@ -3189,12 +3274,13 @@ function vPractice(){
   if(UI.chart)return vChart();
   const weak=S.profile.weak.slice(-6).reverse();
   const w=wordOfDay(),inDeck=!!S.cards["v:"+w[0]];
-  return`<div class="pad"><div class="h1">Practice</div>
+  return`<div class="pad"><div class="h1">Practice</div><p class="sub pagesub">Free and offline, unless it says "uses credits".</p>
+  <div class="sec">☀️ Today</div>
   <div class="card wod"><div class="wodt"><small>🌅 Word of the day</small><b>${esc(w[0])}</b><span>${w[1]!==w[0]?esc(w[1])+" · ":""}${esc(w[2])}</span></div>
    <button class="iconbtn" data-act="sayText" data-text="${esc(w[1])}" aria-label="Listen">🔊</button></div>
   <div class="grid2" style="margin:-2px 0 4px"><button class="btn sm ghost" data-act="wodAdd">${inDeck?"✓ In flashcards":"＋ Flashcards"}</button><button class="btn sm ghost" data-act="wodYuki">💬 Use it with Yuki</button></div>
-  ${dueIds(Object.keys(S.cards)).length?`<button class="row" data-act="review" style="margin-top:12px;border-color:var(--sakura)"><span class="ri">🔁</span><span class="rt"><b>Review ${dueIds(Object.keys(S.cards)).length} due cards</b><span>All decks mixed · about ${Math.max(1,Math.round(Math.min(20,dueIds(Object.keys(S.cards)).length)/4))} min</span></span></button>`:""}
-  <button class="row" data-act="translate" style="margin-top:12px;border-color:#3c4670"><span class="ri">🗣️</span><span class="rt"><b>Travel translator</b><span>English → Japanese in Ryusei's voice · works offline</span></span><span class="chev">›</span></button>
+  <div class="sec">⚡ Quick practice</div>
+  ${dueIds(Object.keys(S.cards)).length?`<button class="row" data-act="review"><span class="ri">🔁</span><span class="rt"><b>Review ${dueIds(Object.keys(S.cards)).length} due cards</b><span>All decks mixed · about ${Math.max(1,Math.round(Math.min(20,dueIds(Object.keys(S.cards)).length)/4))} min</span></span></button>`:""}
   <button class="row" data-act="qzStart" data-k="all"><span class="ri">🧠</span><span class="rt"><b>Multiple-choice quiz</b><span>Test the words you've learned · no audio or hints until you answer</span></span></button>
   <button class="row" data-act="allLessons"><span class="ri">📚</span><span class="rt"><b>All lessons</b><span>Pick any lesson, in any order</span></span></button>
   <div class="sec">🃏 Kana flashcards · free, work offline</div>
@@ -3397,7 +3483,7 @@ function vMe(){
   return`<div class="pad"><div class="h1">Me</div>
    <div class="card mehead"><div class="av big">${esc((S.name||"ゆ").slice(0,1).toUpperCase())}</div><div class="mht"><b>${esc(S.name||"Learner")}</b><span>JLPT ${LV[S.level].label} · ${esc(S.goal||"No goal set yet")}</span>
     <span class="mhs">🔥 ${stI.n} · 💬 ${wordCount()} words · ⭐ ${totalXP()} XP</span></div></div>
-   ${ME_SECS.map(([k,ic,t,d])=>`<button class="row" data-act="meSec" data-v="${k}"><span class="ri">${ic}</span><span class="rt"><b>${t}</b><span>${typeof d==="function"?d():d}</span></span><span class="chev">›</span></button>`).join("")}
+   ${[["👤 You",["profile","memory"]],["💬 Yuki",["talk","voice","ai"]],["⚙️ App",["app"]]].map(([h,ks])=>`<div class="sec">${h}</div>`+ME_SECS.filter(x=>ks.includes(x[0])).map(([k,ic,t,d])=>`<button class="row" data-act="meSec" data-v="${k}"><span class="ri">${ic}</span><span class="rt"><b>${t}</b><span>${typeof d==="function"?d():d}</span></span><span class="chev">›</span></button>`).join("")).join("")}
    <p class="sub" style="text-align:center;margin-top:14px">Yuki Sensei · version ${APP_VERSION}</p></div>`;
 }
 const ME_SECS=[
