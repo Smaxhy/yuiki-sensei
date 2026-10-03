@@ -30,6 +30,15 @@ Safari → Add to Home Screen.
   the live page and compares its `<script>`/`<style>` with the running ones. If different it
   reloads right away when idle (`canReloadNow`), otherwise when the app is next hidden. Loop
   guard: at most one auto-reload per 2 min (`yuki-upd-at`). Still bump `APP_VERSION` (shown in Me).
+- **Speaking vs chat lessons**: `isSpeakingKey(key)` — in each unit lesson b and the roleplay are
+  🎙️ speaking (the call screen opens automatically when the talk starts, target words shown on
+  the call screen), lessons a and c are 💬 chat. Shown as tags on path nodes and in the lesson
+  player.
+- **Separate chats**: `S.threads` = {id: {title, kind, msgs, at}}, `S.chatId` = open thread,
+  `S.chat` is only a pointer to the open thread's msgs (`linkChat()`; not saved twice). "main" =
+  free chat with Yuki; each course talk/lesson/quiz/custom lesson opens its own thread
+  (`openThread`, 30 most recent kept). Chat header title opens the chats list. Course state only
+  applies in its own thread (`activeCourse()`); replies go to the thread they were sent from.
 - **Path (home tab)**: winding path of nodes with coloured unit banners and a sticky unit card
   that appears once you scroll past a banner (`pathScroll`). N5 = the conversation course;
   other levels are built from `CUR[level]` (lessons + a 🏆 unit review). `pathNodes()` /
@@ -110,7 +119,7 @@ Safari → Add to Home Screen.
   settings, what Yuki remembers, and backup/restore as JSON (key excluded).
 
 ## Technical notes
-- State object `S` (currently `v:13`) saved to localStorage key `yuki-sensei-v3`. Keep it backward
+- State object `S` (currently `v:14`) saved to localStorage key `yuki-sensei-v3`. Keep it backward
   compatible. Saved data (and restored backups) go through `migrate()`; if the shape
   changes, bump `DEFAULT.v` and add a step there instead of wiping progress.
 - Clicks route through `data-act` attributes to the `ACT` object.

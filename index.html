@@ -88,6 +88,12 @@ input,textarea,select{font:inherit;font-size:16px;color:var(--text)}
 .tchips{display:flex;gap:6px}
 .tchip{flex-shrink:0;font-size:14px;font-weight:700;padding:6px 10px;border-radius:999px;background:var(--ink3);border:1px solid var(--line)}
 .tchip.ok{background:#24361d;border-color:var(--matcha);color:var(--matcha)}
+.ctbtn{text-align:left;background:none;border:none;padding:0;min-height:44px}
+.caret{font-size:12px;color:var(--dim)}
+.mtag{display:block;width:fit-content;margin:4px auto 0;font-size:11px;font-weight:800;padding:2px 8px;border-radius:999px;background:#7cb8f422;color:var(--sky)}
+.mtag.sp{background:#f4a3c022;color:var(--sakura)}
+.vchips{width:100%;overflow-x:auto;display:flex;justify-content:center}
+.vchips .tchips{flex-wrap:wrap;justify-content:center}
 .urow{display:flex;gap:10px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line);font-size:14.5px}
 .urow:last-child{border-bottom:none}
 .urow i{font-style:normal;width:24px;text-align:center;color:var(--matcha);font-weight:900}
@@ -276,7 +282,7 @@ input,textarea,select{font:inherit;font-size:16px;color:var(--text)}
 <script>
 "use strict";
 // Bump this on every change so phones can spot a new version and offer to update
-const APP_VERSION="2026.10.04-10";
+const APP_VERSION="2026.10.04-11";
 /* ============ DATA ============ */
 const LV = {
   n5:{label:"N5",name:"Beginner",color:"#9fd67c"},
@@ -410,6 +416,9 @@ const COURSE=[
 const CLESSONS=COURSE.flatMap((u,ui)=>u.ls.map(l=>({...l,unit:ui})));
 const clessonById=id=>CLESSONS.find(l=>l.id===id);
 const wordSay=jp=>jp.replace(/～/g,"");
+// Which practice conversations are spoken (a call that opens by itself) and which are typed chats:
+// in every unit the 2nd lesson and the roleplay are speaking, the 1st and 3rd are chats.
+const isSpeakingKey=key=>{if(/^cr:/.test(key))return true;const m=/^cl:(c\d+)([abc])$/.exec(key);return!!m&&m[2]==="b";};
 const CARDS={};
 HIRA.forEach(([c,r])=>CARDS['h:'+c]={deck:'hira',front:c,back:r,sub:'',say:c,label:c+' ('+r+')'});
 KATA.forEach(([c,r])=>CARDS['k:'+c]={deck:'kata',front:c,back:r,sub:'',say:c,label:c+' ('+r+')'});
@@ -466,12 +475,13 @@ const KANJI_LV={none:"none yet",few:"under 50",some:"50–300",many:"300+"};
 /* ============ STATE ============ */
 const KEY="yuki-sensei-v3";
 const DEFAULT={
-  v:13,onboarded:false,name:"",level:"n5",goal:"",
+  v:14,onboarded:false,name:"",level:"n5",goal:"",
   about:{done:false,focus:[],hira:"",kata:"",kanji:"",location:"",native:"English",minutes:15,notes:""},
   placement:null,plan:null,course:null,
   profile:{facts:[],weak:[],strong:[],learned:[]},
   stats:{msgs:0,quizRight:0,quizWrong:0,cards:0,streak:0,lastDay:""},
   done:[],cards:{},chat:[],currentLesson:null,
+  threads:{main:{title:"Chat with Yuki",kind:"free",msgs:[],at:0}},chatId:"main",
   settings:{apiKey:"",model:"claude-haiku-4-5-20251001",rate:0.9,autoSpeakChat:false,speakEnglish:true,micLang:"ja-JP",
     style:{length:"normal",english:"balanced",script:"auto",simple:false},history:12,voiceEn:"",voiceJa:"",jaRec:"ryusei",vvUrl:"",enVoice:"iphone",
     tts:"quest",azKey:"",azRegion:"eastus",azEn:"en-US-AvaMultilingualNeural",azJa:"ja-JP-NanamiNeural",ttsChars:{month:"",n:0},captions:true}
@@ -487,6 +497,29 @@ async function loadState(){
   if(lsOK){try{raw=localStorage.getItem(KEY);}catch(e){}}
   else if(window.storage){try{const r=await window.storage.get(KEY);raw=r&&r.value;}catch(e){}}
   if(raw){try{S=migrate(merge(JSON.parse(JSON.stringify(DEFAULT)),JSON.parse(raw)));}catch(e){}}
+  linkChat();
+}
+/* ---- chat threads: one chat per lesson/talk so conversations don't clump together ---- */
+function linkChat(){if(!S.threads)S.threads={};if(!S.threads.main)S.threads.main={title:"Chat with Yuki",kind:"free",msgs:[],at:0};if(!S.threads[S.chatId])S.chatId="main";S.chat=S.threads[S.chatId].msgs;}
+function openThread(id,title,kind,fresh){
+  let t=S.threads[id];
+  if(!t)t=S.threads[id]={title,kind,msgs:[],at:Date.now()};
+  t.title=title||t.title;t.kind=kind||t.kind;t.at=Date.now();
+  if(fresh)t.msgs.length=0;
+  S.chatId=id;linkChat();
+  // keep the 30 most recent lesson chats (plus the main one)
+  const ids=Object.keys(S.threads).filter(k=>k!=="main").sort((a,b)=>S.threads[b].at-S.threads[a].at);
+  ids.slice(30).forEach(k=>delete S.threads[k]);
+  save();
+}
+const activeCourse=()=>S.course&&S.chatId===S.course.key?S.course:null;
+const THREAD_ICON={free:"💬",speak:"🎙️",chat:"💬",lesson:"📖",quiz:"🧩",custom:"⭐"};
+function chatsSheet(){
+  const ids=Object.keys(S.threads).sort((a,b)=>a==="main"?-1:b==="main"?1:S.threads[b].at-S.threads[a].at);
+  sheet(`<div class="h2" style="margin-bottom:10px">Your chats</div>
+   ${ids.map(id=>{const t=S.threads[id],last=t.msgs[t.msgs.length-1];
+     return`<button class="row${id===S.chatId?" done":""}" data-act="openChat" data-id="${esc(id)}"><span class="ri">${THREAD_ICON[t.kind]||"💬"}</span><span class="rt"><b>${esc(t.title)}</b><span>${last?esc(cleanSpeech(last.text).slice(0,60)):"No messages yet"}</span></span></button>`;}).join("")}
+   <button class="btn ghost" style="margin-top:6px" data-act="closeSheet">Close</button>`);
 }
 // Upgrades older or damaged saves in place so progress is never wiped.
 // When the shape of S changes, bump DEFAULT.v and add a step here.
@@ -525,6 +558,13 @@ function migrate(st){
   if((st.v||0)<12)S2.enVoice="iphone";
   // v12 → v13: the mic listens in Japanese by default (English mode turned "ohayou" into "Ohio")
   if((st.v||0)<13)S2.micLang="ja-JP";
+  // v13 → v14: separate chats per lesson; the old single chat becomes "Chat with Yuki"
+  st.threads=obj(st.threads);
+  if(!st.threads.main||!Array.isArray(st.threads.main.msgs)||(st.v||0)<14&&st.chat&&st.chat.length&&!st.threads.main.msgs.length)
+    st.threads.main={title:"Chat with Yuki",kind:"free",msgs:arr(st.chat).filter(m=>m&&typeof m.text==="string"),at:Date.now()};
+  Object.keys(st.threads).forEach(k=>{const t=st.threads[k];if(!t||typeof t!=="object"){delete st.threads[k];return;}t.msgs=arr(t.msgs).filter(m=>m&&typeof m.text==="string");t.title=String(t.title||"Chat");t.kind=t.kind||"chat";t.at=num(t.at);});
+  if(!st.threads[st.chatId])st.chatId="main";
+  st.chat=st.threads[st.chatId].msgs;
   if(typeof S2.azKey!=="string")S2.azKey="";
   if(!AZ_REGIONS.includes(S2.azRegion))S2.azRegion="eastus";
   if(!AZ_VOICES.en.some(v=>v[0]===S2.azEn))S2.azEn=DEFAULT.settings.azEn;
@@ -540,7 +580,7 @@ function migrate(st){
   return st;
 }
 let saveT=null;
-function saveNow(){clearTimeout(saveT);const d=JSON.stringify(S);if(lsOK){try{localStorage.setItem(KEY,d);return;}catch(e){}}if(window.storage){window.storage.set(KEY,d).catch(()=>{});}}
+function saveNow(){clearTimeout(saveT);const d=JSON.stringify(S,function(k,v){return this===S&&k==="chat"?undefined:v;});if(lsOK){try{localStorage.setItem(KEY,d);return;}catch(e){}}if(window.storage){window.storage.set(KEY,d).catch(()=>{});}}
 function save(){clearTimeout(saveT);saveT=setTimeout(saveNow,150);}
 
 /* ============ HELPERS ============ */
@@ -1047,8 +1087,9 @@ function applyMem(mem){
 async function send(display,apiText,mode){
   display=(display||"").trim();if(!display||UI.busy)return;
   UI.busy=true;touchDay();
-  S.chat.push({role:"user",text:display,api:apiText||undefined});S.stats.msgs++;
-  if(S.course&&!apiText)markUsed(detectUsed(display));
+  const box=S.chat;  // the reply goes to the chat this was sent from, even if you switch chats meanwhile
+  box.push({role:"user",text:display,api:apiText||undefined});S.stats.msgs++;
+  if(activeCourse()&&!apiText)markUsed(detectUsed(display));
   while(S.chat.length>200)S.chat.shift();
   save();
   if(!UI.voice&&UI.tab!=="chat"){UI.tab="chat";render();}else appendLast();
@@ -1058,10 +1099,10 @@ async function send(display,apiText,mode){
     const raw=await callAI(UI.voice?"voice":mode);
     const {text,mem}=parseMem(raw);
     try{applyMem(mem);}catch(e){console.warn("memory skipped",e);}
-    S.chat.push({role:"assistant",text:text||"…"});save();
+    box.push({role:"assistant",text:text||"…"});save();
     // A plan quiz or talk counts as done after a few back-and-forths with Yuki
     if(UI.planCtx&&++UI.planCtx.replies>=4){markNode(UI.planCtx.key);UI.planCtx=null;if(UI.tab==="chat"&&!UI.voice)rerenderChatHead();}
-    showTyping(false);appendLast();
+    showTyping(false);if(S.chat===box)appendLast();
     if(UI.voice){UI.vstate="speaking";renderVoice();speak(text);}
     else if(S.settings.autoSpeakChat)speak(text);
   }catch(err){
@@ -1069,7 +1110,7 @@ async function send(display,apiText,mode){
     const noKey=!S.settings.apiKey.trim();
     const msg=noKey?"I need my own AI connection to think when I'm running outside Claude. Open <b>Me → AI setup</b> and paste your key — it takes two minutes.":
       (err.refusal?"Hmm, I can't answer that one. Let's try something else!":err.status===401?"Your API key was rejected. Check it in <b>Me → AI setup</b>.":err.status===429?"Too many requests at once — wait a few seconds and try again.":err.status===400&&/credit|balance/i.test(err.message)?"Your API account is out of credit. Top it up in the Anthropic Console.":"I couldn't connect ("+esc(err.message)+"). Check your internet and try again.");
-    S.chat.push({role:"assistant",text:msg,err:true});save();appendLast();
+    box.push({role:"assistant",text:msg,err:true});save();if(S.chat===box)appendLast();
     if(UI.voice){UI.vstate="idle";renderVoice();toast("Connection problem — see the chat");}
   }
   UI.busy=false;
@@ -1136,7 +1177,8 @@ function nodeIcon(n){
   if(n.t==="Q")return"🏆";
   return"⭐";
 }
-const nodeSub=n=>n.t==="CL"?"5 new words · learn, practise, talk":n.t==="CK"?"5 new characters":n.t==="CR"?"Use this unit's words in a real chat":"";
+const modeTag=n=>(n.t==="CL"||n.t==="CR")?(isSpeakingKey(n.key)?"🎙️ Speaking":"💬 Chat"):"";
+const nodeSub=n=>n.t==="CL"?"5 new words · learn, practise, "+(isSpeakingKey(n.key)?"then a call":"then chat"):n.t==="CK"?"5 new characters":n.t==="CR"?"A spoken roleplay with this unit's words":"";
 
 /* ---- word memory (spaced repetition shared with flashcards) ---- */
 function bumpWord(id,ok){
@@ -1181,7 +1223,7 @@ function lpSay(){const lp=UI.lp;if(!lp)return;
   else if(lp.step==="quiz"){const q=lp.qs[lp.qi];if(q&&q.dir==="jp")setTimeout(()=>speak(q.say,{rate:0.85}),150);}}
 function vLesson(){
   const lp=UI.lp,n=lp.node,u=COURSE[n.unit];
-  const steps=lp.kind==="words"?["Learn","Practise","Talk"]:["Learn","Practise"];
+  const steps=lp.kind==="words"?["Learn","Practise",isSpeakingKey(n.key)?"🎙️ Speak":"💬 Chat"]:["Learn","Practise"];
   const si=lp.step==="learn"?0:lp.step==="quiz"?1:steps.length-1;
   const prog=lp.step==="learn"?(lp.i+1)/lp.items.length:lp.step==="quiz"?(lp.qi)/lp.qs.length:1;
   const head=`<div class="lphead"><button class="iconbtn" data-act="lpClose" aria-label="Close">✕</button><div class="lpsteps">${steps.map((t,i)=>`<span class="${i<si?"ok":i===si?"on":""}">${i<si?"✓ ":""}${t}</span>`).join("")}</div></div>
@@ -1206,8 +1248,9 @@ function vLesson(){
   return`<div class="pad lp" style="text-align:center">${head}<div style="font-size:64px;margin-top:30px">${u.e}</div><div class="h1">Words learned!</div>
    <p class="sub" style="margin:8px 0 6px">${lp.right}/${lp.qs.length} right in practice.</p>
    <div class="tags" style="justify-content:center;margin:12px 0 18px">${lp.items.map(it=>`<span class="tg">${esc(it[0])} · ${esc(it[2])}</span>`).join("")}</div>
-   <div class="card" style="text-align:left"><b>💬 Last step: use them with Yuki</b><p class="sub" style="margin-top:6px">She'll start a short conversation where you need all 5 words. They tick off as you use them. You can type in Japanese or romaji.</p></div>
-   <button class="btn" data-act="lpTalk">Start the conversation</button><button class="btn ghost" style="margin-top:8px" data-act="lpClose">Later</button></div>`;
+   ${isSpeakingKey(n.key)?`<div class="card" style="text-align:left"><b>🎙️ Last step: a speaking lesson</b><p class="sub" style="margin-top:6px">Yuki calls you. Answer out loud with the 🎤 日本語 button and use all 5 words; they tick off as you say them.</p></div>
+   <button class="btn" data-act="lpTalk">📞 Start the call</button>`:`<div class="card" style="text-align:left"><b>💬 Last step: a chat lesson</b><p class="sub" style="margin-top:6px">Yuki starts a short text chat where you need all 5 words. They tick off as you use them. Type in Japanese or romaji.</p></div>
+   <button class="btn" data-act="lpTalk">💬 Start the chat</button>`}<button class="btn ghost" style="margin-top:8px" data-act="lpClose">Later</button></div>`;
 }
 
 /* ---- conversation step: Yuki must get you to use the target words ---- */
@@ -1218,14 +1261,17 @@ function startTalk(n){
     const pool=final?CLESSONS.flatMap(l=>l.w):u.ls.flatMap(l=>l.w);
     targets=pool.map(w=>w[0]).sort((a,b)=>((S.cards["w:"+a]||{box:0}).box-(S.cards["w:"+b]||{box:0}).box)||Math.random()-0.5).slice(0,5);
     kind=final?"final":"roleplay";title=final?"Your big conversation":"Roleplay: "+u.t;goal=final?"Hold a real conversation using everything you've learned":"Use this unit's words in a real situation";scen=final?"":u.rp;}
-  S.course={key:n.key,kind,title,goal,scen,targets,used:[],review:reviewWords(targets,kind==="lesson"?2:3)};
+  const speaking=isSpeakingKey(n.key);
+  S.course={key:n.key,kind,title,goal,scen,targets,used:[],review:reviewWords(targets,kind==="lesson"?2:3),speaking};
   S.settings.micLang="ja-JP";
-  S.currentLesson=null;UI.lp=null;save();UI.tab="chat";render();
+  openThread(n.key,(speaking?"🎙️ ":"💬 ")+title,speaking?"speak":"chat",true);
+  S.currentLesson=null;UI.lp=null;UI.planCtx=null;save();UI.tab="chat";render();
+  if(speaking)openVoice();
   send(kind==="lesson"?"💬 Let's practise: "+title:kind==="final"?"🎓 Start my big conversation":"🎭 Start the roleplay",
     kind==="final"?"Start my end-of-course conversation now.":kind==="roleplay"?"Start the roleplay now: set the scene in one short English line, then begin in character.":"I just learned these words. Start our practice conversation now.");
 }
 function coursePrompt(){
-  const c=S.course;if(!c)return"";
+  const c=activeCourse();if(!c)return"";
   const wl=c.targets.map(jp=>{const w=wordInfo(jp);return w?`${w[0]} (${w[1]}) = ${w[2]}`:jp;}).join("; ");
   const rv=c.review.map(jp=>{const w=wordInfo(jp);return w?`${w[0]} (${w[1]}) = ${w[2]}`:jp;}).join("; ");
   const left=c.targets.filter(t=>!c.used.includes(t));
@@ -1234,6 +1280,7 @@ TARGET WORDS the student must use: ${wl}.
 Still not used: ${left.length?left.join(", "):"all used!"}.
 ${rv?`OLDER WORDS to bring back (ask about them or work them in, early on): ${rv}.`:""}
 Rules: run a short, natural conversation built so the student HAS to say each target word (ask questions or set up moments that need it). One small step per message. If they're stuck, give a hint (the English meaning or the first sound), not the answer. Keep your Japanese very simple, using mostly the target and older words, with English help as their style needs. They may type romaji; that counts. When every target word has been used, congratulate them warmly and ask 2 quick recap questions (one about an older word).${c.kind==="final"?" This is the end-of-course test: about 10 turns, light corrections only, and at the end give friendly scores out of 10 for understanding, speaking, vocabulary and grammar plus what to work on next.":""}
+${c.speaking?"This is a SPEAKING lesson on a voice call: keep each message to 1-2 short spoken sentences, and invite them to answer out loud.":"This is a typed CHAT lesson."}
 In the memory line, put target words they used correctly this turn in "used" (exact spelling from the list).`;
 }
 // Spot target words in what you typed (Japanese or romaji)
@@ -1256,7 +1303,7 @@ function soundsLike(text,romaji){
   return false;
 }
 function detectUsed(text){
-  const c=S.course;if(!c)return[];
+  const c=activeCourse();if(!c)return[];
   const nj=normJ(text),nr=normR(text),toks=String(text).split(/[\s、。,.!?！？]+/).map(normJ).filter(Boolean);
   return c.targets.filter(jp=>{
     if(c.used.includes(jp))return false;
@@ -1266,7 +1313,7 @@ function detectUsed(text){
   });
 }
 function markUsed(list){
-  const c=S.course;if(!c||!list||!list.length)return;
+  const c=activeCourse();if(!c||!list||!list.length)return;
   let added=0;
   list.forEach(jp=>{if(c.targets.includes(jp)&&!c.used.includes(jp)){c.used.push(jp);bumpWord("w:"+jp,true);added++;}});
   if(!added)return;
@@ -1276,7 +1323,7 @@ function markUsed(list){
   if(UI.tab==="chat"&&!UI.voice){const h=$("#tchips");if(h)h.outerHTML=talkChips();}
 }
 function talkChips(){
-  const c=S.course;if(!c)return"";
+  const c=activeCourse();if(!c)return"";
   return`<div id="tchips" class="tchips">${c.targets.map(jp=>`<span class="tchip${c.used.includes(jp)?" ok":""}">${c.used.includes(jp)?"✓ ":""}${esc(jp)}</span>`).join("")}</div>`;
 }
 
@@ -1286,7 +1333,7 @@ function startNode(n){
   ensurePlan();UI.planCtx=null;S.course=null;
   if(n.t==="L"){startLesson(n.k,true);return;}
   UI.planCtx={key:n.key,replies:0,label:nodeLabel(n)};
-  S.currentLesson=null;save();UI.tab="chat";render();
+  S.currentLesson=null;openThread(n.key,(n.t==="X"?"⭐ ":"🏆 ")+nodeLabel(n),n.t==="X"?"custom":"quiz",true);UI.tab="chat";render();
   if(n.t==="Q"){const [u,ls]=CUR[S.level][n.unit];send("🏆 Unit review: "+u,`Give me a 10-question review quiz on the unit "${u}" (${ls.map(l=>l[1]).join(", ")}) at my level. One question at a time.`);}
   else send("⭐ "+n.title,`Teach me a short lesson about "${n.title}" at my level, step by step, using what you know about me. At most 5 new words, then a short conversation where I have to use them.`);
 }
@@ -1440,7 +1487,7 @@ function vHome(){
       const done=nodeDone(n),isCur=cur&&cur.key===n.key;
       html+=`<div class="nwrap${isCur?" cur":""}" style="transform:translateX(${OFF[g++%8]}px)">${isCur?`<div class="tip">START</div>`:""}
         <button class="node${done?" done":""}${isCur?" cur":""}${!done&&!isCur?" todo":""}${n.t==="X"?" star":""}${n.t==="CK"?" kana":""}" style="--uc:${U.c}" data-act="node" data-key="${esc(n.key)}" aria-label="${esc(nodeLabel(n))}">${nodeIcon(n)}${done?`<span class="bd">✓</span>`:""}</button>
-        <div class="nlab">${esc(nodeLabel(n))}${isCur&&nodeSub(n)?`<small>${esc(nodeSub(n))}</small>`:""}</div></div>`;
+        <div class="nlab">${esc(nodeLabel(n))}${modeTag(n)?`<span class="mtag${isSpeakingKey(n.key)?" sp":""}">${modeTag(n)}</span>`:""}${isCur&&nodeSub(n)?`<small>${esc(nodeSub(n))}</small>`:""}</div></div>`;
     });
   });
   const cu=cur?cur.unit:units.length-1;
@@ -1448,7 +1495,7 @@ function vHome(){
   return`<div class="ptop"><button class="pill" data-act="levelSheet">🇯🇵 ${LV[S.level].label}</button><span class="pill">💬 ${learned} words</span><span class="pill fire">🔥 ${S.stats.streak||0}</span></div>
   <div class="pathwrap">
   ${!S.about.done?`<button class="row" data-act="aboutEdit" style="margin-top:8px;border-color:#3f5a46"><span class="ri">✍️</span><span class="rt"><b>Help Yuki get to know you</b><span>2 minutes · makes your lessons fit you</span></span></button>`:""}
-  ${S.course&&!(S.plan&&S.plan.done[S.course.key])?`<button class="row" data-act="tab" data-tab="chat" style="margin-top:8px;border-color:var(--sakura)"><span class="ri">💬</span><span class="rt"><b>Continue: ${esc(S.course.title)}</b><span>${S.course.used.length}/${S.course.targets.length} words used with Yuki</span></span></button>`:""}
+  ${S.course&&!(S.plan&&S.plan.done[S.course.key])&&S.threads[S.course.key]?`<button class="row" data-act="resumeCourse" style="margin-top:8px;border-color:var(--sakura)"><span class="ri">${S.course.speaking?"🎙️":"💬"}</span><span class="rt"><b>Continue: ${esc(S.course.title)}</b><span>${S.course.used.length}/${S.course.targets.length} words used · ${S.course.speaking?"speaking lesson":"chat lesson"}</span></span></button>`:""}
   <button id="unitHead" data-act="unitSheet" data-u="${cu}">${unitHeadInner(cu)}</button>
   ${html}
   ${cur?"":`<div class="card" style="text-align:center;margin-top:20px"><div style="font-size:48px">🎓</div><b>Path complete!</b><p class="sub" style="margin-top:6px">Move up a level to get a new path.</p></div>`}
@@ -1458,12 +1505,13 @@ function vHome(){
 
 function vChat(){
   const les=S.currentLesson&&lessonById(S.currentLesson);
-  const chips=S.course?["Give me a hint","What does that mean?","Say it slower 🔊","Can we do it in English first?"]:les?["I don't get it","Give me an example","Quiz me on this","Next step","Say it slower 🔊"]:["Quiz me","Teach me something new","Let's practice talking","Explain simpler","Say it slower 🔊"];
+  const C=activeCourse(),th=S.threads[S.chatId]||{title:"Chat with Yuki"};
+  const chips=C?["Give me a hint","What does that mean?","Say it slower 🔊","Can we do it in English first?"]:les?["I don't get it","Give me an example","Quiz me on this","Next step","Say it slower 🔊"]:["Quiz me","Teach me something new","Let's practice talking","Explain simpler","Say it slower 🔊"];
   return`<div class="chat">
-  <div class="chathead"><div class="av">ゆ</div><div class="ct"><b>Yuki</b><small>${S.course?esc(S.course.title):les?esc(les.title):UI.planCtx?esc(UI.planCtx.label):"Online · "+LV[S.level].label}</small></div>
-   ${S.course?`<button class="mini ok" data-act="courseDone">${S.plan&&S.plan.done[S.course.key]?"Finish":"✓ Done"}</button><button class="iconbtn" data-act="courseExit" aria-label="Leave practice">✕</button>`:les?`${S.done.includes(les.id)?"":`<button class="mini ok" data-act="lessonDone">✓ Done</button>`}<button class="iconbtn" data-act="lessonExit" aria-label="Leave lesson">✕</button>`:UI.planCtx?`<button class="mini ok" data-act="ctxDone">✓ Done</button>`:""}
+  <div class="chathead"><div class="av">ゆ</div><button class="ct ctbtn" data-act="chatsSheet"><b>${esc(th.title)} <span class="caret">▾</span></b><small>${C?(C.speaking?"🎙️ Speaking lesson":"💬 Chat lesson"):les?"📖 Lesson":"Yuki · "+LV[S.level].label}</small></button>
+   ${C?`<button class="mini ok" data-act="courseDone">${S.plan&&S.plan.done[C.key]?"Finish":"✓ Done"}</button><button class="iconbtn" data-act="courseExit" aria-label="Leave practice">✕</button>`:les?`${S.done.includes(les.id)?"":`<button class="mini ok" data-act="lessonDone">✓ Done</button>`}<button class="iconbtn" data-act="lessonExit" aria-label="Leave lesson">✕</button>`:UI.planCtx?`<button class="mini ok" data-act="ctxDone">✓ Done</button>`:""}
    <button class="iconbtn call" data-act="voice" aria-label="Voice call">📞</button></div>
-  ${S.course?`<div class="tbar"><span class="sub">Use these words:</span>${talkChips()}</div>`:""}
+  ${C?`<div class="tbar"><span class="sub">Use these words:</span>${talkChips()}</div>`:""}
   <div id="msgs" class="msgs">${S.chat.length?S.chat.map(msgHTML).join(""):emptyChat()}</div>
   <div class="chatfoot"><div class="chips">${chips.map(c=>`<button class="chip" data-act="chip" data-t="${esc(c)}">${esc(c)}</button>`).join("")}</div>
   <div class="inputbar"><button id="micBtn" class="iconbtn micja${UI.listening&&UI.micLang==="ja-JP"?" live":""}" data-act="mic" data-v="ja-JP" aria-label="Speak Japanese">🎤<small>あ</small></button><button class="iconbtn micen${UI.listening&&UI.micLang==="en-US"?" live":""}" data-act="mic" data-v="en-US" aria-label="Speak English">🎤<small>EN</small></button>
@@ -1708,6 +1756,7 @@ function renderVoice(){
    <div class="vtitle"><b>Yuki</b><small>${useQuest()?"🎌 "+(REC_VOICES[S.settings.jaRec]||REC_VOICES.ryusei).name.split(" ")[0]+"'s voice":useVV()?"🎌 "+(REC_VOICES[S.settings.jaRec]||REC_VOICES.himari).name.split(" ")[0]+"'s voice":useNatural()?"✨ natural voice":"voice call"}</small></div>
    <button class="iconbtn" data-act="vCaptions" aria-label="Captions" style="font-size:15px;font-weight:800">${cc?"CC":"🙈"}</button></div>
    <div class="orbwrap"><div class="orb ${st}">ゆ</div><div class="vstat">${label}</div>
+    ${activeCourse()?`<div class="vchips">${talkChips()}</div>`:""}
     <div class="vcap"><div class="vtext${cc?"":" off"}">${cap}</div><div class="vyou">${UI.vyou?"You: "+esc(UI.vyou):""}</div></div></div>
    <div class="vctrl">
     <button class="vbtn" data-act="vRepeat"><i>🔁</i>Repeat</button>
@@ -1733,7 +1782,8 @@ $("#sheet").addEventListener("click",e=>{if(e.target.id==="sheet")closeSheet();}
 /* ============ ACTIONS ============ */
 function startLesson(id,keepLevel){
   const l=lessonById(id);if(!l)return;
-  S.currentLesson=id;if(!keepLevel&&l.level!==S.level)S.level=l.level;save();
+  S.currentLesson=id;if(!keepLevel&&l.level!==S.level)S.level=l.level;
+  openThread("L:"+id,"📖 "+l.title,"lesson",true);
   UI.tab="chat";render();
   send(`📖 Start lesson: ${l.title}`,`Let's start the lesson "${l.title}" (${l.desc}). Teach me step by step at my level, starting from the basics of this topic.`);
 }
@@ -1751,7 +1801,7 @@ function startQuiz(q){
   const t=QUIZZES.find(x=>x[0]===q);
   let p=QUIZ_PROMPTS[q];
   if(q==="weak")p=`Drill my weak spots with a 10-question quiz, one at a time: ${S.profile.weak.slice(-12).join(", ")||"pick what learners at my level usually struggle with"}.`;
-  S.currentLesson=null;save();UI.tab="chat";render();
+  S.currentLesson=null;openThread("q:"+q,"🧩 "+(t?t[2]:"Quiz"),"quiz",true);UI.tab="chat";render();
   send(`🧩 ${t?t[2]:"Quiz"}`,p);
 }
 const ACT={
@@ -1776,7 +1826,7 @@ const ACT={
   obFinish:()=>{S.about.done=true;
     if(UI.obEdit){UI.obEdit=false;save();toast("Saved — Yuki will use this from now on");UI.tab="me";render();return;}
     S.onboarded=true;
-    S.chat=[{role:"assistant",text:`はじめまして${S.name?"、"+S.name+"さん":""}！ I'm Yuki 🌸\n\nHere's how we'll work together:\n• **Learn** has lessons — tap one and I'll teach it step by step\n• **Practice** has flashcards and kana charts that work even offline\n• Tap 📞 up top to talk to me out loud\n• Or just type anything: "quiz me", "what does すみません mean?", "let's roleplay ordering ramen"\n\nI'll remember what you're good at and what trips you up. Ready? Try saying こんにちは!`}];
+    S.chatId="main";linkChat();S.chat.splice(0,S.chat.length,{role:"assistant",text:`はじめまして${S.name?"、"+S.name+"さん":""}！ I'm Yuki 🌸\n\nHere's how we'll work together:\n• **Learn** has lessons — tap one and I'll teach it step by step\n• **Practice** has flashcards and kana charts that work even offline\n• Tap 📞 up top to talk to me out loud\n• Or just type anything: "quiz me", "what does すみません mean?", "let's roleplay ordering ramen"\n\nI'll remember what you're good at and what trips you up. Ready? Try saying こんにちは!`});
     if(S._kana){S.done.push("intro","sounds");}delete S._kana;
     touchDay();save();UI.tab="home";render();},
   lesson:el=>{UI.planCtx=null;startLesson(el.dataset.id);},
@@ -1853,10 +1903,13 @@ const ACT={
     save();touchDay();render();},
   lpTalk:()=>{const n=UI.lp.node;startTalk(n);},
   lpClose:()=>{UI.lp=null;UI.tab="home";render();},
-  courseDone:()=>{const c=S.course;if(c)markNode(c.key,!!(S.plan&&S.plan.done[c.key]));S.course=null;save();UI.tab="home";render();},
-  courseExit:()=>{S.course=null;save();UI.tab="home";render();},
+  courseDone:()=>{const c=S.course;if(c)markNode(c.key,!!(S.plan&&S.plan.done[c.key]));S.course=null;if(UI.voice)closeVoice();S.chatId="main";linkChat();save();UI.tab="home";render();},
+  courseExit:()=>{S.course=null;if(UI.voice)closeVoice();S.chatId="main";linkChat();save();UI.tab="home";render();},
+  chatsSheet:()=>chatsSheet(),
+  openChat:el=>{S.chatId=el.dataset.id;linkChat();S.threads[S.chatId].at=Date.now();save();UI.tab="chat";render();},
+  resumeCourse:()=>{const c=S.course;if(!c)return;S.chatId=c.key;linkChat();save();UI.tab="chat";render();if(c.speaking)openVoice();},
   node:el=>{const n=pathNodes().find(x=>x.key===el.dataset.key);if(n)startNode(n);},
-  ctxDone:()=>{S.course=null;if(UI.planCtx){markNode(UI.planCtx.key);UI.planCtx=null;}UI.tab="home";render();},
+  ctxDone:()=>{if(UI.planCtx){markNode(UI.planCtx.key);UI.planCtx=null;}UI.tab="home";render();},
   unitSheet:el=>unitSheet(+el.dataset.u),
   unitSkip:el=>{const u=+el.dataset.u;if(!confirm("Mark this whole unit as done?"))return;ensurePlan();
     pathNodes().filter(n=>n.unit===u).forEach(n=>{if(n.t==="L"){if(!S.done.includes(n.k))S.done.push(n.k);}else S.plan.done[n.key]=true;});save();toast("Unit skipped ✓");rerender();},
@@ -1884,9 +1937,9 @@ const ACT={
   exportData:()=>{const d=JSON.stringify({...S,settings:{...S.settings,apiKey:"",azKey:""}});sheet(`<div class="h2">Backup</div><p class="sub" style="margin:8px 0">Copy this and keep it somewhere safe (Notes works). Your API keys aren't included.</p><textarea class="field" rows="6" readonly>${esc(d)}</textarea><button class="btn" data-act="copyBackup">Copy</button><button class="btn ghost" style="margin-top:8px" data-act="closeSheet">Close</button>`);},
   copyBackup:()=>{const t=document.querySelector("#sheet textarea");if(navigator.clipboard)navigator.clipboard.writeText(t.value).then(()=>toast("Copied"),()=>{t.select();toast("Select all and copy");});else{t.select();toast("Select all and copy");}},
   importData:()=>sheet(`<div class="h2">Restore</div><p class="sub" style="margin:8px 0">Paste a backup below.</p><textarea id="impT" class="field" rows="6"></textarea><button class="btn" data-act="doImport">Restore</button><button class="btn ghost" style="margin-top:8px" data-act="closeSheet">Cancel</button>`),
-  doImport:()=>{try{const d=JSON.parse($("#impT").value);const key=S.settings.apiKey,az=S.settings.azKey;S=migrate(merge(JSON.parse(JSON.stringify(DEFAULT)),d));S.settings.apiKey=key;S.settings.azKey=az;save();closeSheet();toast("Restored ✅");render();}catch(e){toast("That doesn't look like a backup");}},
-  clearChat:()=>{if(confirm("Clear the chat? Your progress and what Yuki knows about you stay.")){S.chat=[];S.currentLesson=null;save();toast("Chat cleared");}},
-  resetAll:()=>{if(confirm("Erase EVERYTHING — progress, cards, memory, chat?")){const key=S.settings.apiKey,az=S.settings.azKey;S=JSON.parse(JSON.stringify(DEFAULT));S.settings.apiKey=key;S.settings.azKey=az;UI.ob=0;UI.obEdit=false;UI.place=null;UI.tab="home";save();render();}},
+  doImport:()=>{try{const d=JSON.parse($("#impT").value);const key=S.settings.apiKey,az=S.settings.azKey;S=migrate(merge(JSON.parse(JSON.stringify(DEFAULT)),d));S.settings.apiKey=key;S.settings.azKey=az;linkChat();save();closeSheet();toast("Restored ✅");render();}catch(e){toast("That doesn't look like a backup");}},
+  clearChat:()=>{if(confirm("Clear the chat? Your progress and what Yuki knows about you stay.")){S.chat.length=0;S.currentLesson=null;save();toast("Chat cleared");}},
+  resetAll:()=>{if(confirm("Erase EVERYTHING — progress, cards, memory, chat?")){const key=S.settings.apiKey,az=S.settings.azKey;S=JSON.parse(JSON.stringify(DEFAULT));S.settings.apiKey=key;S.settings.azKey=az;linkChat();UI.ob=0;UI.obEdit=false;UI.place=null;UI.tab="home";save();render();}},
   checkUpdate:()=>checkUpdate(true),
   closeSheet:()=>closeSheet()
 };
