@@ -23,8 +23,9 @@ Safari → Add to Home Screen.
   (offline tap quiz incl. 2 review questions from older due words) → Talk. Talk = `S.course`
   ({key, kind, title, goal, scen, targets, used, review}); `coursePrompt()` tells Yuki to make
   the student use every target word and to bring back older words; words tick off via
-  `detectUsed()` on what the student types (kana, romaji, or English voice-typing look-alikes like "Ohio" via `soundsLike()`; everyday English words in `EN_COMMON` never count) and the `used` MEM field; all used
-  → node done. Course words are flashcards `w:<jp>` ("My words" deck) and share spaced
+  `detectUsed()` on what the student types (kana, kanji spellings via `KANJI_ALT`, digits turned back into Japanese via `jaDigits()` — the Japanese mic also converts digits — romaji, or English voice-typing look-alikes like "Ohio" via `soundsLike()`; everyday English words in `EN_COMMON` never count) and the `used` MEM field; all used
+  → node done and a "Lesson complete" card (`courseDoneCard`) with ✓ Finish lesson / Keep practising
+  appears in chat and on the call (hands-free stops auto-listening until "keep practising"). Course words are flashcards `w:<jp>` ("My words" deck) and share spaced
   repetition in `S.cards` (`bumpWord`, `reviewWords`).
 - **Auto-update**: on open, on returning to the app, and every 15 min, `checkUpdate` fetches
   the live page and compares its `<script>`/`<style>` with the running ones. If different it
