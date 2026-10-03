@@ -96,6 +96,11 @@ Safari → Add to Home Screen.
   backups); Me → Voice → "Test Ryusei's live voice" shows the exact error. With
   `enVoice="ryusei"` (default again at the owner's request; "iphone" optional) English is sent to VOICEVOX too, lower-cased with contractions
   expanded (`englishForVV`), neighbouring live segments merged into one request.
+  tts.quest goes silent on English letters, so with Ryusei for English Yuki adds a hidden
+  `<<SAY>>` line before `<<MEM>>` (the whole reply with English in katakana; requested only when
+  `sayWanted()`); `takeSay()` strips it, it's stored as `msg.say` and spoken instead of the text.
+  Without it, `toSpeakable()` keeps Japanese, turns common English words into katakana and drops
+  the rest, so no Latin letters are ever sent.
   All recordings and tts.quest clips play through one shared <audio> element (`questPlayer`,
   `playUrl`, unlocked on first touch/pointer) rather than Web Audio, which iOS silently suspends
   after calls/mic use/app switches; the first clip starts synchronously inside the tap.
