@@ -296,7 +296,7 @@ input,textarea,select{font:inherit;font-size:16px;color:var(--text)}
 <script>
 "use strict";
 // Bump this on every change so phones can spot a new version and offer to update
-const APP_VERSION="2026.10.04-23";
+const APP_VERSION="2026.10.04-24";
 /* ============ DATA ============ */
 const LV = {
   n5:{label:"N5",name:"Beginner",color:"#9fd67c"},
@@ -576,8 +576,8 @@ function migrate(st){
   // v17 → v18: hands-free off (iPhone won't reliably start the mic without a tap)
   if((st.v||0)<18)S2.handsFree=false;
   // v18 → v19: Ryusei for Japanese, a natural iPhone voice for English (owner's choice)
-  if((st.v||0)<19)S2.enVoice="iphone";
   if((st.v||0)<17){S2.tts="quest";S2.enVoice="ryusei";if(S2.jaRec==="off")S2.jaRec="ryusei";}
+  if((st.v||0)<19)S2.enVoice="iphone";
   if((st.v||0)<16){if(S2.style&&S2.style.length==="normal")S2.style.length="short";S2.handsFree=true;}
   S2.handsFree=S2.handsFree===true;
   if(typeof S2.questKey!=="string")S2.questKey="";
@@ -817,11 +817,11 @@ function sayChunk(t,lang,rate){return new Promise(res=>{
   try{if(synth.paused)synth.resume();synth.speak(u);}catch(e){vlog("✗ iPhone voice: "+e.message);fin();}
 });}
 // Wait until the iPhone voice has really stopped (iOS sometimes reports "end" late or early)
-async function synthIdle(max){if(!synth)return;const t0=Date.now();while((synth.speaking||synth.pending)&&Date.now()-t0<(max||6000))await new Promise(r=>setTimeout(r,150));}
+async function synthIdle(max){if(!synth)return;const t0=Date.now();while((synth.speaking||synth.pending)&&Date.now()-t0<(max||6000))await new Promise(r=>setTimeout(r,50));}
 async function sayDevice(t,lang,rate){
   if(!synth){vlog("✗ iPhone voice: not available");return;}
   t=String(t).trim();if(!t)return;
-  await new Promise(r=>setTimeout(r,120));
+  const gap=120-(Date.now()-clipEndAt);if(gap>0)await new Promise(r=>setTimeout(r,gap));
   const parts=t.match(/[^.!?。！？\n]+[.!?。！？]*\s*/g)||[t];
   let buf="";const chunks=[];parts.forEach(p=>{if((buf+p).length>180&&buf){chunks.push(buf);buf="";}buf+=p;});if(buf.trim())chunks.push(buf);
   for(const c of chunks)await sayChunk(c.trim(),lang,rate);
@@ -921,13 +921,13 @@ async function questUrl(text){
 // Plays one clip on the shared player. Once sound has actually started, the clip counts as played no
 // matter what happens next (an iPhone glitch near the end must never make Ryusei say it again).
 // Stalls are treated as finished, and a newer clip or Stop ends the old one cleanly.
-let playId=0;
+let playId=0,clipEndAt=0;
 function playUrl(url,my,rate){return new Promise((res,rej)=>{
   if(my!==natSeq)return res();
   const a=questPlayer(),id=++playId,name=url.split("/").slice(-2).join("/");
   let done=false,started=false,lastT=-1,lastMove=Date.now();
   const fin=ok=>{if(done)return;done=true;clearInterval(iv);clearTimeout(t);
-    if(playId===id){a.onended=a.onerror=a.onplaying=a.ontimeupdate=null;natPlaying=false;}
+    if(playId===id){a.onended=a.onerror=a.onplaying=a.ontimeupdate=null;natPlaying=false;clipEndAt=Date.now();}
     (ok||started)?res():rej(new Error("play"));};
   const t=setTimeout(()=>{vlog("… clip took too long, stopping it");try{if(playId===id)a.pause();}catch(e){}fin(false);},45000);
   const iv=setInterval(()=>{
@@ -946,19 +946,21 @@ function stopQuest(){if(qa){try{qa.pause();}catch(e){}}}
 // iPhone Safari is unreliable with half-made streams, so wait until tts.quest says the file is ready and
 // play the finished MP3. If the status can't be read, try the stream, then the finished file a few times.
 let questStage="";
-async function playQuestAudio(o,my,rate){
-  if(typeof o==="string")return playUrl(o,my,rate);
-  let ready=false,statusOk=false;
-  if(o.status){
-    questStage="waiting for the audio";
-    for(let i=0;i<50&&my===natSeq;i++){
-      try{const r=await withTimeout(fetch(o.status+(o.status.includes("?")?"&":"?")+"t="+Date.now()),6000);const st=await r.json();statusOk=true;
-        if(st.isAudioError){questStage="tts.quest couldn't make the audio";throw new Error(questStage);}
-        if(st.isAudioReady){ready=true;break;}}
-      catch(e){if(statusOk&&/couldn't make/.test(e.message))throw e;if(!statusOk)break;}
-      await new Promise(r=>setTimeout(r,400));
-    }
+async function questReady(o,my){
+  let statusOk=false;if(!o.status)return false;
+  questStage="waiting for the audio";
+  for(let i=0;i<50&&my===natSeq;i++){
+    try{const r=await withTimeout(fetch(o.status+(o.status.includes("?")?"&":"?")+"t="+Date.now()),6000);const st=await r.json();statusOk=true;
+      if(st.isAudioError){questStage="tts.quest couldn't make the audio";throw new Error(questStage);}
+      if(st.isAudioReady)return true;}
+    catch(e){if(statusOk&&/couldn't make/.test(e.message))throw e;if(!statusOk)return false;}
+    await new Promise(r=>setTimeout(r,300));
   }
+  return false;
+}
+async function playQuestAudio(o,my,rate,ready){
+  if(typeof o==="string")return playUrl(o,my,rate);
+  if(ready===undefined)ready=await questReady(o,my);
   if(my!==natSeq)return;
   questStage="playing";
   if(ready&&o.mp3){try{return await playUrl(o.mp3,my,rate);}catch(e){}}
@@ -980,6 +982,24 @@ function questFail(stepNo,msg){
    <button class="btn sm ghost" data-act="iphoneVoiceTest" style="margin-bottom:8px">🔊 Test iPhone voice</button>
    <button class="btn" data-act="questTest">Try again</button><button class="btn ghost" style="margin-top:8px" data-act="closeSheet">Close</button>`);
 }
+// Gets a clip ready BEFORE its turn (while the iPhone voice is still talking): waits until tts.quest has
+// finished it and downloads it into memory, so Ryusei starts the moment the English part ends.
+const blobCache=new Map();
+async function toBlobUrl(url){
+  if(blobCache.has(url))return blobCache.get(url);
+  const p=(async()=>{const r=await withTimeout(fetch(url),15000);if(!r.ok)throw new Error("HTTP "+r.status);
+    const b=await r.blob();if(b.size<200)throw new Error("empty");return URL.createObjectURL(b.type?b:new Blob([b],{type:"audio/mpeg"}));})();
+  blobCache.set(url,p);p.catch(()=>blobCache.delete(url));
+  if(blobCache.size>40){const k=blobCache.keys().next().value;blobCache.get(k).then(u=>URL.revokeObjectURL(u)).catch(()=>{});blobCache.delete(k);}
+  return p;
+}
+async function prepClip(job,my){
+  const o=typeof job==="string"?job:await job;
+  if(typeof o==="string"){let blob=null;try{blob=await toBlobUrl(o);}catch(e){}return{o,blob};}
+  const ready=await questReady(o,my);let blob=null;
+  if(ready&&o.mp3&&my===natSeq){try{blob=await toBlobUrl(o.mp3);}catch(e){vlog("… couldn't preload the clip ("+e.message+"), streaming it");}}
+  return{o,ready,blob};
+}
 function englishForVV(t){t=t.toLowerCase().replace(/[’‘]/g,"'");EN_FIX.forEach(([a,b])=>{t=t.replace(a,b);});return t;}
 const enRyusei=()=>S.settings.enVoice==="ryusei";
 // Japanese parts: Ryusei's recording if we have one (instant), otherwise live from tts.quest;
@@ -993,17 +1013,20 @@ async function speakQuest(segs,rate,text,opts){
   }
   const my=++natSeq;natBusy=true;
   const recUrl=sg=>{const k=recKey(sg.t);return RECORDED.has(k)?recUrlFor(k):null;};
-  const jobs=segs.map(sg=>sg.k!=="ja"?null:(recUrl(sg)||questUrl(vvText(sg.t))));
-  jobs.forEach(j=>j&&j.catch&&j.catch(()=>{}));
+  const jobs=segs.map(sg=>sg.k!=="ja"?null:prepClip(recUrl(sg)||questUrl(vvText(sg.t)),my));
+  jobs.forEach(j=>j&&j.catch(()=>{}));
   try{
     for(let i=0;i<segs.length;i++){
       if(my!==natSeq)return;
       if(!jobs[i]){await sayDevice(segs[i].t.trim(),"en-US",rate);continue;}
       // (with enVoice "ryusei" every segment is sent as "ja", so it never reaches the iPhone English voice unless the service fails)
-      natLoading=true;let url=null;try{url=typeof jobs[i]==="string"?jobs[i]:await jobs[i];}catch(e){
+      natLoading=true;let clip=null;try{clip=await jobs[i];}catch(e){
         if(!questNote){questNote=true;toast("Ryusei's voice didn't answer ("+e.message+"). Tap Me → Voice → Test Ryusei for details.",4500);}}
       natLoading=false;if(my!==natSeq)return;
-      if(url){await synthIdle(6000);if(my!==natSeq)return;try{await playQuestAudio(url,my,rate);continue;}catch(e){if(!questNote){questNote=true;toast("Ryusei's audio: "+e.message+" — using the iPhone voice",4000);}}}
+      if(clip){await synthIdle(6000);if(my!==natSeq)return;
+        if(clip.blob){try{await playUrl(clip.blob,my,rate);continue;}catch(e){vlog("… preloaded clip wouldn't play, trying the original");}}
+        if(my!==natSeq)return;
+        try{await playQuestAudio(clip.o,my,rate,clip.ready);continue;}catch(e){if(!questNote){questNote=true;toast("Ryusei's audio: "+e.message+" — using the iPhone voice",4000);}}}
       if(my!==natSeq)return;
       if(segs[i].orig!==undefined)await speakPlainDevice(segs[i].orig,rate);else await sayDevice(segs[i].t.trim(),"ja-JP",rate);
     }
@@ -1181,10 +1204,10 @@ ${styleRules()}
 - The phone may also write Japanese they SAID as digits or kanji (1 = いち, 元気 = げんき, 今日は = こんにちは). That means they said it correctly: accept it, never ask them to "say the Japanese word" because of digits or kanji.
 - KANJI FROM VOICE TYPING: when the student speaks Japanese, the phone often writes it in kanji by itself. They are a beginner who said it out loud in kana-level Japanese: read the kanji as what they said, count it as correct, and always write Japanese back to them in hiragana/katakana (kanji only with the reading in brackets, if at all).
 - VOICE TYPING: the student often speaks and the phone types it. Japanese they say can arrive as English look-alikes ("Ohio" = おはよう, "arigato" = ありがとう, "cone itchy wa" = こんにちは). Treat these as the Japanese they meant (count them as used), and gently show the proper Japanese spelling.
-- Make every question easy to understand: write the instruction in English, and put an English translation in brackets after any Japanese question sentence (never give away the answer itself). After they answer, translate the full correct sentence too.
+${mode==="voice"?"":`- Make every question easy to understand: write the instruction in English, and put an English translation in brackets after any Japanese question sentence (never give away the answer itself). After they answer, translate the full correct sentence too.
 - LISTENING: when you want them to listen without reading, wrap the Japanese in double square brackets like [[きょうは いい てんき ですね]]. The app hides it behind a play button.
 - Use line breaks, not big headers or tables.
-${mode==="voice"?`- VOICE CALL: they are talking to you out loud and hearing your reply through text-to-speech. Reply in 1-2 short spoken sentences (under 25 words), then hand the turn back to them. No lists, no markdown, no brackets, no romaji. Speak like a friend on a call. Keep the conversation going.\n`:""}
+`}${mode==="voice"?`- VOICE CALL: they are talking to you out loud and hearing your reply through text-to-speech. Reply in 1-2 short spoken sentences (under 25 words), then hand the turn back to them. No lists, no markdown, no brackets, no romaji. Speak like a friend on a call. Keep the conversation going.\n`:""}
 ${sayWanted()?`SPOKEN VERSION (very important)
 Your reply is read aloud by a Japanese-only voice that cannot read English letters. Just before the memory line, add one line starting with <<SAY>> followed by the WHOLE reply rewritten for that voice: keep Japanese as it is, write every English word in katakana the way it sounds (e.g. "Great job! Now say hello." → グレート ジョブ！ ナウ セイ ハロー。), and drop emojis, romaji in brackets, markdown and symbols. Never mention this line.
 
@@ -1203,9 +1226,10 @@ function memoryPrompt(){
 - Quiz record: ${S.stats.quizRight} right, ${S.stats.quizWrong} wrong. Flashcards due: ${due}.
 ${coursePrompt()}${les?`\nCURRENT LESSON: "${les.title}" — ${les.desc} (${LV[les.level].label}, unit "${les.unit}"). Teach it in small steps: short explanation → 2-3 examples → a quick practice question, then wait for their answer. Never dump the whole lesson at once. When they've shown they understand the core of it, congratulate them and tell them they can tap "✓ Done".`:""}`;
 }
-function buildMessages(){
-  const msgs=[];
-  S.chat.slice(-(S.settings.history||12)).forEach(m=>{
+// Calls are quick back-and-forths, so they send at most 6 recent messages (the lesson itself is in the memory part)
+function buildMessages(mode){
+  const msgs=[],n=S.settings.history||12;
+  S.chat.slice(-(mode==="voice"?Math.min(6,n):n)).forEach(m=>{
     if(m.err)return;
     const role=m.role==="user"?"user":"assistant";
     const content=(m.role==="user"&&m.api)?m.api:m.text;
@@ -1217,12 +1241,13 @@ function buildMessages(){
 }
 // One place that talks to the Anthropic API. With no key saved, it sends no auth
 // (that only works inside Claude's own preview); otherwise it uses your key.
-async function apiRequest(body){
+const FAST_MODEL="claude-haiku-4-5-20251001";
+async function apiRequest(body,cheap){
   const key=S.settings.apiKey.trim();
   const headers={"Content-Type":"application/json"};
   let model="claude-sonnet-4-6";
   body={...body};
-  if(key){headers["x-api-key"]=key;headers["anthropic-version"]="2023-06-01";headers["anthropic-dangerous-direct-browser-access"]="true";model=S.settings.model;}
+  if(key){headers["x-api-key"]=key;headers["anthropic-version"]="2023-06-01";headers["anthropic-dangerous-direct-browser-access"]="true";model=cheap?FAST_MODEL:S.settings.model;}
   const smart=key&&model==="claude-sonnet-5-5";
   if(smart){
     // Sonnet 5.5 thinks before answering; low effort keeps a chat tutor fast and cheap.
@@ -1240,11 +1265,13 @@ async function apiRequest(body){
   if(data.stop_reason==="refusal"){const err=new Error("refusal");err.refusal=true;throw err;}
   return (data.content||[]).filter(b=>b.type==="text").map(b=>b.text||"").join("").trim();
 }
+// Calls always use the fast, cheap model (short spoken replies don't need the Smart one)
 function callAI(mode){
-  const max={tiny:500,short:700,normal:1000,detailed:1600}[S.settings.style.length]||1000;
+  const voice=mode==="voice";
+  const max=voice?400:({tiny:500,short:700,normal:1000,detailed:1600}[S.settings.style.length]||1000);
   return apiRequest({max_tokens:max,
     system:[{type:"text",text:systemPrompt(mode),cache_control:{type:"ephemeral"}},{type:"text",text:memoryPrompt()}],
-    messages:buildMessages()});
+    messages:buildMessages(mode)},voice);
 }
 // The hidden <<SAY>> line (spoken version for Ryusei) is taken out of the reply and kept separately
 const sayWanted=()=>S.settings.tts==="quest"&&S.settings.enVoice==="ryusei";
@@ -1906,6 +1933,7 @@ function vMe(){
      <option value="claude-sonnet-5-5"${st.model==="claude-sonnet-5-5"?" selected":""}>Smart (Sonnet) — best tutor</option>
      <option value="claude-haiku-4-5-20251001"${st.model==="claude-haiku-4-5-20251001"?" selected":""}>Fast & cheap (Haiku)</option>
    </select>
+   <p class="sub" style="margin:-4px 0 10px">📞 Calls always use Fast & cheap and send only the last 6 messages, to save credits. Ryusei and the iPhone voice are free.</p>
    <div class="grid2"><button class="btn sm" data-act="saveKey">Save key</button><button class="btn sm ghost" data-act="testAI">Test Yuki</button></div>
    <button class="btn sm ghost" style="margin-top:8px" data-act="keyHelp">How do I get a key?</button>
   </div>
