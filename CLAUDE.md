@@ -27,6 +27,10 @@ Safari → Add to Home Screen.
   → node done and a "Lesson complete" card (`courseDoneCard`) with ✓ Finish lesson / Keep practising
   appears in chat and on the call (hands-free stops auto-listening until "keep practising"). Course words are flashcards `w:<jp>` ("My words" deck) and share spaced
   repetition in `S.cards` (`bumpWord`, `reviewWords`).
+- **Roleplay warm-up**: a roleplay / the final conversation (CR node) first runs the lesson player on its 5
+  target words (`rpTargets(n)`, `UI.lp.pre`: "Warm-up" → Practise, free), then `startTalk(n, lp.targets)` uses
+  the same words. `coursePrompt` tells Yuki to use only Japanese the student has learned (anything else with
+  its English in brackets).
 - **Path tests & recaps** (free, offline; state v23): N5 units get ⚡ Mini test after lesson b (`cq:<u>:m`,
   8 Qs, pass 60%), 📝 Unit test after the roleplay (`cq:<u>:t`, 12 Qs incl. the unit's kana, 70%), 🔁 Big
   recap every 3 units (`cq:<u>:r`, 15 Qs over the last 3 units) and 🏅 N5 final test (`cq:final`, 25 Qs).

@@ -368,7 +368,7 @@ input,textarea,select{font:inherit;font-size:16px;color:var(--text)}
 <script>
 "use strict";
 // Bump this on every change so phones can spot a new version and offer to update
-const APP_VERSION="2026.10.06-3";
+const APP_VERSION="2026.10.06-4";
 /* ============ DATA ============ */
 const LV = {
   n5:{label:"N5",name:"Beginner",color:"#9fd67c"},
@@ -1625,7 +1625,7 @@ function startCourseNode(n){
   ensurePlan();UI.planCtx=null;
   if(n.t==="CL"){const l=clessonById(n.k);UI.lp={node:n,kind:"words",items:l.w,step:"learn",i:0};render();lpSay();return;}
   if(n.t==="CK"){UI.lp={node:n,kind:"kana",items:[...n.k].map(ch=>{const id=(/[ァ-ン]/.test(ch)?"k:":"h:")+ch;return[ch,CARDS[id].back,"",id];}),step:"learn",i:0};render();lpSay();return;}
-  if(n.t==="CR")startTalk(n);
+  if(n.t==="CR"){const targets=rpTargets(n);UI.lp={node:n,kind:"words",items:targets.map(wordInfo).filter(Boolean),step:"learn",i:0,targets,pre:true};render();lpSay();return;}
   if(n.t==="CQ")startTest(n);
 }
 const itemId=(lp,it)=>lp.kind==="kana"?it[3]:"w:"+it[0];
@@ -1649,14 +1649,14 @@ function lpSay(){const lp=UI.lp;if(!lp)return;
   else if(lp.step==="quiz"){const q=lp.qs[lp.qi];if(q&&q.dir==="jp")speak(q.say,{rate:0.85});}}
 function vLesson(){
   const lp=UI.lp,n=lp.node,u=COURSE[n.unit];
-  const steps=lp.kind==="words"?["Learn","Practise",isSpeakingKey(n.key)?"🎙️ Speak":"💬 Chat"]:["Learn","Practise"];
+  const steps=lp.kind==="words"?[lp.pre?"Warm-up":"Learn","Practise",n.t==="CR"?"🎭 Roleplay":isSpeakingKey(n.key)?"🎙️ Speak":"💬 Chat"]:["Learn","Practise"];
   const si=lp.step==="learn"?0:lp.step==="quiz"?1:steps.length-1;
   const prog=lp.step==="learn"?(lp.i+1)/lp.items.length:lp.step==="quiz"?(lp.qi)/lp.qs.length:1;
   const head=`<div class="lphead"><button class="iconbtn" data-act="lpClose" aria-label="Close">✕</button><div class="lpsteps">${steps.map((t,i)=>`<span class="${i<si?"ok":i===si?"on":""}">${i<si?"✓ ":""}${t}</span>`).join("")}</div></div>
     <div class="bar" style="margin:10px 0 0"><i style="width:${Math.round(prog*100)}%;background:${u.c}"></i></div>`;
   if(lp.step==="learn"){
     const it=lp.items[lp.i];
-    return`<div class="pad lp">${head}<p class="sub lpk">${lp.kind==="kana"?"New character":"New word"} ${lp.i+1} of ${lp.items.length} · ${esc(nodeLabel(n))}</p>
+    return`<div class="pad lp">${head}<p class="sub lpk">${lp.pre?"🔥 Warm-up: words for the conversation":lp.kind==="kana"?"New character":"New word"} ${lp.i+1} of ${lp.items.length} · ${esc(nodeLabel(n))}</p>
      <button class="wcard" data-act="lpSay" style="--uc:${u.c}"><div class="wjp">${esc(it[0])}</div>${lp.kind==="words"?`<div class="wro">${esc(it[1])}</div><div class="wen">${esc(it[2])}</div>`:`<div class="wen">"${esc(it[1])}"</div>`}<div class="whear">🔊 Tap to hear again</div></button>
      <button class="btn" style="margin-top:16px" data-act="lpNext">${lp.i<lp.items.length-1?"Next":"Let's practise →"}</button></div>`;
   }
@@ -1671,21 +1671,26 @@ function vLesson(){
   }
   // done
   if(lp.kind==="kana")return`<div class="pad lp" style="text-align:center">${head}<div style="font-size:64px;margin-top:40px">🎉</div><div class="h1">5 new characters!</div><p class="sub" style="margin:8px 0 20px">${lp.right}/${lp.qs.length} right. They're now in your Hiragana/Katakana flashcards.</p><button class="btn" data-act="lpClose">Back to path</button></div>`;
-  return`<div class="pad lp" style="text-align:center">${head}<div style="font-size:64px;margin-top:30px">${u.e}</div><div class="h1">Words learned!</div>
+  return`<div class="pad lp" style="text-align:center">${head}<div style="font-size:64px;margin-top:30px">${lp.pre?"🎭":u.e}</div><div class="h1">${lp.pre?"Ready for the conversation!":"Words learned!"}</div>
    <p class="sub" style="margin:8px 0 6px">${lp.right}/${lp.qs.length} right in practice.</p>
    <div class="tags" style="justify-content:center;margin:12px 0 18px">${lp.items.map(it=>`<span class="tg">${esc(it[0])} · ${esc(it[2])}</span>`).join("")}</div>
-   ${isSpeakingKey(n.key)?`<div class="card" style="text-align:left"><b>🎙️ Last step: a speaking lesson</b><p class="sub" style="margin-top:6px">Yuki calls you. Answer out loud with the 🎤 日本語 button and use all 5 words; they tick off as you say them.</p></div>
+   ${lp.pre?`<div class="card" style="text-align:left"><b>🎭 Now use them for real</b><p class="sub" style="margin-top:6px">${COURSE[n.k].rp==="FINAL"?"Your big end-of-course conversation with Yuki.":"The scene: "+esc(COURSE[n.k].rp)+" Yuki plays the other person."} Answer out loud with 🎤 日本語 and use all 5 words; they tick off as you say them.</p></div>
+   <button class="btn" data-act="lpTalk">📞 Start the conversation</button>`:isSpeakingKey(n.key)?`<div class="card" style="text-align:left"><b>🎙️ Last step: a speaking lesson</b><p class="sub" style="margin-top:6px">Yuki calls you. Answer out loud with the 🎤 日本語 button and use all 5 words; they tick off as you say them.</p></div>
    <button class="btn" data-act="lpTalk">📞 Start the call</button>`:`<div class="card" style="text-align:left"><b>💬 Last step: a chat lesson</b><p class="sub" style="margin-top:6px">Yuki starts a short text chat where you need all 5 words. They tick off as you use them. Type in Japanese or romaji.</p></div>
    <button class="btn" data-act="lpTalk">💬 Start the chat</button>`}<button class="btn ghost" style="margin-top:8px" data-act="lpClose">Later</button></div>`;
 }
 
 /* ---- conversation step: Yuki must get you to use the target words ---- */
-function startTalk(n){
+// The 5 words a roleplay is built around: this unit's (or for the final, the whole course's) weakest words
+function rpTargets(n){
+  const u=COURSE[n.k],pool=u.rp==="FINAL"?CLESSONS.flatMap(l=>l.w):u.ls.flatMap(l=>l.w);
+  return pool.map(w=>w[0]).sort((a,b)=>((S.cards["w:"+a]||{box:0}).box-(S.cards["w:"+b]||{box:0}).box)||Math.random()-0.5).slice(0,5);
+}
+function startTalk(n,preset){
   let targets,kind,title,goal,scen="";
   if(n.t==="CL"){const l=clessonById(n.k);targets=l.w.map(w=>w[0]);kind="lesson";title=l.t;goal=l.g;}
   else{const u=COURSE[n.k],final=u.rp==="FINAL";
-    const pool=final?CLESSONS.flatMap(l=>l.w):u.ls.flatMap(l=>l.w);
-    targets=pool.map(w=>w[0]).sort((a,b)=>((S.cards["w:"+a]||{box:0}).box-(S.cards["w:"+b]||{box:0}).box)||Math.random()-0.5).slice(0,5);
+    targets=preset&&preset.length?preset:rpTargets(n);
     kind=final?"final":"roleplay";title=final?"Your big conversation":"Roleplay: "+u.t;goal=final?"Hold a real conversation using everything you've learned":"Use this unit's words in a real situation";scen=final?"":u.rp;}
   const speaking=isSpeakingKey(n.key);
   S.course={key:n.key,kind,title,goal,scen,targets,used:[],review:reviewWords(targets,kind==="lesson"?2:3),speaking};
@@ -1705,6 +1710,7 @@ function coursePrompt(){
 TARGET WORDS the student must use: ${wl}.
 Still not used: ${left.length?left.join(", "):"all used!"}.
 ${rv?`OLDER WORDS to bring back (ask about them or work them in, early on): ${rv}.`:""}
+Use only Japanese the student has learned (target, older and recently learned words); any other word needs its English in brackets.
 Rules: run a short, natural conversation built so the student HAS to say each target word (ask questions or set up moments that need it). One small step per message. If they're stuck, give a hint (the English meaning or the first sound), not the answer. Keep your Japanese very simple, using mostly the target and older words, with English help as their style needs. They may type romaji; that counts. When every target word has been used, congratulate them warmly and ask 2 quick recap questions (one about an older word).${c.kind==="final"?" This is the end-of-course test: about 10 turns, light corrections only, and at the end give friendly scores out of 10 for understanding, speaking, vocabulary and grammar plus what to work on next.":""}
 ${c.speaking?"This is a SPEAKING lesson on a voice call: keep each message to 1-2 short spoken sentences, and invite them to answer out loud.":"This is a typed CHAT lesson."}
 In the memory line, put target words they used correctly this turn in "used" (exact spelling from the list).`;
@@ -2790,7 +2796,7 @@ const ACT={
     if(ok)lp.right++;bumpWord(lp.kind==="kana"?q.it[3]:"w:"+q.it[0],ok);
     if(!ok&&!lp.requeued[lp.qi]){lp.requeued[lp.qi]=1;lp.qs.push({...q,opts:shuffle(q.opts.slice())});}
     addXP(ok?2:1,"cards");save();render();},
-  lpTalk:()=>{const n=UI.lp.node;startTalk(n);},
+  lpTalk:()=>{const lp=UI.lp;startTalk(lp.node,lp.targets);},
   lpClose:()=>{UI.lp=null;UI.tab="home";render();},
   courseDone:()=>{stopSpeak();const c=S.course;if(c)markNode(c.key,!!(S.plan&&S.plan.done[c.key]));S.course=null;if(UI.voice)closeVoice();S.chatId="main";linkChat();save();UI.tab="home";render();},
   keepPractising:()=>{const c=activeCourse();if(c){c.keep=true;save();}if(UI.voice)renderVoice();else rerenderChatHead();toast("Keep going! Tap ✓ Finish whenever you want to move on",2200);},
