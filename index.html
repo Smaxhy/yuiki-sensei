@@ -346,7 +346,7 @@ input,textarea,select{font:inherit;font-size:16px;color:var(--text)}
 .mht{flex:1;min-width:0}.mht b{display:block;font-size:19px}.mht span{display:block;font-size:13px;color:var(--dim);margin-top:2px}.mht .mhs{color:var(--text);font-weight:700;margin-top:6px}
 .chev{font-size:22px;color:var(--dim);flex-shrink:0}
 #tabs{gap:1px;padding:5px 4px;margin-left:6px;margin-right:6px}
-#tabs button{font-size:9.5px;min-width:0;padding:0;letter-spacing:-.03em;white-space:nowrap}
+#tabs button{font-size:10.5px;min-width:0;padding:0;letter-spacing:-.03em;white-space:nowrap}
 #tabs button .ti{font-size:20px}
 .wbd .due{font-style:normal;font-size:10px;font-weight:800;color:var(--gold);letter-spacing:0;margin-right:5px}
 /* ===== Look v2: calmer colours, grouped lists instead of boxes ===== */
@@ -451,7 +451,6 @@ html,body{background:var(--ink)}
     <button data-act="tab" data-tab="translate"><span class="ti">🗣️</span>Translate</button>
     <button data-act="tab" data-tab="practice"><span class="ti">🎯</span>Practice</button>
     <button data-act="tab" data-tab="cards"><span class="ti">🃏</span>Cards</button>
-    <button data-act="tab" data-tab="progress"><span class="ti">📅</span>Progress</button>
     <button data-act="tab" data-tab="me"><span class="ti">👤</span>Me</button>
   </nav>
 </div>
@@ -462,7 +461,7 @@ html,body{background:var(--ink)}
 <script>
 "use strict";
 // Bump this on every change so phones can spot a new version and offer to update
-const APP_VERSION="2026.10.08-1";
+const APP_VERSION="2026.10.08-2";
 /* ============ DATA ============ */
 const LV = {
   n5:{label:"N5",name:"Beginner",color:"#9fd67c"},
@@ -2083,7 +2082,7 @@ function vProgress(){
   const d=S.days[isoDay()]||{xp:0,sec:0},g=S.daily.goal,st=streakInfo(),D=S.daily;
   const all=Object.values(S.days),got=new Set(D.badges.map(b=>b[0]));
   const left=D.exam?Math.round((new Date(D.exam+"T00:00")-new Date(isoDay()+"T00:00"))/864e5):null;
-  return`<div class="pad"><div class="h1">Progress</div>
+  return`<div class="pad"><button class="mini" data-act="tab" data-tab="me">‹ Me</button><div class="h1" style="margin-top:12px">📅 Progress</div>
   <div class="card todaycard"><div class="tcring">${ring(d.xp,g,112,10)}<div class="tcin"><b>${d.xp}</b><span>of ${g} XP</span>${d.xp>=g?`<span class="ok">✓ goal</span>`:""}</div></div>
     <div class="tcside"><div><b>🔥 ${st.n}</b><span>day streak${st.n&&!st.today?" · study today!":""}</span></div><div><b>❄️ ${D.freeze}</b><span>streak freeze${D.freeze===1?"":"s"}</span></div><div><b>⏱️ ${fmtMin(d.sec)}</b><span>studied today</span></div></div></div>
   <div class="sec">🎯 Daily goal</div><div class="goalgrid">${GOALS.map(([v,t,m])=>`<button class="gopt${g===v?" on":""}" data-act="goalSet" data-v="${v}"><b>${t}</b><span>${v} XP · ${m}</span></button>`).join("")}</div>
@@ -2926,7 +2925,7 @@ async function trSaveOffline(){
 
 /* ============ VIEWS ============ */
 function render(){
-  document.querySelectorAll("#tabs button").forEach(b=>b.classList.toggle("on",b.dataset.tab===UI.tab));
+  document.querySelectorAll("#tabs button").forEach(b=>b.classList.toggle("on",b.dataset.tab===(UI.tab==="progress"?"me":UI.tab)));
   $("#tabs").classList.toggle("hidden",!S.onboarded||UI.obEdit||!!UI.place||!!UI.lp||!!(UI.qz&&UI.qz.test));
   const main=$("#main");
   if(UI.place){main.innerHTML=vPlace();main.scrollTop=0;return;}
@@ -3483,7 +3482,7 @@ function vMe(){
   return`<div class="pad"><div class="h1">Me</div>
    <div class="card mehead"><div class="av big">${esc((S.name||"ゆ").slice(0,1).toUpperCase())}</div><div class="mht"><b>${esc(S.name||"Learner")}</b><span>JLPT ${LV[S.level].label} · ${esc(S.goal||"No goal set yet")}</span>
     <span class="mhs">🔥 ${stI.n} · 💬 ${wordCount()} words · ⭐ ${totalXP()} XP</span></div></div>
-   ${[["👤 You",["profile","memory"]],["💬 Yuki",["talk","voice","ai"]],["⚙️ App",["app"]]].map(([h,ks])=>`<div class="sec">${h}</div>`+ME_SECS.filter(x=>ks.includes(x[0])).map(([k,ic,t,d])=>`<button class="row" data-act="meSec" data-v="${k}"><span class="ri">${ic}</span><span class="rt"><b>${t}</b><span>${typeof d==="function"?d():d}</span></span><span class="chev">›</span></button>`).join("")).join("")}
+   ${[["👤 You",["progress","profile","memory"]],["💬 Yuki",["talk","voice","ai"]],["⚙️ App",["app"]]].map(([h,ks])=>`<div class="sec">${h}</div>`+[...ME_SECS,["progress","📅","Progress",()=>{const st=streakInfo(),d=S.days[isoDay()]||{xp:0};return`🔥 ${st.n} day streak · today ${d.xp}/${S.daily.goal} XP · calendar, badges, countdown`;}]].filter(x=>ks.includes(x[0])).sort((a,b)=>ks.indexOf(a[0])-ks.indexOf(b[0])).map(([k,ic,t,d])=>`<button class="row" data-act="${k==="progress"?"tab":"meSec"}" data-v="${k}" data-tab="${k==="progress"?"progress":""}"><span class="ri">${ic}</span><span class="rt"><b>${t}</b><span>${typeof d==="function"?d():d}</span></span><span class="chev">›</span></button>`).join("")).join("")}
    <p class="sub" style="text-align:center;margin-top:14px">Yuki Sensei · version ${APP_VERSION}</p></div>`;
 }
 const ME_SECS=[

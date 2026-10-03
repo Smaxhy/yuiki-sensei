@@ -56,7 +56,7 @@ Safari → Add to Home Screen.
   other levels are built from `CUR[level]` (lessons + a 🏆 unit review). `pathNodes()` /
   `pathUnits()`; custom ⭐ lessons in `S.plan.custom` ({id,title,before,level}) from the
   "⭐ Add a lesson" sheet or Yuki's `path` MEM field. Progress in `S.plan.done`.
-- **Tabs**: Path, Yuki (chat), Translate (`UI.tab="translate"`), Practice, Cards, Progress, Me (labels 9.5px so 7 fit on an iPhone 15). Cards (`vCards`) lists only learned cards
+- **Tabs**: Path, Yuki (chat), Translate (`UI.tab="translate"`), Practice, Cards, Me (labels 10.5px). Progress (`UI.tab="progress"`) is opened from the top row of Me → You (and the Home goal ring / streak pill); it has a "‹ Me" back button and lights up the Me tab. Cards (`vCards`) lists only learned cards
   (`S.cards`), weakest first, filter chips (`UI.cardsF`), and practises them with the "mine" decks
   (`MINE`: mine / mine-words / mine-kana / mine-kanji = due first, then weakest, never new cards). Home's
   "to review" and Practice's "Review due cards" open it. "All lessons" (`UI.tab="learn"`) opens from the
