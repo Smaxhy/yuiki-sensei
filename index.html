@@ -345,8 +345,8 @@ input,textarea,select{font:inherit;font-size:16px;color:var(--text)}
 .mehead{display:flex;align-items:center;gap:14px;background:linear-gradient(150deg,#3a2433,#22243a);border-color:#5a3a4c}
 .mht{flex:1;min-width:0}.mht b{display:block;font-size:19px}.mht span{display:block;font-size:13px;color:var(--dim);margin-top:2px}.mht .mhs{color:var(--text);font-weight:700;margin-top:6px}
 .chev{font-size:22px;color:var(--dim);flex-shrink:0}
-#tabs{gap:2px;padding:5px;margin-left:8px;margin-right:8px}
-#tabs button{font-size:10.5px;min-width:0;padding:0 1px;letter-spacing:-.01em}
+#tabs{gap:1px;padding:5px 4px;margin-left:6px;margin-right:6px}
+#tabs button{font-size:9.5px;min-width:0;padding:0;letter-spacing:-.03em;white-space:nowrap}
 #tabs button .ti{font-size:20px}
 .wbd .due{font-style:normal;font-size:10px;font-weight:800;color:var(--gold);letter-spacing:0;margin-right:5px}
 @keyframes dot{0%,80%,100%{opacity:.25}40%{opacity:1}}
@@ -363,6 +363,7 @@ input,textarea,select{font:inherit;font-size:16px;color:var(--text)}
   <nav id="tabs">
     <button data-act="tab" data-tab="home"><span class="ti">🗺️</span>Path</button>
     <button data-act="tab" data-tab="chat"><span class="ti">💬</span>Yuki</button>
+    <button data-act="tab" data-tab="translate"><span class="ti">🗣️</span>Translate</button>
     <button data-act="tab" data-tab="practice"><span class="ti">🎯</span>Practice</button>
     <button data-act="tab" data-tab="cards"><span class="ti">🃏</span>Cards</button>
     <button data-act="tab" data-tab="progress"><span class="ti">📅</span>Progress</button>
@@ -376,7 +377,7 @@ input,textarea,select{font:inherit;font-size:16px;color:var(--text)}
 <script>
 "use strict";
 // Bump this on every change so phones can spot a new version and offer to update
-const APP_VERSION="2026.10.07-2";
+const APP_VERSION="2026.10.07-3";
 /* ============ DATA ============ */
 const LV = {
   n5:{label:"N5",name:"Beginner",color:"#9fd67c"},
@@ -3511,7 +3512,7 @@ function startQuiz(q){
   send(`🧩 ${t?t[2]:"Quiz"}`,p);
 }
 const ACT={
-  tab:el=>{const t=el.dataset.tab;if(t!==UI.tab)stopSpeak();if(t!=="me"||UI.tab==="me")UI.me=null;if(t!==UI.tab){UI.fc=null;UI.qz=null;}UI.tab=t;if(t!=="practice")UI.chart=null;render();},
+  tab:el=>{const t=el.dataset.tab;if(t!==UI.tab)stopSpeak();if(t!=="me"||UI.tab==="me")UI.me=null;if(t!==UI.tab){UI.fc=null;UI.qz=null;}UI.tab=t;if(t!=="practice")UI.chart=null;render();if(t==="translate")trFillSoon(3000);},
   cardsF:el=>{UI.cardsF=el.dataset.v;rerender();},
   translate:()=>{stopSpeak();UI.tab="translate";render();trFillSoon(3000);},
   trGo:()=>{const i=$("#trIn");if(i&&i.value.trim())trRun(i.value.trim());else toast("Type or say something in English");},
