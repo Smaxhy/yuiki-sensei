@@ -295,6 +295,12 @@ Safari → Add to Home Screen.
   auto-update never reloads during a lesson, flashcards or an open sheet (`canReloadNow`); call captions use
   `captionText()` (markdown removed, bullets kept); spoken answers with kanji still tick course words.
 
+## Look (v2, 2026.10.08)
+- Calm dark palette in `:root` (ink/ink2/ink3 surfaces, hairline `--line`, accents sakura/sky/matcha/gold/lav/teal), set in the
+  "Look v2" CSS block near the end of `<style>` (it overrides earlier rules). No outlines on surfaces. Consecutive `.row`s join
+  into one grouped list (rounded first/last, hairline separators) with colour-coded icon chips; tiles cycle accent colours.
+  Pages use `.sec` category headings (uppercase, small): Practice (Today / Quick practice / decks…), Me (You / Yuki / App).
+
 ## Technical notes
 - State object `S` (currently `v:23`) saved to localStorage key `yuki-sensei-v3`. Keep it backward
   compatible. Saved data (and restored backups) go through `migrate()`; if the shape
