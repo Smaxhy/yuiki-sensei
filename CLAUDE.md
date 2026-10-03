@@ -68,6 +68,12 @@ Safari → Add to Home Screen.
   `audio/himari/` and `audio/ryusei/` (file name = `recId(text)`), chosen with
   `S.settings.jaRec`; `speak()` plays these first for exact matches. New decks: re-run
   `tools/gen_audio.py`. Credits "VOICEVOX:冥鳴ひまり" / "VOICEVOX:青山龍星" must stay (Me + README).
+  Live "Himari & Ryusei" engine (`S.settings.tts="voicevox"`, `vvUrl`): the owner's own free
+  VOICEVOX server (Hugging Face Space built from `voice-server/Dockerfile`, CORS open). `speakVV`
+  synthesises Japanese segments on the server (`fetchVV`, speaker from `jaRec`, cached) and
+  speaks English segments with the best iPhone voice, in order; falls back to iPhone voices if
+  the server is asleep/unreachable. `pingVV()` wakes the server on open. `vvBase()` accepts
+  "user/space" or a full URL.
   Has Repeat and Slower buttons. If the mic is blocked, it shows iPhone fix-it steps.
 - **Listening**: Japanese wrapped in [[double brackets]] in AI replies shows as a hidden,
   tap-to-play audio clip.
