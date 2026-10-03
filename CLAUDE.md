@@ -118,6 +118,12 @@ Safari → Add to Home Screen.
   An iPhone line that hasn't started after 1.8 s is cancelled and tried once more (`sayChunk`).
   "🔁 Say it again" (call screen, under the captions; also Repeat and the chat 🔊) runs `sayAgain()`:
   `resetAudio()` fully resets the speech engine and makes a fresh audio player inside the tap.
+  Stopping is final: `stopSpeak()` bumps `spGen`, and `sayDevice`/`sayChunk`/`speakPlainDevice` check it
+  before every sentence, so a cut-off reply can't carry on. The voice stops on End call, switching chat
+  or tab, Finish lesson and when the app is hidden; a reply that arrives after you left isn't read out.
+  Volume: Ryusei waits 300 ms after the iPhone voice (`synthEndAt`; iOS "ducks" other sound right after
+  its own speech), and a mic that doesn't end after Send is aborted (an open mic keeps iPhone in quiet
+  call sound).
   iPhone audio session: left on "auto" (forcing "playback" could silence speechSynthesis);
   "play-and-record" only while the mic is actually listening, then back to "auto" (keeping
   "play-and-record" for a whole call makes voices sound muffled/telephone-like).
