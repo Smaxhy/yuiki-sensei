@@ -23,7 +23,7 @@ Safari → Add to Home Screen.
   (offline tap quiz incl. 2 review questions from older due words) → Talk. Talk = `S.course`
   ({key, kind, title, goal, scen, targets, used, review}); `coursePrompt()` tells Yuki to make
   the student use every target word and to bring back older words; words tick off via
-  `detectUsed()` on what the student types (kana or romaji) and the `used` MEM field; all used
+  `detectUsed()` on what the student types (kana, romaji, or English voice-typing look-alikes like "Ohio" via `soundsLike()`; everyday English words in `EN_COMMON` never count) and the `used` MEM field; all used
   → node done. Course words are flashcards `w:<jp>` ("My words" deck) and share spaced
   repetition in `S.cards` (`bumpWord`, `reviewWords`).
 - **Auto-update**: on open, on returning to the app, and every 15 min, `checkUpdate` fetches
@@ -90,6 +90,8 @@ Safari → Add to Home Screen.
   listens or a call is open ("playback" alone blocks the microphone).
   `applyMem` coerces MEM fields with `asList()` and is wrapped in try/catch so an odd memory
   line can never break a reply.
+  The mic listens in Japanese by default (`micLang="ja-JP"`, forced when a course talk starts);
+  English mode makes iPhone type Japanese as English look-alikes.
   Has Repeat and Slower buttons. If the mic is blocked, it shows iPhone fix-it steps.
 - **Listening**: Japanese wrapped in [[double brackets]] in AI replies shows as a hidden,
   tap-to-play audio clip.
@@ -102,7 +104,7 @@ Safari → Add to Home Screen.
   settings, what Yuki remembers, and backup/restore as JSON (key excluded).
 
 ## Technical notes
-- State object `S` (currently `v:12`) saved to localStorage key `yuki-sensei-v3`. Keep it backward
+- State object `S` (currently `v:13`) saved to localStorage key `yuki-sensei-v3`. Keep it backward
   compatible. Saved data (and restored backups) go through `migrate()`; if the shape
   changes, bump `DEFAULT.v` and add a step there instead of wiping progress.
 - Clicks route through `data-act` attributes to the `ACT` object.
