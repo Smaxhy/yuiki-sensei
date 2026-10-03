@@ -53,7 +53,7 @@ Safari → Add to Home Screen.
   (sent with `output_config.effort:"low"` and server-side fallbacks; Haiku 4.5 rejects effort).
   The system prompt is two blocks: a stable one (persona, learner card, style rules; marked
   `cache_control`) and `memoryPrompt()` (memory, stats, current lesson) which changes per turn.
-- **Reply style** (`S.settings.style`): length, English vs Japanese, reading help, simple
+- **Reply style** (`S.settings.style`): length (tiny/short/normal/detailed, default short), English vs Japanese, reading help, simple
   English. Turned into prompt lines by `styleRules()`.
 - **Credit saver** (`S.settings.history`): 6/12/24 recent messages sent per request.
 - **Memory**: every AI reply ends with a hidden line `<<MEM>>{json}` containing facts,
@@ -102,9 +102,13 @@ Safari → Add to Home Screen.
   English voice doesn't mangle it.
   `applyMem` coerces MEM fields with `asList()` and is wrapped in try/catch so an odd memory
   line can never break a reply.
-  Two mic buttons everywhere (chat input bar and call screen): 🎤 日本語 and 🎤 English, each
-  starting recognition in that language for one utterance (`startMic(…, lang)`, `UI.micLang`),
-  because iPhone recognition handles one language at a time. Default `micLang="ja-JP"`.
+  Mic engine (`MIC`, `startMic`/`micRun`/`stopMic`/`switchMicLang`): continuous recognition that
+  restarts itself when iPhone stops after a pause, until the user taps ➤ Send (or 25 s of
+  silence). Two languages per message: tap the other language while listening to continue in it
+  (iPhone recognises one language at a time). Call screen: 🎤 日本語 / 🎤 English to start, then
+  Cancel / ⇄ other language / ➤ Send; hands-free (`S.settings.handsFree`, default on) starts
+  listening after Yuki finishes speaking; reply-length switch (Very short/Short/Normal) on the
+  call. Chat mic fills the text box (no auto-send). Default `micLang="ja-JP"`.
   Yuki is told English via the Japanese mic arrives as katakana and English-mode Japanese as
   look-alikes ("Ohio"). Captions toggle sits top-right on the call screen.
   Has Repeat and Slower buttons. If the mic is blocked, it shows iPhone fix-it steps.
@@ -119,7 +123,7 @@ Safari → Add to Home Screen.
   settings, what Yuki remembers, and backup/restore as JSON (key excluded).
 
 ## Technical notes
-- State object `S` (currently `v:15`) saved to localStorage key `yuki-sensei-v3`. Keep it backward
+- State object `S` (currently `v:16`) saved to localStorage key `yuki-sensei-v3`. Keep it backward
   compatible. Saved data (and restored backups) go through `migrate()`; if the shape
   changes, bump `DEFAULT.v` and add a step there instead of wiping progress.
 - Clicks route through `data-act` attributes to the `ACT` object.
