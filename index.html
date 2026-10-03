@@ -149,6 +149,10 @@ input,textarea,select{font:inherit;font-size:16px;color:var(--text)}
 #sheet li{margin-bottom:8px}
 #toast{position:fixed;left:50%;bottom:calc(90px + var(--safeB));transform:translateX(-50%);background:#000d;color:#fff;padding:10px 16px;border-radius:12px;font-size:14px;z-index:90;opacity:0;transition:.25s;pointer-events:none;max-width:88%;text-align:center}
 #toast.on{opacity:1}
+.qbig{font-size:22px;font-weight:700;line-height:1.5;margin:18px 0 16px}
+.obnav{display:flex;gap:8px;margin-top:18px}
+.obnav .btn{flex:1}
+.obnav .btn.ghost{flex:0 0 96px}
 @keyframes dot{0%,80%,100%{opacity:.25}40%{opacity:1}}
 @keyframes throb{0%,100%{transform:scale(1)}50%{transform:scale(1.06)}}
 @keyframes breathe{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
@@ -274,17 +278,48 @@ const QUIZZES=[
  ["roleplay","🎭","Roleplay","Café, station, hotel, first date small talk"]
 ];
 
+// Offline level check: [band, question, options, index of correct option]
+const PLACE=[
+ ["kana","What sound is あ?",["a","o","i","e"],0],
+ ["kana","What sound is カ?",["ta","ka","na","ha"],1],
+ ["kana","ありがとう means…",["good morning","sorry","thank you","goodbye"],2],
+ ["n5","わたし＿がくせいです。",["を","に","で","は"],3],
+ ["n5","水 means…",["water","fire","tree","money"],0],
+ ["n5","\"I ate sushi\" is…",["すしを食べます","すしを食べました","すしを食べません","すしを食べたい"],1],
+ ["n5","駅は＿ですか。(Where is the station?)",["だれ","なに","どこ","いつ"],2],
+ ["n5","りんごを三＿ください。",["人","本","枚","つ"],3],
+ ["n4","日本語が＿ようになりました。",["話せる","話す","話した","話して"],0],
+ ["n4","先生に＿。(I was scolded by the teacher)",["しかりました","しかられました","しからせました","しかっています"],1],
+ ["n4","母がケーキを作って＿。(Mum made a cake for me)",["あげました","もらいました","くれました","やりました"],2],
+ ["n3","明日は休みの＿だ。(It should be a day off)",["ため","ばかり","ように","はず"],3],
+ ["n3","試験に合格する＿、毎日勉強しています。",["ために","ばかりに","わりに","くせに"],0],
+ ["n3","彼は知っている＿に、教えてくれない。",["はず","くせ","ため","よう"],1],
+ ["n2","彼の話を聞いて、笑わず＿いられなかった。",["では","とも","には","ても"],2],
+ ["n2","この店は日曜日＿営業しております。(Open on Sundays only)",["にわたって","を通じて","に伴い","に限り"],3]
+];
+const BANDS=["kana","n5","n4","n3","n2"];
+const FOCUS=["Speaking","Listening","Reading","Kanji & writing","Grammar","Vocabulary","JLPT exam","Travel phrases","Anime & casual","Business Japanese"];
+const STYLE_OPTS={
+  length:["Reply length",[["short","Short"],["normal","Normal"],["detailed","Detailed"]]],
+  english:["Explanations in",[["more","Mostly English"],["balanced","Mix"],["immersion","Mostly Japanese"]]],
+  script:["Reading help",[["auto","Auto"],["romaji","Romaji"],["kana","Kana readings"],["none","None"]]]
+};
+const KANJI_LV={none:"none yet",few:"under 50",some:"50–300",many:"300+"};
+
 /* ============ STATE ============ */
 const KEY="yuki-sensei-v3";
 const DEFAULT={
-  v:3,onboarded:false,name:"",level:"n5",goal:"",
+  v:4,onboarded:false,name:"",level:"n5",goal:"",
+  about:{done:false,focus:[],hira:"",kata:"",kanji:"",location:"",native:"English",minutes:15,notes:""},
+  placement:null,
   profile:{facts:[],weak:[],strong:[],learned:[]},
   stats:{msgs:0,quizRight:0,quizWrong:0,cards:0,streak:0,lastDay:""},
   done:[],cards:{},chat:[],currentLesson:null,
-  settings:{apiKey:"",model:"claude-haiku-4-5-20251001",rate:0.9,autoSpeakChat:false,speakEnglish:true,micLang:"ja-JP"}
+  settings:{apiKey:"",model:"claude-haiku-4-5-20251001",rate:0.9,autoSpeakChat:false,speakEnglish:true,micLang:"ja-JP",
+    style:{length:"normal",english:"balanced",script:"auto",simple:false},history:12,voiceEn:"",voiceJa:""}
 };
 let S=JSON.parse(JSON.stringify(DEFAULT));
-const UI={tab:"home",ob:0,fc:null,chart:null,voice:false,vstate:"idle",vyou:"",busy:false,listening:false};
+const UI={tab:"home",ob:0,obEdit:false,place:null,fc:null,chart:null,voice:false,vstate:"idle",vyou:"",busy:false,listening:false};
 
 function merge(base,saved){for(const k in saved){if(saved[k]&&typeof saved[k]==="object"&&!Array.isArray(saved[k])&&base[k]&&typeof base[k]==="object")merge(base[k],saved[k]);else base[k]=saved[k];}return base;}
 let lsOK=true;
@@ -307,6 +342,15 @@ function migrate(st){
   if(!LV[st.level])st.level="n5";
   if(st.currentLesson&&!lessonById(st.currentLesson))st.currentLesson=null;
   if(!["claude-haiku-4-5-20251001","claude-sonnet-5-5"].includes(st.settings.model))st.settings.model=DEFAULT.settings.model;
+  // v3 → v4: learner profile, level check, reply style, credit saver, voice choice (defaults come from merge)
+  st.about.focus=arr(st.about.focus).map(String);
+  ["location","native","notes","hira","kata","kanji"].forEach(k=>st.about[k]=typeof st.about[k]==="string"?st.about[k]:"");
+  st.about.minutes=num(st.about.minutes)||15;
+  if(st.placement&&(!LV[st.placement.level]||typeof st.placement.bands!=="object"))st.placement=null;
+  const sty=obj(st.settings.style);
+  Object.entries(STYLE_OPTS).forEach(([k,[,opts]])=>{if(!opts.some(([v])=>v===sty[k]))sty[k]=DEFAULT.settings.style[k];});
+  sty.simple=!!sty.simple;st.settings.style=sty;
+  if(![6,12,24].includes(+st.settings.history))st.settings.history=12;else st.settings.history=+st.settings.history;
   st.v=DEFAULT.v;
   return st;
 }
@@ -338,11 +382,30 @@ function md(t){
 const synth=window.speechSynthesis||null;
 let voices=[];
 function loadVoices(){if(synth)voices=synth.getVoices()||[];}
-if(synth){loadVoices();synth.onvoiceschanged=loadVoices;}
-function pickVoice(lang){
+if(synth){loadVoices();synth.onvoiceschanged=()=>{const had=voices.length;loadVoices();if(!had&&voices.length&&UI.tab==="me"&&S.onboarded&&!UI.obEdit&&!UI.place)rerender();};}
+// Novelty voices that ship with iOS/macOS and sound robotic or silly
+const NOVELTY=/albert|bad news|bahh|bells|boing|bubbles|cellos|good news|jester|organ|superstar|trinoids|whisper|wobble|zarvox|deranged|hysterical|fred|junior|ralph|kathy|grandma|grandpa|eddy|flo\b|reed|rocko|sandy|shelley/i;
+const GOOD={en:/ava|zoe|samantha|allison|evan|nathan|noelle|susan|joelle|tom\b|serena|daniel|karen|moira|tessa|google us english/i,ja:/kyoko|o-ren|otoya|hattori|sakura|google 日本語/i};
+const vlang=v=>v.lang.replace("_","-").toLowerCase();
+function voiceScore(v,L){
+  let s=0;const n=v.name;
+  if(vlang(v)===L)s+=20;
+  if(/premium/i.test(n))s+=60;else if(/enhanced/i.test(n))s+=45;
+  if(/siri/i.test(n))s+=35;
+  if(GOOD[L.slice(0,2)]&&GOOD[L.slice(0,2)].test(n))s+=15;
+  if(v.localService)s+=3;
+  if(NOVELTY.test(n))s-=100;
+  return s;
+}
+function voiceList(lang){
+  if(synth&&!voices.length)loadVoices();
   const L=lang.toLowerCase();
-  const list=voices.filter(v=>v.lang.replace("_","-").toLowerCase().startsWith(L.slice(0,2)));
-  return list.find(v=>/kyoko|o-ren|siri|premium|enhanced/i.test(v.name)&&v.lang.toLowerCase().replace("_","-")===L)||list.find(v=>v.lang.toLowerCase().replace("_","-")===L)||list[0]||null;
+  return voices.filter(v=>vlang(v).startsWith(L.slice(0,2))).sort((a,b)=>voiceScore(b,L)-voiceScore(a,L));
+}
+function pickVoice(lang){
+  const list=voiceList(lang);
+  const chosen=lang.startsWith("ja")?S.settings.voiceJa:S.settings.voiceEn;
+  return (chosen&&list.find(v=>v.name===chosen))||list[0]||null;
 }
 const JP=/[\u3040-\u30ff\u3400-\u9fff\uff66-\uff9f\u3005]/;
 function cleanSpeech(t){
@@ -375,8 +438,9 @@ function speak(text,opts){
     const u=new SpeechSynthesisUtterance(s.t.trim());
     u.lang=s.k==="ja"?"ja-JP":"en-US";
     const v=pickVoice(u.lang);if(v)u.voice=v;
-    u.rate=s.k==="ja"?rate:Math.min(1,rate+0.1);
-    u.pitch=s.k==="ja"?1.1:1.05;
+    // English sounds most natural near normal speed and pitch; Japanese follows the speed slider
+    u.rate=s.k==="ja"?rate:Math.max(0.85,Math.min(1.05,rate+0.1));
+    u.pitch=s.k==="ja"?1.05:1;
     synth.speak(u);
   });
 }
@@ -418,40 +482,67 @@ function micHelp(kind){
 }
 
 /* ============ AI ============ */
+function learnerCard(){
+  const a=S.about,P=S.placement,parts=[];
+  if(a.location)parts.push("lives in "+a.location);
+  if(a.native)parts.push("native language: "+a.native);
+  if(a.hira)parts.push("reads hiragana: "+a.hira);
+  if(a.kata)parts.push("reads katakana: "+a.kata);
+  if(a.kanji)parts.push("kanji known: "+(KANJI_LV[a.kanji]||a.kanji));
+  if(a.focus.length)parts.push("wants to focus on: "+a.focus.join(", "));
+  if(a.minutes)parts.push("studies about "+a.minutes+" min a day");
+  if(P)parts.push(`level check (${P.date}): ${LV[P.level].label} — `+BANDS.filter(b=>P.bands[b]).map(b=>b.toUpperCase()+" "+P.bands[b][0]+"/"+P.bands[b][1]).join(", "));
+  if(a.notes)parts.push("in their own words: "+a.notes.slice(0,300));
+  return parts.join("; ")||"not filled in yet";
+}
+function styleRules(){
+  const st=S.settings.style,r=[];
+  r.push({short:"Keep replies short: 2-4 short sentences, under 60 words, one idea at a time.",normal:"Keep replies short and chatty: usually under 120 words.",detailed:"You may give fuller explanations (up to about 250 words) with extra examples when teaching."}[st.length]);
+  r.push({more:"Explain in English; use Japanese for examples and practice.",balanced:"Mix English explanations with Japanese at their level.",immersion:"Speak mostly Japanese at their level; use English only for tricky explanations or when they're stuck."}[st.english]);
+  r.push({auto:"Reading help: match their level. N5: mostly kana, with readings in brackets after kanji like 学校(がっこう). Romaji only for total beginners, and only at first.",romaji:"After every Japanese sentence, add romaji in brackets.",kana:"After every word with kanji, add its reading in brackets, like 学校(がっこう). No romaji.",none:"No romaji and no reading brackets unless they ask."}[st.script]);
+  if(st.simple)r.push("Use simple, plain English: short sentences, everyday words, no grammar jargon. If you must use a grammar term, explain it in a few words.");
+  return r.map(x=>"- "+x).join("\n");
+}
+// Two parts: a stable part (who Yuki is, who the student is, how to teach) that the API can cache,
+// and a small part that changes every turn (memory, stats, current lesson).
 function systemPrompt(mode){
-  const p=S.profile, L=LV[S.level], les=S.currentLesson&&lessonById(S.currentLesson);
-  const due=dueIds(Object.keys(CARDS)).length;
+  const L=LV[S.level];
   return `You are Yuki (ゆき), a 26-year-old Japanese tutor from Kyoto who studied linguistics at Waseda. You are this student's personal tutor inside a learning app. You're warm, upbeat, a little playful, and honest. You correct every mistake kindly but clearly. You have your own personality and opinions; you're not a textbook.
 
 STUDENT
 - Name: ${S.name||"unknown"}
 - Level: JLPT ${L.label} (${L.name}). Goal: ${S.goal||"not stated"}
-- Lessons finished: ${S.done.length?S.done.map(id=>(lessonById(id)||{}).title).filter(Boolean).slice(-15).join(", "):"none yet"}
-- Things you know about them: ${p.facts.join("; ")||"nothing yet"}
-- Weak spots: ${p.weak.slice(-15).join("; ")||"none recorded"}
-- Strong spots: ${p.strong.slice(-10).join("; ")||"none recorded"}
-- Recently learned: ${p.learned.slice(-25).join("; ")||"nothing yet"}
-- Quiz record: ${S.stats.quizRight} right, ${S.stats.quizWrong} wrong. Flashcards due: ${due}.
-${les?`\nCURRENT LESSON: "${les.title}" — ${les.desc} (${LV[les.level].label}, unit "${les.unit}"). Teach it in small steps: short explanation → 2-3 examples → a quick practice question, then wait for their answer. Never dump the whole lesson at once. When they've shown they understand the core of it, congratulate them and tell them they can tap "✓ Done".`:""}
+- Learner card: ${learnerCard()}
 
 HOW TO TEACH
-- Match their level. N5: mostly kana, simple kanji with reading in brackets like 学校(がっこう). Higher levels: natural Japanese.
-- Use romaji only for total beginners and only at first; push them toward kana.
+- Match their level and their learner card. Use their focus areas, interests and life for examples.
+${styleRules()}
 - Real, useful example sentences. Explain why, not just what.
 - If they make a mistake, show: what they wrote → the correct version → a one-line reason.
 - If they seem frustrated or tired, ease off, encourage, or switch to something fun.
 - Follow their requests directly: if they ask for a quiz, give a quiz; a roleplay, play the role; flashcard-style drilling, do it.
 - QUIZZES: one question at a time, wait for the answer, say right or wrong with a short reason, keep a running score (e.g. 3/4), finish after 10 or when they say stop, then summarize what to review.
 - LISTENING: when you want them to listen without reading, wrap the Japanese in double square brackets like [[きょうは いい てんき ですね]]. The app hides it behind a play button.
-- Keep replies short and chatty: usually under 120 words. Use line breaks, not big headers or tables.
-${mode==="voice"?`- VOICE CALL: they are talking to you out loud and hearing your reply through text-to-speech. Reply in 1-3 short spoken sentences. No lists, no markdown, no brackets, no romaji. Speak like a friend on a call. Keep the conversation going.`:""}
-
+- Use line breaks, not big headers or tables.
+${mode==="voice"?`- VOICE CALL: they are talking to you out loud and hearing your reply through text-to-speech. Reply in 1-3 short spoken sentences. No lists, no markdown, no brackets, no romaji. Speak like a friend on a call. Keep the conversation going.\n`:""}
 MEMORY (very important)
 At the very end of EVERY reply, on its own line, write <<MEM>> followed by compact JSON with anything NEW from this turn. Fields (all optional): "facts" (things about the student's life, interests or preferences), "weak" (specific items they got wrong or struggle with), "strong" (things they clearly mastered), "learned" (new words or patterns taught, as "word = meaning"), "right" (number of quiz answers correct this turn), "wrong" (number incorrect this turn), "lessonDone" (true only when the current lesson's core is mastered). If nothing new: <<MEM>>{}. Never mention this line to the student.`;
 }
+function memoryPrompt(){
+  const p=S.profile,les=S.currentLesson&&lessonById(S.currentLesson);
+  const due=dueIds(Object.keys(CARDS)).length;
+  return `WHAT YOU REMEMBER
+- Lessons finished: ${S.done.length?S.done.map(id=>(lessonById(id)||{}).title).filter(Boolean).slice(-15).join(", "):"none yet"}
+- Things you know about them: ${p.facts.join("; ")||"nothing yet"}
+- Weak spots: ${p.weak.slice(-15).join("; ")||"none recorded"}
+- Strong spots: ${p.strong.slice(-10).join("; ")||"none recorded"}
+- Recently learned: ${p.learned.slice(-25).join("; ")||"nothing yet"}
+- Quiz record: ${S.stats.quizRight} right, ${S.stats.quizWrong} wrong. Flashcards due: ${due}.
+${les?`\nCURRENT LESSON: "${les.title}" — ${les.desc} (${LV[les.level].label}, unit "${les.unit}"). Teach it in small steps: short explanation → 2-3 examples → a quick practice question, then wait for their answer. Never dump the whole lesson at once. When they've shown they understand the core of it, congratulate them and tell them they can tap "✓ Done".`:""}`;
+}
 function buildMessages(){
   const msgs=[];
-  S.chat.slice(-30).forEach(m=>{
+  S.chat.slice(-(S.settings.history||12)).forEach(m=>{
     if(m.err)return;
     const role=m.role==="user"?"user":"assistant";
     const content=(m.role==="user"&&m.api)?m.api:m.text;
@@ -467,13 +558,31 @@ async function apiRequest(body){
   const key=S.settings.apiKey.trim();
   const headers={"Content-Type":"application/json"};
   let model="claude-sonnet-4-6";
+  body={...body};
   if(key){headers["x-api-key"]=key;headers["anthropic-version"]="2023-06-01";headers["anthropic-dangerous-direct-browser-access"]="true";model=S.settings.model;}
-  const res=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers,body:JSON.stringify({model,...body})});
-  let data=null;try{data=await res.json();}catch(e){}
+  const smart=key&&model==="claude-sonnet-5-5";
+  if(smart){
+    // Sonnet 5.5 thinks before answering; low effort keeps a chat tutor fast and cheap.
+    // Room is added to max_tokens because thinking counts toward it (you only pay for what's used).
+    body.output_config={effort:"low"};body.max_tokens+=1500;
+    // If Sonnet declines a message, the API retries it on a fallback model instead of failing.
+    headers["anthropic-beta"]="server-side-fallback-2026-07-01";body.fallbacks="default";
+  }
+  const go=async(h,b)=>{const res=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:h,body:JSON.stringify({model,...b})});let data=null;try{data=await res.json();}catch(e){}return{res,data};};
+  let {res,data}=await go(headers,body);
+  if(smart&&res.status===400&&data&&data.error&&/fallback|beta/i.test(data.error.message||"")){
+    const h={...headers};delete h["anthropic-beta"];const b={...body};delete b.fallbacks;({res,data}=await go(h,b));
+  }
   if(!res.ok||!data||data.error){const msg=(data&&data.error&&data.error.message)||("HTTP "+res.status);const err=new Error(msg);err.status=res.status;throw err;}
-  return (data.content||[]).map(b=>b.text||"").join("").trim();
+  if(data.stop_reason==="refusal"){const err=new Error("refusal");err.refusal=true;throw err;}
+  return (data.content||[]).filter(b=>b.type==="text").map(b=>b.text||"").join("").trim();
 }
-function callAI(mode){return apiRequest({max_tokens:1000,system:systemPrompt(mode),messages:buildMessages()});}
+function callAI(mode){
+  const max={short:700,normal:1000,detailed:1600}[S.settings.style.length]||1000;
+  return apiRequest({max_tokens:max,
+    system:[{type:"text",text:systemPrompt(mode),cache_control:{type:"ephemeral"}},{type:"text",text:memoryPrompt()}],
+    messages:buildMessages()});
+}
 function parseMem(raw){
   const i=raw.lastIndexOf("<<MEM>>");
   if(i<0)return{text:raw,mem:{}};
@@ -513,7 +622,7 @@ async function send(display,apiText,mode){
     showTyping(false);
     const noKey=!S.settings.apiKey.trim();
     const msg=noKey?"I need my own AI connection to think when I'm running outside Claude. Open <b>Me → AI setup</b> and paste your key — it takes two minutes.":
-      (err.status===401?"Your API key was rejected. Check it in <b>Me → AI setup</b>.":err.status===429?"Too many requests at once — wait a few seconds and try again.":err.status===400&&/credit|balance/i.test(err.message)?"Your API account is out of credit. Top it up in the Anthropic Console.":"I couldn't connect ("+esc(err.message)+"). Check your internet and try again.");
+      (err.refusal?"Hmm, I can't answer that one. Let's try something else!":err.status===401?"Your API key was rejected. Check it in <b>Me → AI setup</b>.":err.status===429?"Too many requests at once — wait a few seconds and try again.":err.status===400&&/credit|balance/i.test(err.message)?"Your API account is out of credit. Top it up in the Anthropic Console.":"I couldn't connect ("+esc(err.message)+"). Check your internet and try again.");
     S.chat.push({role:"assistant",text:msg,err:true});save();appendLast();
     if(UI.voice){UI.vstate="idle";renderVoice();toast("Connection problem — see the chat");}
   }
@@ -524,14 +633,24 @@ async function send(display,apiText,mode){
 /* ============ VIEWS ============ */
 function render(){
   document.querySelectorAll("#tabs button").forEach(b=>b.classList.toggle("on",b.dataset.tab===UI.tab));
-  $("#tabs").classList.toggle("hidden",!S.onboarded);
+  $("#tabs").classList.toggle("hidden",!S.onboarded||UI.obEdit||!!UI.place);
   const main=$("#main");
-  if(!S.onboarded){main.innerHTML=vOnboard();return;}
+  if(UI.place){main.innerHTML=vPlace();main.scrollTop=0;return;}
+  if(!S.onboarded||UI.obEdit){main.innerHTML=vOnboard();main.scrollTop=0;return;}
   main.innerHTML=({home:vHome,chat:vChat,learn:vLearn,practice:vPractice,me:vMe}[UI.tab]||vHome)();
   main.scrollTop=0;
   if(UI.tab==="chat")afterChat();
 }
 
+// Re-render without jumping back to the top (for taps on chips and toggles)
+function rerender(){const m=$("#main"),y=m.scrollTop;render();m.scrollTop=y;}
+const chipRow=(act,k,cur,opts)=>`<div class="chips">${opts.map(([v,t])=>`<button class="chip${cur===v?" on":""}" data-act="${act}" data-k="${k}" data-v="${v}">${t}</button>`).join("")}</div>`;
+function styleControls(){
+  const st=S.settings.style;
+  return Object.entries(STYLE_OPTS).map(([k,[label,opts]])=>`<p class="sub" style="margin:12px 0 6px">${label}</p>${chipRow("styleSet",k,st[k],opts)}`).join("")+
+   `<div class="toggle" style="margin-top:8px"><span>Simple English, no grammar jargon</span><button class="sw${st.simple?" on":""}" data-act="styleSimple" aria-label="Simple English"></button></div>`;
+}
+function obNav(back,next,label){return`<div class="obnav"><button class="btn ghost" data-act="ob" data-step="${back}">← Back</button><button class="btn" data-act="${next==="finish"?"obFinish":"ob"}" data-step="${next}">${label||"Next"}</button></div>`;}
 function vOnboard(){
   const step=UI.ob;
   if(step===0)return`<div class="pad" style="padding-top:60px;text-align:center">
@@ -542,11 +661,62 @@ function vOnboard(){
     <button class="btn" data-act="ob" data-step="1" style="margin-top:8px">Next</button></div>`;
   if(step===1)return`<div class="pad" style="padding-top:40px">
     <div class="h1">How much Japanese do you know?</div><p class="sub" style="margin:8px 0 18px">No wrong answer. You can change it anytime.</p>
-    ${[["n5","🌱","Total beginner","I can't read anything yet"],["n5b","あ","I know some kana","I can read a bit of hiragana"],["n4","🌿","Basic","I know N5 stuff: です, ます, simple kanji"],["n3","🌳","Intermediate","I can hold simple conversations"],["n2","🏯","Advanced","I want polish and real-world Japanese"]].map(([v,i,t,d])=>`<button class="row" data-act="obLevel" data-v="${v}"><span class="ri">${i}</span><span class="rt"><b>${t}</b><span>${d}</span></span></button>`).join("")}</div>`;
+    ${[["n5","🌱","Total beginner","I can't read anything yet"],["n5b","あ","I know some kana","I can read a bit of hiragana"],["n4","🌿","Basic","I know N5 stuff: です, ます, simple kanji"],["n3","🌳","Intermediate","I can hold simple conversations"],["n2","🏯","Advanced","I want polish and real-world Japanese"]].map(([v,i,t,d])=>`<button class="row" data-act="obLevel" data-v="${v}"><span class="ri">${i}</span><span class="rt"><b>${t}</b><span>${d}</span></span></button>`).join("")}
+    <button class="row" data-act="placeStart" data-ob="1" style="border-color:var(--sakura)"><span class="ri">🤔</span><span class="rt"><b>Not sure? Take a 3-minute level check</b><span>16 quick questions, works offline, uses no credits</span></span></button></div>`;
   if(step===2)return`<div class="pad" style="padding-top:40px">
     <div class="h1">Why are you learning?</div><p class="sub" style="margin:8px 0 18px">I'll use this to pick examples you'll actually use.</p>
     ${[["✈️","Travel in Japan"],["🎌","Anime, manga & games"],["💼","Work or business"],["🏠","Moving to / living in Japan"],["❤️","Friends, partner or family"],["🧠","Just for fun"]].map(([i,t])=>`<button class="row" data-act="obGoal" data-v="${esc(t)}"><span class="ri">${i}</span><span class="rt"><b>${t}</b></span></button>`).join("")}</div>`;
+  const a=S.about;
+  if(step===3)return`<div class="pad" style="padding-top:40px">
+    <div class="h1">What do you want to get better at?</div><p class="sub" style="margin:8px 0 18px">Pick as many as you like. I'll lean my lessons and examples toward these.</p>
+    <div class="tags">${FOCUS.map(f=>`<button class="chip${a.focus.includes(f)?" on":""}" data-act="obFocus" data-v="${esc(f)}">${esc(f)}</button>`).join("")}</div>
+    ${obNav(UI.obEdit?"exit":2,4)}</div>`;
+  if(step===4)return`<div class="pad" style="padding-top:40px">
+    <div class="h1">Where are you right now?</div><p class="sub" style="margin:8px 0 6px">So I start at the right spot and don't repeat what you know.</p>
+    <p class="sub" style="margin:14px 0 6px">Hiragana (あいう)</p>${chipRow("obSet","hira",a.hira,[["none","Not yet"],["some","Some"],["all","All of it"]])}
+    <p class="sub" style="margin:14px 0 6px">Katakana (アイウ)</p>${chipRow("obSet","kata",a.kata,[["none","Not yet"],["some","Some"],["all","All of it"]])}
+    <p class="sub" style="margin:14px 0 6px">Kanji</p>${chipRow("obSet","kanji",a.kanji,Object.entries(KANJI_LV).map(([k,v])=>[k,v[0].toUpperCase()+v.slice(1)]))}
+    <p class="sub" style="margin:16px 0 0">Where do you live? (optional)</p><input class="field" data-set="about.location" value="${esc(a.location)}" placeholder="e.g. Chicago, USA — or Osaka, Japan">
+    <p class="sub">Your first language</p><input class="field" data-set="about.native" value="${esc(a.native)}" placeholder="English">
+    <p class="sub" style="margin:6px 0">How long can you study most days?</p>${chipRow("obSet","minutes",String(a.minutes),[["5","5 min"],["15","15 min"],["30","30 min"],["60","1 hour+"]])}
+    ${S.placement?`<p class="sub" style="margin-top:14px">✓ Level check done: <b>${LV[S.placement.level].label}</b></p>`:`<button class="btn sm ghost" style="margin-top:14px" data-act="placeStart" data-ob="4">Take the 3-minute level check</button>`}
+    ${obNav(3,5)}</div>`;
+  if(step===5)return`<div class="pad" style="padding-top:40px">
+    <div class="h1">How should I talk to you?</div><p class="sub" style="margin:8px 0 6px">You can change all of this later in Me.</p>
+    ${styleControls()}
+    <p class="sub" style="margin:16px 0 0">Anything else I should know? (optional)</p>
+    <textarea class="field" rows="3" data-set="about.notes" placeholder="e.g. Trip to Osaka in May. I love One Piece. I get nervous speaking.">${esc(a.notes)}</textarea>
+    ${obNav(4,"finish",UI.obEdit?"Save":"Start learning 🌸")}</div>`;
   return"";
+}
+
+/* ============ LEVEL CHECK (offline) ============ */
+function startPlace(fromOb){UI.place={i:0,ans:[],ob:fromOb||0};render();}
+function placeResult(ans){
+  const bands={};
+  PLACE.forEach(([b],i)=>{bands[b]=bands[b]||[0,0];bands[b][1]++;if(ans[i])bands[b][0]++;});
+  let level="n5";
+  for(let i=0;i<BANDS.length;i++){const [r,t]=bands[BANDS[i]];if(r/t<0.67)break;level=i===0?"n5":i===BANDS.length-1?"n1":BANDS[i+1];}
+  return{level,bands,date:dayStr()};
+}
+function vPlace(){
+  const P=UI.place;
+  if(P.i>=PLACE.length){
+    const r=P.result||(P.result=placeResult(P.ans));
+    return`<div class="pad" style="padding-top:40px;text-align:center"><div style="font-size:60px">🎯</div>
+    <div class="h1" style="margin:8px 0">You're around ${LV[r.level].label}</div>
+    <p class="sub">${LV[r.level].name} — that's where your lessons will start.</p>
+    <div class="card" style="margin-top:18px;text-align:left">${BANDS.map(b=>{const [x,t]=r.bands[b];return`<div class="toggle"><span>${b==="kana"?"Kana":b.toUpperCase()}</span><b style="color:${x/t>=0.67?"var(--matcha)":"var(--red)"}">${x}/${t}</b></div>`;}).join("")}</div>
+    <button class="btn" style="margin-top:8px" data-act="placeUse">Use ${LV[r.level].label}</button>
+    <button class="btn ghost" style="margin-top:8px" data-act="placeKeep">Keep my current level</button></div>`;
+  }
+  const [b,q,opts]=PLACE[P.i];
+  return`<div class="pad" style="padding-top:24px"><div style="display:flex;justify-content:space-between;align-items:center"><button class="mini" data-act="placeStop">✕ Stop</button><span class="sub">${P.i+1} / ${PLACE.length}</span></div>
+  <div class="bar"><i style="width:${Math.round(P.i/PLACE.length*100)}%"></i></div>
+  <div class="qbig">${esc(q)}</div>
+  ${opts.map((o,k)=>`<button class="row" data-act="placeAns" data-k="${k}"><span class="rt"><b style="font-size:18px">${esc(o)}</b></span></button>`).join("")}
+  <button class="btn ghost sm" style="margin-top:6px" data-act="placeAns" data-k="-1">I'm not sure</button>
+  <p class="sub" style="margin-top:12px;text-align:center">Don't guess — "not sure" gives a truer result.</p></div>`;
 }
 
 function vHome(){
@@ -557,6 +727,7 @@ function vHome(){
   ${S.currentLesson&&lessonById(S.currentLesson)&&!S.done.includes(S.currentLesson)?`<button class="card hero" data-act="tab" data-tab="chat"><div class="tag">IN PROGRESS</div><div class="h2">${esc(lessonById(S.currentLesson).title)}</div><div class="go">Continue with Yuki →</div></button>`:
    next?`<button class="card hero" data-act="lesson" data-id="${next.id}"><div class="tag">YOUR NEXT LESSON · ${esc(next.unit)}</div><div class="h2">${esc(next.title)}</div><div class="sub" style="margin-top:4px">${esc(next.desc)}</div><div class="go">Start with Yuki →</div></button>`:
    `<div class="card"><b>You've finished every ${LV[S.level].label} lesson! 🎉</b><p class="sub" style="margin-top:6px">Move up a level in Me, or ask Yuki for a review session.</p></div>`}
+  ${!S.about.done?`<button class="card hero" data-act="aboutEdit" style="background:linear-gradient(150deg,#243a2e,#22243a);border-color:#3f5a46"><div class="tag" style="color:var(--matcha)">2 MINUTES · NO CREDITS</div><div class="h2">Help Yuki get to know you</div><div class="sub" style="margin-top:4px">What you want to learn, where you're at, and how she should talk to you.</div><div class="go" style="color:var(--matcha)">Answer a few questions →</div></button>`:""}
   <div class="grid2">
     <button class="tile" data-act="voice"><span class="ico">🎙️</span>Talk out loud<small>Voice conversation</small></button>
     <button class="tile" data-act="tab" data-tab="chat"><span class="ico">💬</span>Chat<small>Ask Yuki anything</small></button>
@@ -620,6 +791,7 @@ function vLearn(){
   <div class="chips" style="margin:12px 0 6px">${Object.entries(LV).map(([k,v])=>`<button class="chip${S.level===k?" on":""}" data-act="setLevel" data-v="${k}">${v.label} ${v.name}</button>`).join("")}</div>
   <div class="sub">${done} of ${total} done</div><div class="bar"><i style="width:${total?Math.round(done/total*100):0}%"></i></div>
   <p class="sub" style="margin:10px 0 4px">Tap any lesson and Yuki teaches it step by step. Go in any order.</p>
+  <button class="btn sm ghost" style="margin:8px 0 4px" data-act="placeStart">🎯 Not sure of your level? Take the 3-minute check</button>
   ${units.map(([u,ls])=>`<div class="sec">${esc(u)}</div>${ls.map(([id,t,d])=>{const ok=S.done.includes(id);return`<button class="row${ok?" done":""}" data-act="lesson" data-id="${id}"><span class="ri">${ok?"✓":"▶"}</span><span class="rt"><b>${esc(t)}</b><span>${esc(d)}</span></span></button>`;}).join("")}`).join("")}
   </div>`;
 }
@@ -700,6 +872,16 @@ function vMe(){
    <label class="sub">Level</label><div class="chips" style="margin:6px 0 10px">${Object.entries(LV).map(([k,v])=>`<button class="chip${S.level===k?" on":""}" data-act="setLevel" data-v="${k}">${v.label}</button>`).join("")}</div>
    <label class="sub">Goal</label><input class="field" data-set="goal" value="${esc(S.goal)}" placeholder="e.g. travel to Tokyo next spring">
   </div>
+  <div class="sec">📋 Your learner card</div><div class="card">
+   <p class="sub" style="margin-bottom:10px">${esc(learnerCard())}</p>
+   <div class="grid2"><button class="btn sm ghost" data-act="aboutEdit">Edit my answers</button><button class="btn sm ghost" data-act="placeStart">🎯 Level check</button></div>
+  </div>
+  <div class="sec">💬 How Yuki talks</div><div class="card" style="padding-top:6px">${styleControls()}</div>
+  <div class="sec">💰 Credit saver</div><div class="card">
+   <p class="sub" style="margin-bottom:8px">How many recent messages Yuki re-reads each time. Fewer = cheaper. Your learner card and what she remembers are always sent, so she never forgets who you are.</p>
+   ${chipRow("histSet","history",String(st.history),[["6","Light (6)"],["12","Normal (12)"],["24","Long (24)"]])}
+   <p class="sub" style="margin-top:10px">Cheapest setup: Fast & cheap brain + Short replies + Light.</p>
+  </div>
   <div class="sec">🧠 AI setup ${keySet?"· <span style='color:var(--matcha)'>connected</span>":"· <span style='color:var(--gold)'>needed outside Claude</span>"}</div>
   <div class="card">
    <p class="sub" style="margin-bottom:8px">Yuki's brain is Claude, through your own Anthropic API key. It's pay-as-you-go and the key is stored only on this phone.</p>
@@ -717,7 +899,9 @@ function vMe(){
    ${sw("speakEnglish",st.speakEnglish,"Read English parts too")}
    <div class="toggle"><span>Speaking speed</span><input type="range" min="0.5" max="1.2" step="0.05" value="${st.rate}" data-set="rate" style="width:45%"></div>
    <div class="toggle"><span>Mic listens for</span><div class="chips"><button class="chip${st.micLang==="ja-JP"?" on":""}" data-act="micLang" data-v="ja-JP">日本語</button><button class="chip${st.micLang==="en-US"?" on":""}" data-act="micLang" data-v="en-US">English</button></div></div>
-   <button class="btn sm ghost" style="margin-top:8px" data-act="testVoice">Test voice</button>
+   ${voicePicker("en","English voice",st.voiceEn)}
+   ${voicePicker("ja","Japanese voice",st.voiceJa)}
+   <div class="grid2" style="margin-top:8px"><button class="btn sm ghost" data-act="testVoice">Test voice</button><button class="btn sm ghost" data-act="voiceHelp">Get better voices</button></div>
   </div>
   <div class="sec">What Yuki remembers about you</div><div class="card">
    ${S.profile.facts.length?`<div class="tags">${S.profile.facts.map(f=>`<span class="tg">${esc(f)}</span>`).join("")}</div>`:`<p class="sub">Nothing yet — chat with her and she'll pick things up.</p>`}
@@ -730,6 +914,16 @@ function vMe(){
    <button class="btn sm ghost" style="margin-top:8px" data-act="clearChat">Clear chat (keeps progress)</button>
    <button class="btn sm ghost" style="margin-top:8px;color:var(--red)" data-act="resetAll">Reset everything</button>
   </div></div>`;
+}
+
+function voicePicker(lang,label,cur){
+  const list=voiceList(lang);
+  if(!list.length)return"";
+  const best=list[0];
+  return`<label class="sub" style="display:block;margin-top:10px">${label}</label><select class="field" data-set="voice.${lang}">
+   <option value=""${cur?"":" selected"}>Automatic (best: ${esc(best.name)})</option>
+   ${list.filter(v=>!NOVELTY.test(v.name)).slice(0,25).map(v=>`<option value="${esc(v.name)}"${cur===v.name?" selected":""}>${esc(v.name)} · ${esc(v.lang)}${/premium|enhanced|siri/i.test(v.name)?" ★":""}</option>`).join("")}
+  </select>`;
 }
 
 /* ============ VOICE CALL ============ */
@@ -788,9 +982,26 @@ function startQuiz(q){
 }
 const ACT={
   tab:el=>{UI.tab=el.dataset.tab;if(UI.tab!=="practice"){UI.fc=null;UI.chart=null;}render();},
-  ob:el=>{const n=$("#obName");S.name=n?n.value.trim():S.name;UI.ob=+el.dataset.step;render();},
-  obLevel:el=>{const v=el.dataset.v;S.level=v==="n5b"?"n5":v;S._kana=v==="n5b";UI.ob=2;render();},
-  obGoal:el=>{S.goal=el.dataset.v;S.onboarded=true;
+  ob:el=>{if(el.dataset.step==="exit"){UI.obEdit=false;render();return;}const n=$("#obName");S.name=n?n.value.trim():S.name;UI.ob=+el.dataset.step;render();},
+  obLevel:el=>{const v=el.dataset.v;S.level=v==="n5b"?"n5":v;S._kana=v==="n5b";if(S._kana&&!S.about.hira)S.about.hira="some";UI.ob=2;render();},
+  obGoal:el=>{S.goal=el.dataset.v;UI.ob=3;save();render();},
+  obFocus:el=>{const f=S.about.focus,v=el.dataset.v,i=f.indexOf(v);if(i>=0)f.splice(i,1);else f.push(v);save();rerender();},
+  obSet:el=>{const k=el.dataset.k;S.about[k]=k==="minutes"?+el.dataset.v:el.dataset.v;save();rerender();},
+  styleSet:el=>{S.settings.style[el.dataset.k]=el.dataset.v;save();rerender();},
+  styleSimple:el=>{S.settings.style.simple=!S.settings.style.simple;save();el.classList.toggle("on",S.settings.style.simple);},
+  histSet:el=>{S.settings.history=+el.dataset.v;save();rerender();},
+  aboutEdit:()=>{UI.obEdit=true;UI.ob=3;render();},
+  placeStart:el=>startPlace(el&&el.dataset.ob?+el.dataset.ob:0),
+  placeAns:el=>{const P=UI.place;const k=+el.dataset.k;P.ans.push(k===PLACE[P.i][3]);P.i++;render();},
+  placeStop:()=>{const ob=UI.place.ob;UI.place=null;if(ob)UI.ob=ob;render();},
+  placeUse:()=>{const P=UI.place,r=P.result;S.placement=r;S.level=r.level;
+    if(r.bands.kana[0]===r.bands.kana[1]&&!S.about.hira)S.about.hira="all";
+    const ob=P.ob;UI.place=null;save();toast("Level set to "+LV[r.level].label);
+    if(ob)UI.ob=ob===1?2:ob;render();},
+  placeKeep:()=>{const P=UI.place;S.placement=P.result;const ob=P.ob;UI.place=null;save();if(ob)UI.ob=ob===1?2:ob;render();},
+  obFinish:()=>{S.about.done=true;
+    if(UI.obEdit){UI.obEdit=false;save();toast("Saved — Yuki will use this from now on");UI.tab="me";render();return;}
+    S.onboarded=true;
     S.chat=[{role:"assistant",text:`はじめまして${S.name?"、"+S.name+"さん":""}！ I'm Yuki 🌸\n\nHere's how we'll work together:\n• **Learn** has lessons — tap one and I'll teach it step by step\n• **Practice** has flashcards and kana charts that work even offline\n• Tap 📞 up top to talk to me out loud\n• Or just type anything: "quiz me", "what does すみません mean?", "let's roleplay ordering ramen"\n\nI'll remember what you're good at and what trips you up. Ready? Try saying こんにちは!`}];
     if(S._kana){S.done.push("intro","sounds");}delete S._kana;
     touchDay();save();UI.tab="home";render();},
@@ -798,19 +1009,27 @@ const ACT={
   lessonDone:()=>{if(S.currentLesson&&!S.done.includes(S.currentLesson))S.done.push(S.currentLesson);const n=nextLesson();S.currentLesson=null;save();toast("✅ Lesson complete!");render();
     if(n)setTimeout(()=>sheet(`<div class="h2">Nice work! 🎉</div><p class="sub" style="margin:8px 0 16px">Next up: <b>${esc(n.title)}</b></p><button class="btn" data-act="lesson" data-id="${n.id}">Start it now</button><button class="btn ghost" style="margin-top:8px" data-act="closeSheet">Later</button>`),300);},
   lessonExit:()=>{S.currentLesson=null;save();render();},
-  setLevel:el=>{S.level=el.dataset.v;save();render();},
+  setLevel:el=>{S.level=el.dataset.v;save();rerender();},
   send:()=>doSend(),
   chip:el=>{const t=el.dataset.t;if(t.startsWith("Say it slower")){const last=[...S.chat].reverse().find(m=>m.role==="assistant"&&!m.err);if(last)speak(last.text,{rate:0.6});return;}send(t);},
   mic:()=>{if(UI.listening){stopMic();return;}const inp=$("#inp");startMic(t=>{if(inp){inp.value=t;inp.dispatchEvent(new Event("input"));}},final=>{if(final&&inp&&inp.value.trim())doSend();});},
   sayMsg:el=>{const m=S.chat[+el.dataset.i];if(m)speak(m.text);},
   sayText:el=>speak(el.dataset.text,{rate:0.8}),
   reveal:el=>el.classList.toggle("show"),
+  voiceHelp:()=>sheet(`<div class="h2" style="margin-bottom:10px">🔊 Make Yuki sound better</div>
+    <p class="sub" style="margin-bottom:10px">Your iPhone has much nicer voices, but you have to download them first (free):</p><ol>
+    <li>Open <b>Settings → Accessibility → Spoken Content → Voices</b>.</li>
+    <li>Tap <b>English</b>, pick a voice like <b>Ava</b>, <b>Zoe</b> or <b>Evan</b>, and download the <b>Premium</b> or <b>Enhanced</b> version.</li>
+    <li>Go back, tap <b>Japanese</b>, and download <b>Kyoko (Enhanced)</b> or <b>O-ren (Premium)</b>.</li>
+    <li>Close Yuki fully (swipe it away) and reopen it. In <b>Me → Voice</b>, pick the new voices (they have a ★), then tap <b>Test voice</b>.</li></ol>
+    <p class="sub" style="margin-top:10px">"Automatic" already picks the best voice your phone has, so after downloading you may not need to change anything.</p>
+    <button class="btn" style="margin-top:14px" data-act="closeSheet">Got it</button>`),
   voice:()=>openVoice(),
   closeVoice:()=>closeVoice(),
   vMic:()=>voiceMic(),
   vRepeat:()=>{const l=[...S.chat].reverse().find(m=>m.role==="assistant"&&!m.err);if(l){UI.vstate="speaking";renderVoice();speak(l.text);}},
   vSlow:()=>{const l=[...S.chat].reverse().find(m=>m.role==="assistant"&&!m.err);if(l){UI.vstate="speaking";renderVoice();speak(l.text,{rate:0.6});}},
-  micLang:el=>{S.settings.micLang=el.dataset.v;save();if(UI.voice)renderVoice();else render();},
+  micLang:el=>{S.settings.micLang=el.dataset.v;save();if(UI.voice)renderVoice();else rerender();},
   review:()=>startDeck("all"),
   deck:el=>startDeck(el.dataset.d),
   flip:()=>{if(UI.fc&&!UI.fc.flip){UI.fc.flip=true;render();}},
@@ -840,7 +1059,7 @@ const ACT={
   importData:()=>sheet(`<div class="h2">Restore</div><p class="sub" style="margin:8px 0">Paste a backup below.</p><textarea id="impT" class="field" rows="6"></textarea><button class="btn" data-act="doImport">Restore</button><button class="btn ghost" style="margin-top:8px" data-act="closeSheet">Cancel</button>`),
   doImport:()=>{try{const d=JSON.parse($("#impT").value);const key=S.settings.apiKey;S=migrate(merge(JSON.parse(JSON.stringify(DEFAULT)),d));S.settings.apiKey=key;save();closeSheet();toast("Restored ✅");render();}catch(e){toast("That doesn't look like a backup");}},
   clearChat:()=>{if(confirm("Clear the chat? Your progress and what Yuki knows about you stay.")){S.chat=[];S.currentLesson=null;save();toast("Chat cleared");}},
-  resetAll:()=>{if(confirm("Erase EVERYTHING — progress, cards, memory, chat?")){const key=S.settings.apiKey;S=JSON.parse(JSON.stringify(DEFAULT));S.settings.apiKey=key;UI.ob=0;UI.tab="home";save();render();}},
+  resetAll:()=>{if(confirm("Erase EVERYTHING — progress, cards, memory, chat?")){const key=S.settings.apiKey;S=JSON.parse(JSON.stringify(DEFAULT));S.settings.apiKey=key;UI.ob=0;UI.obEdit=false;UI.place=null;UI.tab="home";save();render();}},
   closeSheet:()=>closeSheet()
 };
 document.addEventListener("click",e=>{
@@ -852,10 +1071,15 @@ document.addEventListener("click",e=>{
 document.addEventListener("change",e=>{
   const el=e.target;const k=el.dataset&&el.dataset.set;if(!k)return;
   if(k==="name"||k==="goal")S[k]=el.value.trim();
+  else if(k.startsWith("about."))S.about[k.slice(6)]=el.value.trim();
+  else if(k==="voice.en"||k==="voice.ja"){S.settings[k==="voice.en"?"voiceEn":"voiceJa"]=el.value;save();speak(k==="voice.en"?"Hi! This is how I'll sound in English.":"こんにちは、ゆきです。",{forceEnglish:true});return;}
   else if(k==="rate")S.settings.rate=parseFloat(el.value);
   else if(k==="model")S.settings.model=el.value;
   save();if(k==="rate")speak("この速さでどうですか？",{});
 });
+
+// Save typed profile answers as you type, so a re-render never loses them
+document.addEventListener("input",e=>{const k=e.target.dataset&&e.target.dataset.set;if(k&&k.startsWith("about.")){S.about[k.slice(6)]=e.target.value;save();}});
 
 /* ============ iPHONE LAYOUT ============ */
 function fitViewport(){const vv=window.visualViewport;const h=vv?vv.height:window.innerHeight;document.documentElement.style.setProperty("--vh",h+"px");window.scrollTo(0,0);const b=$("#msgs");if(b)b.scrollTop=b.scrollHeight;}
