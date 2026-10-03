@@ -269,7 +269,7 @@ input,textarea,select{font:inherit;font-size:16px;color:var(--text)}
 <script>
 "use strict";
 // Bump this on every change so phones can spot a new version and offer to update
-const APP_VERSION="2026.10.04-3";
+const APP_VERSION="2026.10.04-4";
 /* ============ DATA ============ */
 const LV = {
   n5:{label:"N5",name:"Beginner",color:"#9fd67c"},
@@ -459,15 +459,15 @@ const KANJI_LV={none:"none yet",few:"under 50",some:"50–300",many:"300+"};
 /* ============ STATE ============ */
 const KEY="yuki-sensei-v3";
 const DEFAULT={
-  v:9,onboarded:false,name:"",level:"n5",goal:"",
+  v:10,onboarded:false,name:"",level:"n5",goal:"",
   about:{done:false,focus:[],hira:"",kata:"",kanji:"",location:"",native:"English",minutes:15,notes:""},
   placement:null,plan:null,course:null,
   profile:{facts:[],weak:[],strong:[],learned:[]},
   stats:{msgs:0,quizRight:0,quizWrong:0,cards:0,streak:0,lastDay:""},
   done:[],cards:{},chat:[],currentLesson:null,
   settings:{apiKey:"",model:"claude-haiku-4-5-20251001",rate:0.9,autoSpeakChat:false,speakEnglish:true,micLang:"ja-JP",
-    style:{length:"normal",english:"balanced",script:"auto",simple:false},history:12,voiceEn:"",voiceJa:"",jaRec:"himari",vvUrl:"",
-    tts:"device",azKey:"",azRegion:"eastus",azEn:"en-US-AvaMultilingualNeural",azJa:"ja-JP-NanamiNeural",ttsChars:{month:"",n:0},captions:true}
+    style:{length:"normal",english:"balanced",script:"auto",simple:false},history:12,voiceEn:"",voiceJa:"",jaRec:"ryusei",vvUrl:"",
+    tts:"quest",azKey:"",azRegion:"eastus",azEn:"en-US-AvaMultilingualNeural",azJa:"ja-JP-NanamiNeural",ttsChars:{month:"",n:0},captions:true}
 };
 let S=JSON.parse(JSON.stringify(DEFAULT));
 const UI={tab:"home",ob:0,obEdit:false,place:null,planCtx:null,lp:null,fc:null,chart:null,voice:false,vstate:"idle",vyou:"",busy:false,listening:false};
@@ -506,9 +506,12 @@ function migrate(st){
   if(st.plan){st.plan.done=obj(st.plan.done);st.plan.custom=arr(st.plan.custom).filter(c=>c&&c.id&&c.title);}  // v6: custom path lessons
   // v6 → v7: natural voices
   const S2=st.settings;
-  if(!["device","azure","voicevox"].includes(S2.tts))S2.tts="device";
+  if(!["device","azure","voicevox","quest"].includes(S2.tts))S2.tts="quest";
   if(typeof S2.vvUrl!=="string")S2.vvUrl="";
   if(S2.tts==="voicevox"&&!S2.vvUrl.trim())S2.tts="device";
+  if(!["device","azure","voicevox","quest"].includes(S2.tts))S2.tts="quest";
+  // v9 → v10: Ryusei everywhere (live voice via free tts.quest, recordings in Ryusei)
+  if((st.v||0)<10){S2.jaRec="ryusei";if(S2.tts==="device")S2.tts="quest";}
   if(typeof S2.azKey!=="string")S2.azKey="";
   if(!AZ_REGIONS.includes(S2.azRegion))S2.azRegion="eastus";
   if(!AZ_VOICES.en.some(v=>v[0]===S2.azEn))S2.azEn=DEFAULT.settings.azEn;
@@ -639,7 +642,7 @@ async function fetchNatural(ssml){
   natCache.set(ssml,buf);if(natCache.size>40)natCache.delete(natCache.keys().next().value);
   return buf;
 }
-function stopNatural(){natSeq++;natLoading=false;natBusy=false;if(natSrc){try{natSrc.onended=null;natSrc.stop();}catch(e){}natSrc=null;}natPlaying=false;}
+function stopNatural(){natSeq++;natLoading=false;natBusy=false;stopQuest();if(natSrc){try{natSrc.onended=null;natSrc.stop();}catch(e){}natSrc=null;}natPlaying=false;}
 async function speakNatural(segs,rate,en,ja){
   const my=++natSeq;const ctx=audioCtx();if(!ctx)throw new Error("no audio");
   const ssml=buildSSML(segs,rate,en,ja);
@@ -740,6 +743,7 @@ async function speakVV(segs,rate,text,opts){
 function pingVV(){const b=useVV()?vvBase(S.settings.vvUrl):"";if(b)fetch(b+"/version").catch(()=>{});}
 function speakAI(text,opts){
   const segsN=segments(cleanSpeech(text)).filter(s=>s.k==="ja"||S.settings.speakEnglish||opts.forceEnglish);
+  if(useQuest()&&segsN.length){if(synth)synth.cancel();speakQuest(segsN,opts.rate||S.settings.rate,text,opts);return;}
   if(!useVV()&&!useNatural()&&S.settings.jaRec!=="off"&&location.protocol!=="file:"&&segsN.some(sg=>sg.k==="ja"&&RECORDED.has(recKey(sg.t)))){if(synth)synth.cancel();speakWithRecordings(segsN,opts.rate||S.settings.rate,text,opts);return;}
   if(useVV()&&segsN.length){if(synth)synth.cancel();speakVV(segsN,opts.rate||S.settings.rate,text,opts);return;}
   if(useNatural()&&segsN.length){
@@ -753,6 +757,56 @@ function speakAI(text,opts){
     return;
   }
   speakDevice(text,opts);
+}
+/* ---- Ryusei/Himari live for ANY sentence: free public VOICEVOX service tts.quest (no key needed) ---- */
+const QUEST_API="https://api.tts.quest/v3/voicevox/synthesis";
+const useQuest=()=>S.settings.tts==="quest"&&location.protocol!=="file:";
+const SILENT_MP3="data:audio/mpeg;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjYwLjE2LjEwMAAAAAAAAAAAAAAA//OEwAAAAAAAAAAAAEluZm8AAAAPAAAACQAABCAARUVFRUVFRUVFRUVdXV1dXV1dXV1dXXR0dHR0dHR0dHR0i4uLi4uLi4uLi4uioqKioqKioqKiorq6urq6urq6urq60dHR0dHR0dHR0dHo6Ojo6Ojo6Ojo6P//////////////AAAAAExhdmM2MC4zMQAAAAAAAAAAAAAAACQD8AAAAAAAAAQgDeb0IwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//NExAAAAANIAAAAAExBTUUzLjEwMFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVTEFNRTMu//NExFMAAANIAAAAADEwMFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVTEFNRTMu//NExKYAAANIAAAAADEwMFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVTEFNRTMu//NExKwAAANIAAAAADEwMFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVTEFNRTMu//NExKwAAANIAAAAADEwMFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVTEFNRTMu//NExKwAAANIAAAAADEwMFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVTEFNRTMu//NExKwAAANIAAAAADEwMFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV//NExKwAAANIAAAAAFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV//NExKwAAANIAAAAAFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV";
+let qa=null,questNote=false;
+const questCache=new Map();
+// One shared <audio> player, unlocked on the first tap (iPhone rule), so later clips can play by themselves
+function questPlayer(){if(!qa){qa=new Audio();qa.preload="auto";qa.playsInline=true;}return qa;}
+document.addEventListener("touchend",()=>{const a=questPlayer();if(a.dataset.ok)return;a.src=SILENT_MP3;a.play().then(()=>{a.dataset.ok="1";}).catch(()=>{});},{passive:true});
+async function questUrl(text){
+  const key=vvSpeaker()+"|"+text;
+  if(questCache.has(key))return questCache.get(key);
+  const p=(async()=>{
+    const r=await withTimeout(fetch(`${QUEST_API}?speaker=${vvSpeaker()}&text=${encodeURIComponent(text)}`),15000);
+    const j=await r.json();
+    if(!j.success)throw new Error(j.errorMessage||"busy");
+    return j.mp3StreamingUrl||j.mp3DownloadUrl||j.wavDownloadUrl;
+  })();
+  questCache.set(key,p);p.catch(()=>questCache.delete(key));
+  if(questCache.size>80)questCache.delete(questCache.keys().next().value);
+  return p;
+}
+function playUrl(url,my,rate){return new Promise((res,rej)=>{
+  if(my!==natSeq)return res();
+  const a=questPlayer();let done=false;const fin=(ok)=>{if(done)return;done=true;clearTimeout(t);a.onended=a.onerror=null;natPlaying=false;ok?res():rej(new Error("play"));};
+  const t=setTimeout(()=>fin(false),45000);
+  a.onended=()=>fin(true);a.onerror=()=>fin(false);
+  a.src=url;a.playbackRate=rate&&rate<0.75?0.8:1;natPlaying=true;
+  a.play().catch(()=>fin(false));
+});}
+function stopQuest(){if(qa){try{qa.pause();}catch(e){}}}
+// Japanese parts: Ryusei's recording if we have one (instant), otherwise live from tts.quest; English parts: iPhone voice
+async function speakQuest(segs,rate,text,opts){
+  const my=++natSeq;natBusy=true;
+  const recUrl=sg=>{const k=recKey(sg.t);return RECORDED.has(k)?`audio/${S.settings.jaRec}/${recId(k)}.mp3`:null;};
+  const jobs=segs.map(sg=>sg.k!=="ja"?null:(recUrl(sg)?Promise.resolve(recUrl(sg)):questUrl(sg.t.trim())));
+  jobs.forEach(j=>j&&j.catch(()=>{}));
+  try{
+    for(let i=0;i<segs.length;i++){
+      if(my!==natSeq)return;
+      if(!jobs[i]){await sayDevice(segs[i].t.trim(),"en-US",rate);continue;}
+      natLoading=true;let url=null;try{url=await jobs[i];}catch(e){
+        if(!questNote){questNote=true;toast(/busy|limit|wait/i.test(e.message)?"Ryusei's live voice is busy — using the iPhone voice for a moment":"Couldn't reach Ryusei's live voice — using the iPhone voice",3500);}}
+      natLoading=false;if(my!==natSeq)return;
+      if(url){try{await playUrl(url,my,rate);continue;}catch(e){}}
+      if(my!==natSeq)return;
+      await sayDevice(segs[i].t.trim(),"ja-JP",rate);
+    }
+  }finally{if(my===natSeq){natBusy=false;natLoading=false;}}
 }
 // Any Japanese bit of a reply that matches a recording (all course words, kana, cards) plays in
 // Himari/Ryusei; the rest uses the iPhone voice. No server or key needed.
@@ -1524,7 +1578,10 @@ function vMe(){
   </div>
   <div class="sec">🔊 Voice</div><div class="card">
    <p class="sub" style="margin-bottom:6px">Voice engine</p>
-   ${chipRow("ttsSet","tts",st.tts,[["device","🎌 Himari + iPhone"],["azure","✨ Azure"],["voicevox","Own server (advanced)"]])}
+   ${chipRow("ttsSet","tts",st.tts,[["quest","🎌 "+(REC_VOICES[st.jaRec]||REC_VOICES.ryusei).name.split(" ")[0]+" everywhere"],["device","Recordings + iPhone"],["azure","✨ Azure"],["voicevox","Own server"]])}
+   ${st.tts==="quest"?`<p class="sub" style="margin:10px 0 0">Free, no key: all Japanese — lessons, chat, calls — is spoken by ${esc((REC_VOICES[st.jaRec]||REC_VOICES.ryusei).name.split(" ")[0])}. Words you're learning play instantly from recordings; new sentences come live from the free VOICEVOX service <b>tts.quest</b> (can take a few seconds; if it's busy, that sentence uses the iPhone voice). English parts use your best iPhone voice.</p>
+    <p class="sub" style="margin:10px 0 6px">Voice</p>${chipRow("recSet","jaRec",st.jaRec==="off"?"ryusei":st.jaRec,Object.entries(REC_VOICES).map(([k,v])=>[k,v.name.split(" ")[0]]))}
+    <p class="sub" style="margin-top:6px">Voice: ${esc((REC_VOICES[st.jaRec]||REC_VOICES.ryusei).credit)} · live audio by tts.quest</p>${englishTip()}`:""}
    ${st.tts==="device"?`<p class="sub" style="margin:10px 0 0">Free, no key: every word from your lessons, flashcards and kana is spoken by ${esc((REC_VOICES[st.jaRec]||REC_VOICES.himari).name.split(" ")[0])} (recorded), including when Yuki uses them in chat. Other sentences use your best iPhone voice.</p>`:""}
    ${st.tts==="voicevox"?`
     <p class="sub" style="margin:12px 0 0">Advanced: if you have your own VOICEVOX server (e.g. a Hugging Face Space — note some accounts now need billing for Docker Spaces), Yuki speaks <b>all</b> Japanese in Himari or Ryusei. English parts use your best iPhone voice.</p>
@@ -1546,9 +1603,9 @@ function vMe(){
     <select class="field" data-set="azJa">${AZ_VOICES.ja.map(([id,n,d])=>`<option value="${id}"${st.azJa===id?" selected":""}>${esc(n)} — ${esc(d)}</option>`).join("")}</select>
     <p class="sub">Used this month: ${(st.ttsChars.month===isoDay().slice(0,7)?st.ttsChars.n:0).toLocaleString()} / 500,000 free characters</p>`
    :`${voicePicker("en","English voice",st.voiceEn)}${englishTip()}${voicePicker("ja","Japanese voice",st.voiceJa)}`}
-   <p class="sub" style="margin:14px 0 6px">Flashcard & kana audio (free, recorded, works offline once played)</p>
+   ${st.tts==="quest"||st.tts==="voicevox"?"":`<p class="sub" style="margin:14px 0 6px">Flashcard & kana audio (free, recorded, works offline once played)</p>
    ${chipRow("recSet","jaRec",st.jaRec,[...Object.entries(REC_VOICES).map(([k,v])=>[k,v.name.split(" ")[0]]),["off","Off"]])}
-   ${st.jaRec!=="off"?`<p class="sub" style="margin-top:6px">${esc(REC_VOICES[st.jaRec].desc)} · Voice: ${esc(REC_VOICES[st.jaRec].credit)}</p>`:""}
+   ${st.jaRec!=="off"?`<p class="sub" style="margin-top:6px">${esc(REC_VOICES[st.jaRec].desc)} · Voice: ${esc(REC_VOICES[st.jaRec].credit)}</p>`:""}`}
    <div class="toggle" style="margin-top:8px"><span>Speaking speed</span><input type="range" min="0.5" max="1.2" step="0.05" value="${st.rate}" data-set="rate" style="width:45%"></div>
    ${sw("autoSpeakChat",st.autoSpeakChat,"Read replies aloud in chat")}
    ${sw("speakEnglish",st.speakEnglish,"Read English parts too")}
@@ -1601,7 +1658,7 @@ function renderVoice(){
   const cap=last&&!last.err?esc(cleanSpeech(last.text).replace(/\s+\n/g,"\n").trim()).replace(/\n+/g,"<br>"):last&&last.err?"Connection problem — check the chat.":"Say hi! Try 「こんにちは」 or ask me anything in English.";
   const cc=S.settings.captions;
   $("#voice").innerHTML=`<div class="vtop"><button class="iconbtn" data-act="closeVoice" aria-label="Close">✕</button>
-   <div class="vtitle"><b>Yuki</b><small>${useVV()?"🎌 "+(REC_VOICES[S.settings.jaRec]||REC_VOICES.himari).name.split(" ")[0]+"'s voice":useNatural()?"✨ natural voice":"voice call"}</small></div>
+   <div class="vtitle"><b>Yuki</b><small>${useQuest()?"🎌 "+(REC_VOICES[S.settings.jaRec]||REC_VOICES.ryusei).name.split(" ")[0]+"'s voice":useVV()?"🎌 "+(REC_VOICES[S.settings.jaRec]||REC_VOICES.himari).name.split(" ")[0]+"'s voice":useNatural()?"✨ natural voice":"voice call"}</small></div>
    <div class="seg" aria-label="I'm speaking"><button class="${S.settings.micLang==="ja-JP"?"on":""}" data-act="micLang" data-v="ja-JP">あ</button><button class="${S.settings.micLang==="en-US"?"on":""}" data-act="micLang" data-v="en-US">A</button></div></div>
    <div class="orbwrap"><div class="orb ${st}">ゆ</div><div class="vstat">${label}</div>
     <div class="vcap"><div class="vtext${cc?"":" off"}">${cap}</div><div class="vyou">${UI.vyou?"You: "+esc(UI.vyou):""}</div></div></div>
@@ -1704,7 +1761,7 @@ const ACT={
     <p class="sub" style="margin-top:10px">Free Spaces fall asleep after a couple of days unused. Yuki wakes yours when you open the app; the very first sentence after a long break may use the iPhone voice while it wakes (about a minute).</p>
     <button class="btn ghost" style="margin-top:10px" data-act="closeSheet">Done</button>`),
   copyDock:()=>{const t=$("#vvDock");if(navigator.clipboard)navigator.clipboard.writeText(t.value).then(()=>toast("Copied ✓"),()=>{t.select();toast("Select all and copy");});else{t.select();toast("Select all and copy");}},
-  ttsSet:el=>{S.settings.tts=el.dataset.v;natFailNote=false;vvNote=false;save();rerender();pingVV();},
+  ttsSet:el=>{S.settings.tts=el.dataset.v;natFailNote=false;vvNote=false;questNote=false;save();rerender();pingVV();},
   saveAz:()=>{const v=$("#azKeyIn");S.settings.azKey=v?v.value.trim():"";natCache.clear();natFailNote=false;save();toast(S.settings.azKey?"Key saved — tap Test voice 🔊":"Key removed");rerender();},
   azHelp:()=>sheet(`<div class="h2" style="margin-bottom:10px">✨ Getting natural voices (free)</div><ol>
     <li>In Safari go to <b>portal.azure.com</b> and sign up for a free Microsoft Azure account (it asks for a card to verify you, but the free tier costs nothing).</li>
@@ -1774,7 +1831,7 @@ const ACT={
     <li>Come back here, paste it in the box, tap <b>Save key</b>, then <b>Test Yuki</b>.</li></ol>
     <p class="sub" style="margin-top:10px">The key lives only on this phone. The app file itself has no key in it, so sharing the link doesn't share your key. Pick "Fast & cheap" if you want it to cost less.</p>
     <button class="btn" style="margin-top:14px" data-act="closeSheet">Got it</button>`),
-  testVoice:()=>speak("こんにちは！ゆきです。 Hi, this is how I sound.",{forceEnglish:true}),
+  testVoice:()=>{questNote=false;speak("こんにちは！ゆきです。きょうも いっしょに がんばりましょう。 Hi, this is how I sound.",{forceEnglish:true});},
   exportData:()=>{const d=JSON.stringify({...S,settings:{...S.settings,apiKey:"",azKey:""}});sheet(`<div class="h2">Backup</div><p class="sub" style="margin:8px 0">Copy this and keep it somewhere safe (Notes works). Your API keys aren't included.</p><textarea class="field" rows="6" readonly>${esc(d)}</textarea><button class="btn" data-act="copyBackup">Copy</button><button class="btn ghost" style="margin-top:8px" data-act="closeSheet">Close</button>`);},
   copyBackup:()=>{const t=document.querySelector("#sheet textarea");if(navigator.clipboard)navigator.clipboard.writeText(t.value).then(()=>toast("Copied"),()=>{t.select();toast("Select all and copy");});else{t.select();toast("Select all and copy");}},
   importData:()=>sheet(`<div class="h2">Restore</div><p class="sub" style="margin:8px 0">Paste a backup below.</p><textarea id="impT" class="field" rows="6"></textarea><button class="btn" data-act="doImport">Restore</button><button class="btn ghost" style="margin-top:8px" data-act="closeSheet">Cancel</button>`),
