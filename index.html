@@ -1,0 +1,853 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Yuki">
+<meta name="theme-color" content="#151722">
+<title>Yuki Sensei</title>
+<link id="touchIcon" rel="apple-touch-icon" href="">
+<style>
+:root{
+  --ink:#151722; --ink2:#1d2030; --ink3:#272b3f; --line:#33384f;
+  --text:#eef0f7; --dim:#9298b3; --sakura:#f4a3c0; --sakura2:#d97a9f;
+  --matcha:#9fd67c; --sky:#7cb8f4; --gold:#f2c36b; --red:#f27c7c;
+  --vh:100dvh; --safeB:env(safe-area-inset-bottom,0px); --safeT:env(safe-area-inset-top,0px);
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{background:var(--ink);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Hiragino Kaku Gothic ProN","Noto Sans JP",system-ui,sans-serif;font-size:16px;overscroll-behavior:none}
+body{position:fixed;inset:0;overflow:hidden}
+button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
+button:active{transform:scale(.97)}
+input,textarea,select{font:inherit;font-size:16px;color:var(--text)}
+#app{height:var(--vh);display:flex;flex-direction:column;padding-top:var(--safeT)}
+#main{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;position:relative}
+#tabs{display:flex;background:var(--ink2);border-top:1px solid var(--line);padding:6px 4px calc(6px + var(--safeB))}
+#tabs button{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;font-size:11px;color:var(--dim);padding:4px 0;border-radius:10px}
+#tabs button .ti{font-size:21px;line-height:1}
+#tabs button.on{color:var(--sakura)}
+.hidden{display:none!important}
+.pad{padding:18px 16px 28px;max-width:560px;margin:0 auto}
+.h1{font-size:24px;font-weight:800;letter-spacing:-.02em}
+.h2{font-size:19px;font-weight:700;letter-spacing:-.01em}
+.sub{color:var(--dim);font-size:14px;line-height:1.45}
+.sec{font-size:13px;font-weight:700;color:var(--dim);margin:22px 2px 8px}
+.card{background:var(--ink2);border:1px solid var(--line);border-radius:18px;padding:16px;margin-bottom:10px}
+.hello{display:flex;align-items:center;gap:14px;margin:6px 0 18px}
+.av{width:38px;height:38px;border-radius:50%;background:linear-gradient(140deg,var(--sakura),var(--sakura2));display:flex;align-items:center;justify-content:center;font-weight:800;color:#2a1520;flex-shrink:0}
+.av.big{width:58px;height:58px;font-size:26px}
+.hero{display:block;width:100%;text-align:left;background:linear-gradient(150deg,#3a2433,#22243a);border:1px solid #5a3a4c}
+.hero .tag{font-size:12px;color:var(--sakura);font-weight:700;margin-bottom:6px}
+.hero .go{margin-top:12px;font-weight:700;color:var(--sakura)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.tile{background:var(--ink2);border:1px solid var(--line);border-radius:18px;padding:16px 14px;text-align:left;font-weight:700;font-size:15px;display:flex;flex-direction:column;gap:6px;min-height:96px}
+.tile .ico{font-size:26px}
+.tile small{font-weight:500;color:var(--dim);font-size:12px}
+.row{display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:var(--ink2);border:1px solid var(--line);border-radius:16px;padding:13px 14px;margin-bottom:8px}
+.row .ri{width:42px;height:42px;border-radius:12px;background:var(--ink3);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;font-weight:700}
+.row .rt{flex:1;min-width:0}
+.row .rt b{display:block;font-size:15px}
+.row .rt span{display:block;font-size:12.5px;color:var(--dim);margin-top:2px;line-height:1.35}
+.row.done{border-color:#4b6b3a}
+.row.done .ri{background:#2f4426}
+.chips{display:flex;gap:6px;overflow-x:auto;padding:2px 0 4px;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{flex-shrink:0;background:var(--ink3);border:1px solid var(--line);border-radius:999px;padding:7px 13px;font-size:13.5px;white-space:nowrap}
+.chip.on{background:#4a2c3c;border-color:var(--sakura);color:var(--sakura)}
+.btn{display:block;width:100%;padding:15px;border-radius:14px;font-weight:700;font-size:16px;background:linear-gradient(140deg,var(--sakura),var(--sakura2));color:#2a1520;text-align:center}
+.btn.ghost{background:var(--ink3);color:var(--text);border:1px solid var(--line)}
+.btn.sm{padding:10px;font-size:14px}
+.stat3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.stat{background:var(--ink);border-radius:12px;padding:12px 6px;text-align:center}
+.stat b{display:block;font-size:22px}
+.stat span{font-size:11.5px;color:var(--dim)}
+.tags{display:flex;flex-wrap:wrap;gap:6px}
+.tg{background:var(--ink3);border-radius:8px;padding:5px 9px;font-size:13px}
+.tg.w{background:#4a2630;color:#ffc2cf}
+.tg.s{background:#2c4224;color:#c9f0b2}
+.field{width:100%;background:var(--ink);border:1px solid var(--line);border-radius:12px;padding:12px;margin:6px 0 10px;outline:none}
+.field:focus{border-color:var(--sakura)}
+.toggle{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--line);font-size:15px}
+.toggle:last-child{border-bottom:none}
+.sw{width:50px;height:30px;border-radius:15px;background:var(--line);position:relative;transition:.2s;flex-shrink:0}
+.sw::after{content:"";position:absolute;top:3px;left:3px;width:24px;height:24px;border-radius:50%;background:#fff;transition:.2s}
+.sw.on{background:var(--matcha)}
+.sw.on::after{left:23px}
+/* chat */
+.chat{display:flex;flex-direction:column;height:100%}
+.chathead{display:flex;align-items:center;gap:10px;padding:10px 12px;border-bottom:1px solid var(--line);background:var(--ink2);flex-shrink:0}
+.chathead .ct{flex:1;min-width:0}
+.chathead .ct b{display:block;font-size:15px}
+.chathead .ct small{display:block;color:var(--dim);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mini{background:var(--ink3);border:1px solid var(--line);border-radius:10px;padding:7px 10px;font-size:13px;font-weight:700}
+.mini.ok{border-color:var(--matcha);color:var(--matcha)}
+.iconbtn{width:44px;height:44px;border-radius:14px;background:var(--ink3);border:1px solid var(--line);font-size:20px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.iconbtn.live{background:#4a2630;border-color:var(--red);animation:throb 1.2s infinite}
+.msgs{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:14px 12px;display:flex;flex-direction:column;gap:12px}
+.m{display:flex;gap:8px;max-width:100%}
+.m.u{justify-content:flex-end}
+.bub{max-width:84%;padding:11px 14px;border-radius:18px;font-size:16px;line-height:1.6;word-break:break-word}
+.m.a .bub{background:var(--ink2);border:1px solid var(--line);border-bottom-left-radius:6px}
+.m.u .bub{background:#4a2c3c;border-bottom-right-radius:6px}
+.m.a .av{width:30px;height:30px;font-size:14px;margin-top:2px}
+.bubwrap{display:flex;flex-direction:column;gap:4px;max-width:84%}
+.bubwrap .bub{max-width:100%}
+.say{align-self:flex-start;font-size:13px;color:var(--dim);padding:4px 8px;border-radius:8px;background:var(--ink3)}
+.bub code{background:var(--ink3);padding:1px 5px;border-radius:5px}
+.listen{display:inline-flex;flex-direction:column;gap:4px;margin:4px 0}
+.play{background:var(--sky);color:#0f2235;font-weight:800;border-radius:10px;padding:8px 14px;font-size:14px}
+.hid{filter:blur(6px);font-size:14px;color:var(--dim)}
+.hid.show{filter:none}
+.err{background:#3a2026;border:1px solid #6b3340;border-radius:14px;padding:12px;font-size:14px;line-height:1.5}
+.dots{display:flex;gap:5px;padding:4px 2px}
+.dots i{width:8px;height:8px;border-radius:50%;background:var(--dim);animation:dot 1s infinite}
+.dots i:nth-child(2){animation-delay:.15s}.dots i:nth-child(3){animation-delay:.3s}
+.chatfoot{border-top:1px solid var(--line);background:var(--ink2);padding:8px 10px 10px;flex-shrink:0}
+.inputbar{display:flex;gap:8px;align-items:flex-end;margin-top:6px}
+#inp{flex:1;background:var(--ink);border:1px solid var(--line);border-radius:16px;padding:11px 14px;resize:none;outline:none;max-height:120px;line-height:1.35}
+#inp:focus{border-color:var(--sakura)}
+.send{width:44px;height:44px;border-radius:14px;background:linear-gradient(140deg,var(--sakura),var(--sakura2));color:#2a1520;font-size:20px;font-weight:900;flex-shrink:0}
+/* flashcards */
+.fc{perspective:1000px;margin:10px 0 16px}
+.fcin{background:var(--ink2);border:1px solid var(--line);border-radius:24px;min-height:300px;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;text-align:center;gap:10px}
+.fcf{font-size:84px;font-weight:700;line-height:1.1}
+.fcf.long{font-size:44px}
+.fcb{font-size:28px;font-weight:800;color:var(--sakura)}
+.fcs{font-size:18px;color:var(--dim)}
+.bar{height:6px;border-radius:3px;background:var(--ink3);overflow:hidden;margin:8px 0}
+.bar i{display:block;height:100%;background:var(--sakura);border-radius:3px}
+.kgrid{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
+.kc{background:var(--ink2);border:1px solid var(--line);border-radius:12px;padding:8px 0;text-align:center}
+.kc b{display:block;font-size:26px;font-weight:600}
+.kc span{font-size:11px;color:var(--dim)}
+.kc.blank{visibility:hidden}
+.kc.weak{border-color:var(--red)}
+/* voice overlay */
+#voice{position:fixed;inset:0;background:radial-gradient(circle at 50% 30%,#2b2340,#121420 70%);z-index:50;display:flex;flex-direction:column;padding:calc(14px + var(--safeT)) 18px calc(18px + var(--safeB))}
+.vtop{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.orbwrap{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;min-height:0}
+.orb{width:150px;height:150px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#ffd6e6,var(--sakura) 45%,var(--sakura2));box-shadow:0 0 60px #f4a3c055;display:flex;align-items:center;justify-content:center;font-size:56px;font-weight:800;color:#3a1828;transition:.3s}
+.orb.listening{animation:breathe 1.1s infinite;box-shadow:0 0 80px #f27c7c88;background:radial-gradient(circle at 35% 30%,#ffe0e0,#f27c7c 50%,#c24f5f)}
+.orb.thinking{animation:spin 2.4s linear infinite;opacity:.8}
+.orb.speaking{animation:talk .45s infinite alternate}
+.vstat{font-size:15px;color:var(--dim);font-weight:600}
+.vtext{max-height:30vh;overflow-y:auto;font-size:17px;line-height:1.6;text-align:center;padding:0 6px;width:100%}
+.vyou{font-size:14px;color:var(--dim);text-align:center;min-height:20px}
+.vctrl{display:flex;justify-content:center;align-items:center;gap:18px;margin-top:10px}
+.bigmic{width:86px;height:86px;border-radius:50%;background:linear-gradient(140deg,var(--sakura),var(--sakura2));font-size:36px;box-shadow:0 6px 30px #f4a3c066}
+.bigmic.live{background:linear-gradient(140deg,#ff9a9a,#d64f63);animation:throb 1.2s infinite}
+.vside{width:54px;height:54px;border-radius:50%;background:var(--ink3);border:1px solid var(--line);font-size:20px}
+.vside small{display:block;font-size:9px;color:var(--dim)}
+/* sheet + toast */
+#sheet{position:fixed;inset:0;background:#000a;z-index:80;display:flex;align-items:flex-end}
+#sheet .sh{background:var(--ink2);width:100%;max-height:85vh;overflow-y:auto;border-radius:22px 22px 0 0;padding:20px 18px calc(20px + var(--safeB))}
+#sheet ol{padding-left:20px;line-height:1.6;font-size:15px}
+#sheet li{margin-bottom:8px}
+#toast{position:fixed;left:50%;bottom:calc(90px + var(--safeB));transform:translateX(-50%);background:#000d;color:#fff;padding:10px 16px;border-radius:12px;font-size:14px;z-index:90;opacity:0;transition:.25s;pointer-events:none;max-width:88%;text-align:center}
+#toast.on{opacity:1}
+@keyframes dot{0%,80%,100%{opacity:.25}40%{opacity:1}}
+@keyframes throb{0%,100%{transform:scale(1)}50%{transform:scale(1.06)}}
+@keyframes breathe{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes talk{from{transform:scale(1)}to{transform:scale(1.05)}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div id="app">
+  <main id="main"></main>
+  <nav id="tabs">
+    <button data-act="tab" data-tab="home"><span class="ti">🏠</span>Home</button>
+    <button data-act="tab" data-tab="chat"><span class="ti">💬</span>Yuki</button>
+    <button data-act="tab" data-tab="learn"><span class="ti">📚</span>Learn</button>
+    <button data-act="tab" data-tab="practice"><span class="ti">🃏</span>Practice</button>
+    <button data-act="tab" data-tab="me"><span class="ti">👤</span>Me</button>
+  </nav>
+</div>
+<div id="voice" class="hidden"></div>
+<div id="sheet" class="hidden"></div>
+<div id="toast"></div>
+
+<script>
+"use strict";
+/* ============ DATA ============ */
+const LV = {
+  n5:{label:"N5",name:"Beginner",color:"#9fd67c"},
+  n4:{label:"N4",name:"Elementary",color:"#7cb8f4"},
+  n3:{label:"N3",name:"Intermediate",color:"#c59cf4"},
+  n2:{label:"N2",name:"Upper-intermediate",color:"#f4a3c0"},
+  n1:{label:"N1",name:"Advanced",color:"#f2c36b"}
+};
+// [unit, [[id, title, description], ...]]
+const CUR = {
+ n5:[
+  ["Start here",[["intro","How Japanese works","The three writing systems, word order, and what to expect"],["sounds","Sounds & pronunciation","The 5 vowels, long vowels, pitch, and the small っ pause"]]],
+  ["Hiragana",[["h1","あ & か rows","あいうえお かきくけこ"],["h2","さ & た rows","さしすせそ たちつてと"],["h3","な & は rows","なにぬねの はひふへほ"],["h4","ま & や rows","まみむめも やゆよ"],["h5","ら, わ & ん","らりるれろ わ を ん"],["h6","Dakuten ゛and ゜","が ざ だ ば ぱ rows"],["h7","Combos & small っ","きゃ しゅ ちょ and double consonants"],["h8","Reading real words","Put all hiragana together with short words"]]],
+  ["Katakana",[["k1","ア to ト","First half of katakana"],["k2","ナ to ン","Second half of katakana"],["k3","Katakana dakuten & combos","ガ パ キャ and the long-vowel bar ー"],["k4","Loanwords","Reading your name, foods and brands in katakana"]]],
+  ["First conversations",[["greet","Greetings","おはよう, こんにちは, ありがとう, すみません"],["selfintro","Introducing yourself","はじめまして, name, country, job, hobbies"],["polite","Polite survival phrases","おねがいします, 大丈夫です, わかりません"],["reacts","Natural reactions","そうですね, へえ, なるほど, 本当？"]]],
+  ["Core grammar",[["desu","X は Y です","The most important sentence pattern"],["kosoado","これ・それ・あれ","This, that, that over there, and where"],["no","The の particle","Possession and linking nouns"],["ka","Asking questions","か, 何, 誰, どこ, いつ, どう"]]],
+  ["Numbers & time",[["num","Numbers 1–100","Counting, ages, phone numbers"],["money","Big numbers & money","百, 千, 万 and prices"],["time","Telling time","何時, 分, 午前, 午後"],["dates","Days, dates & months","曜日, 何月, 何日"]]],
+  ["Verbs",[["masu","ます verbs","食べます, 行きます, します"],["masupast","Past & negative","ました, ません, ませんでした"],["parts","Particles を に で へ","Who did what, where, and how"],["aru","あります・います","Existence and having things"],["invite","Invitations","ましょう and ませんか"],["te","て-form","How to build it and why it matters"],["tekudasai","てください","Polite requests"],["teiru","ています","Doing right now, and states"]]],
+  ["Adjectives",[["iadj","い adjectives","大きい, 高い, おいしい and their forms"],["naadj","な adjectives","静か, 好き, 元気 and their forms"],["compare","Comparing things","より, 一番, どちら"]]],
+  ["Daily life",[["family","Family","My family vs someone else's"],["food","Food & ordering","At a restaurant and convenience store"],["shop","Shopping","Prices, sizes, paying"],["places","Places & directions","Where is the station?"],["trans","Trains & buses","Tickets, transfers, which platform"],["weather","Weather & seasons","Talking about the weather"],["counters","Counters","つ, 人, 本, 枚, 匹"],["wants","Wants & likes","ほしい, 〜たい, 好き"]]],
+  ["N5 kanji",[["kj1","Numbers & money","一 二 三 … 十 百 千 万 円"],["kj2","Days & time","日 月 火 水 木 金 土 年 時 分"],["kj3","People & body","人 男 女 子 口 目 手 足"],["kj4","Places & directions","山 川 上 下 左 右 中 大 小"],["kj5","Action kanji","食 飲 見 行 来 話 読 書"]]]
+ ],
+ n4:[
+  ["Plain forms",[["plain","Dictionary form","Casual verbs and when to use them"],["nai","ない form","Casual negatives and ないでください"],["ta","た form","Casual past and たことがある"],["casual","Casual speech","Talking with friends naturally"]]],
+  ["New verb forms",[["pot","Potential form","Can do: 食べられる, 話せる"],["vol","Volitional form","Let's: 行こう, and 〜ようと思う"],["pass","Passive form","Being done to: 言われた, 盗まれた"],["caus","Causative form","Making or letting: 食べさせる"],["imp","Commands","Imperatives and なさい"]]],
+  ["Conditionals",[["cto","と conditional","Natural results"],["cba","ば conditional","If… then"],["ctara","たら conditional","When / if, most flexible"],["cnara","なら conditional","If that's the case"]]],
+  ["Giving & receiving",[["give","あげる・くれる・もらう","Who gives to whom"],["givete","Giving actions","てあげる, てくれる, てもらう"]]],
+  ["Expressing yourself",[["omou","と思う・と言う","Opinions and quoting"],["sou","そう・よう・らしい","Seems, looks like, I heard"],["tsumori","つもり・予定","Plans and intentions"],["nagara","ながら・し","Doing two things, listing reasons"],["node","から・ので・のに","Because, and although"]]],
+  ["Keigo intro",[["keigo1","Respectful & humble","いらっしゃる, 申す, the basics"],["keigo2","Shop & service Japanese","What staff say to you and why"]]],
+  ["N4 kanji",[["n4k1","N4 kanji set 1","Common daily kanji"],["n4k2","N4 kanji set 2","Places and movement"],["n4k3","N4 kanji set 3","Feelings and descriptions"],["n4k4","N4 kanji set 4","Work and school"]]],
+  ["Real situations",[["doctor","At the doctor","Symptoms and the pharmacy"],["phone","On the phone","Calling, messages, polite phone speech"],["trouble","Travel trouble","Lost items, missed trains, asking for help"],["n4read","N4 reading","Short passages with questions"]]]
+ ],
+ n3:[
+  ["Grammar",[["g31","ようにする・ようになる","Effort and change"],["g32","ことにする・ことになる","Decisions"],["g33","わけ・はず・べき","Logic and obligation"],["g34","ために・ように","Purpose"],["g35","てしまう・ておく・てみる","Completion, preparing, trying"],["g36","ばかり・ほど・くらい","Degree and amount"]]],
+  ["Speaking",[["opin","Opinions & disagreeing","Softening and nuance"],["story","Telling a story","Connecting events smoothly"],["onoma","Onomatopoeia","ドキドキ, ワクワク, ゴロゴロ"],["anime","Anime & casual speech","What characters really say"]]],
+  ["Keigo",[["k3k","Keigo in depth","Respectful, humble, polite forms"],["work","Workplace Japanese","Meetings, emails, coworkers"]]],
+  ["Kanji & vocab",[["n3k","N3 kanji","Compounds and multiple readings"],["idiom","Idioms 慣用句","Body-part idioms and more"]]],
+  ["Reading & writing",[["n3r","N3 reading","Articles, notices, emails"],["n3w","Writing paragraphs","Clear structured writing"]]]
+ ],
+ n2:[
+  ["Grammar",[["g21","Formal connectors","に伴い, を通じて, にわたって"],["g22","Limits & timing","に限り, をもって, に先立って"],["g23","Feelings & emphasis","ものだ, ことか, ずにはいられない"],["g24","Results & outcomes","あげく, 末に, 結果"]]],
+  ["Real Japanese",[["news","News Japanese","Understanding headlines and broadcasts"],["biz","Business keigo","Full formal speech"],["nuance","Synonym nuances","Words that look the same but aren't"]]],
+  ["Skills",[["n2r","N2 reading","Editorials and opinion pieces"],["n2w","Essay writing","Arguing a point in Japanese"],["debate","Discussion practice","Debate real topics"]]]
+ ],
+ n1:[
+  ["Mastery",[["lit","Literary grammar","Classical leftovers in modern Japanese"],["yoji","四字熟語","Four-character idioms"],["kansai","関西弁 and dialects","How Osaka people really talk"],["n1r","N1 reading","Academic and literary texts"],["n1w","Formal writing","Reports and polished writing"],["culture","Cultural literacy","Proverbs, references, humor"]]]
+ ]
+};
+const allLessons = () => Object.entries(CUR).flatMap(([lv,units])=>units.flatMap(([u,ls])=>ls.map(([id,t,d])=>({id,title:t,desc:d,unit:u,level:lv}))));
+const LESSONS = allLessons();
+const lessonById = id => LESSONS.find(l=>l.id===id);
+
+// Kana
+const HR=['あいうえお','かきくけこ','さしすせそ','たちつてと','なにぬねの','はひふへほ','まみむめも','や ゆ よ','らりるれろ','わ   を','ん    ','がぎぐげご','ざじずぜぞ','だぢづでど','ばびぶべぼ','ぱぴぷぺぽ'];
+const KR=['アイウエオ','カキクケコ','サシスセソ','タチツテト','ナニヌネノ','ハヒフヘホ','マミムメモ','ヤ ユ ヨ','ラリルレロ','ワ   ヲ','ン    ','ガギグゲゴ','ザジズゼゾ','ダヂヅデド','バビブベボ','パピプペポ'];
+const RR=['a i u e o','ka ki ku ke ko','sa shi su se so','ta chi tsu te to','na ni nu ne no','ha hi fu he ho','ma mi mu me mo','ya - yu - yo','ra ri ru re ro','wa - - - wo','n - - - -','ga gi gu ge go','za ji zu ze zo','da ji zu de do','ba bi bu be bo','pa pi pu pe po'];
+const COMBO_BASE=[['き','キ','ky'],['し','シ','sh'],['ち','チ','ch'],['に','ニ','ny'],['ひ','ヒ','hy'],['み','ミ','my'],['り','リ','ry'],['ぎ','ギ','gy'],['じ','ジ','j'],['び','ビ','by'],['ぴ','ピ','py']];
+function kanaList(rows){const out=[];rows.forEach((r,ri)=>{const ro=RR[ri].split(' ');[...r].forEach((ch,ci)=>{if(ch!==' '&&ro[ci]&&ro[ci]!=='-')out.push([ch,ro[ci]]);});});return out;}
+const HIRA=kanaList(HR), KATA=kanaList(KR);
+COMBO_BASE.forEach(([h,k,r])=>{[['ゃ','ャ','a'],['ゅ','ュ','u'],['ょ','ョ','o']].forEach(([sh,sk,v])=>{HIRA.push([h+sh,r+v]);KATA.push([k+sk,r+v]);});});
+
+const VOCAB=[
+["私","わたし","I, me"],["あなた","あなた","you"],["人","ひと","person"],["友達","ともだち","friend"],["家族","かぞく","family"],["母","はは","(my) mother"],["父","ちち","(my) father"],["先生","せんせい","teacher"],["学生","がくせい","student"],["名前","なまえ","name"],
+["水","みず","water"],["お茶","おちゃ","green tea"],["ご飯","ごはん","rice, meal"],["パン","パン","bread"],["肉","にく","meat"],["魚","さかな","fish"],["野菜","やさい","vegetables"],["朝ご飯","あさごはん","breakfast"],["晩ご飯","ばんごはん","dinner"],["コーヒー","コーヒー","coffee"],
+["家","いえ","house, home"],["学校","がっこう","school"],["駅","えき","station"],["店","みせ","shop"],["会社","かいしゃ","company"],["病院","びょういん","hospital"],["部屋","へや","room"],["トイレ","トイレ","toilet"],["電車","でんしゃ","train"],["車","くるま","car"],
+["今日","きょう","today"],["明日","あした","tomorrow"],["昨日","きのう","yesterday"],["今","いま","now"],["朝","あさ","morning"],["夜","よる","night"],["毎日","まいにち","every day"],["時間","じかん","time"],["週末","しゅうまつ","weekend"],["休み","やすみ","day off, break"],
+["食べる","たべる","to eat"],["飲む","のむ","to drink"],["行く","いく","to go"],["来る","くる","to come"],["帰る","かえる","to go home"],["見る","みる","to see, watch"],["聞く","きく","to listen, ask"],["話す","はなす","to speak"],["読む","よむ","to read"],["書く","かく","to write"],
+["する","する","to do"],["買う","かう","to buy"],["待つ","まつ","to wait"],["寝る","ねる","to sleep"],["起きる","おきる","to wake up"],["分かる","わかる","to understand"],["会う","あう","to meet"],["使う","つかう","to use"],["勉強する","べんきょうする","to study"],["好き","すき","liked, favorite"],
+["大きい","おおきい","big"],["小さい","ちいさい","small"],["新しい","あたらしい","new"],["古い","ふるい","old (things)"],["高い","たかい","expensive, tall"],["安い","やすい","cheap"],["おいしい","おいしい","tasty"],["楽しい","たのしい","fun"],["忙しい","いそがしい","busy"],["暑い","あつい","hot (weather)"],
+["寒い","さむい","cold (weather)"],["元気","げんき","healthy, energetic"],["静か","しずか","quiet"],["きれい","きれい","pretty, clean"],["有名","ゆうめい","famous"],["本","ほん","book"],["電話","でんわ","telephone"],["お金","おかね","money"],["天気","てんき","weather"],["日本語","にほんご","Japanese language"]
+];
+const KANJI=[
+["一","one","いち・ひと"],["二","two","に・ふた"],["三","three","さん・みっ"],["四","four","よん・し"],["五","five","ご・いつ"],["六","six","ろく・むっ"],["七","seven","なな・しち"],["八","eight","はち・やっ"],["九","nine","きゅう・く"],["十","ten","じゅう・とお"],
+["百","hundred","ひゃく"],["千","thousand","せん"],["万","ten thousand","まん"],["円","yen, circle","えん"],["日","day, sun","にち・ひ"],["月","month, moon","げつ・つき"],["火","fire","か・ひ"],["水","water","すい・みず"],["木","tree","もく・き"],["金","gold, money","きん・かね"],
+["土","earth, soil","ど・つち"],["年","year","ねん・とし"],["時","time, hour","じ・とき"],["分","minute, part","ふん・わ(かる)"],["人","person","じん・ひと"],["男","man","だん・おとこ"],["女","woman","じょ・おんな"],["子","child","し・こ"],["口","mouth","こう・くち"],["目","eye","もく・め"],
+["手","hand","しゅ・て"],["足","foot, leg","そく・あし"],["山","mountain","さん・やま"],["川","river","せん・かわ"],["上","up, above","じょう・うえ"],["下","down, below","か・した"],["左","left","さ・ひだり"],["右","right","う・みぎ"],["中","middle, inside","ちゅう・なか"],["大","big","だい・おお(きい)"],
+["小","small","しょう・ちい(さい)"],["食","eat","しょく・た(べる)"],["飲","drink","いん・の(む)"],["見","see","けん・み(る)"],["行","go","こう・い(く)"],["来","come","らい・く(る)"],["話","talk","わ・はな(す)"],["読","read","どく・よ(む)"],["書","write","しょ・か(く)"],["学","study","がく・まな(ぶ)"]
+];
+const CARDS={};
+HIRA.forEach(([c,r])=>CARDS['h:'+c]={deck:'hira',front:c,back:r,sub:'',say:c,label:c+' ('+r+')'});
+KATA.forEach(([c,r])=>CARDS['k:'+c]={deck:'kata',front:c,back:r,sub:'',say:c,label:c+' ('+r+')'});
+VOCAB.forEach(([w,r,e])=>CARDS['v:'+w]={deck:'vocab',front:w,back:e,sub:r!==w?r:'',say:r,label:w+' ('+e+')'});
+KANJI.forEach(([k,m,r])=>CARDS['j:'+k]={deck:'kanji',front:k,back:m,sub:r,say:r.split('・')[0].replace(/[()]/g,''),label:k+' ('+m+')'});
+const DECKS={
+  hira:{name:"Hiragana",icon:"あ",ids:Object.keys(CARDS).filter(i=>i.startsWith('h:'))},
+  kata:{name:"Katakana",icon:"ア",ids:Object.keys(CARDS).filter(i=>i.startsWith('k:'))},
+  vocab:{name:"Core words",icon:"言",ids:Object.keys(CARDS).filter(i=>i.startsWith('v:'))},
+  kanji:{name:"First kanji",icon:"字",ids:Object.keys(CARDS).filter(i=>i.startsWith('j:'))}
+};
+const QUIZZES=[
+ ["mixed","🎲","Quick mixed quiz","A bit of everything at your level"],
+ ["weak","🎯","My weak spots","Yuki drills what you keep missing"],
+ ["vocab","言","Vocabulary","Meanings both directions"],
+ ["grammar","文","Grammar","Fill in the particle or form"],
+ ["kanji","字","Kanji","Readings and meanings"],
+ ["listen","👂","Listening","Tap play, then answer"],
+ ["translate","🔁","Translation challenge","English → Japanese sentences"],
+ ["roleplay","🎭","Roleplay","Café, station, hotel, first date small talk"]
+];
+
+/* ============ STATE ============ */
+const KEY="yuki-sensei-v3";
+const DEFAULT={
+  v:3,onboarded:false,name:"",level:"n5",goal:"",
+  profile:{facts:[],weak:[],strong:[],learned:[]},
+  stats:{msgs:0,quizRight:0,quizWrong:0,cards:0,streak:0,lastDay:""},
+  done:[],cards:{},chat:[],currentLesson:null,
+  settings:{apiKey:"",model:"claude-haiku-4-5-20251001",rate:0.9,autoSpeakChat:false,speakEnglish:true,micLang:"ja-JP"}
+};
+let S=JSON.parse(JSON.stringify(DEFAULT));
+const UI={tab:"home",ob:0,fc:null,chart:null,voice:false,vstate:"idle",vyou:"",busy:false,listening:false};
+
+function merge(base,saved){for(const k in saved){if(saved[k]&&typeof saved[k]==="object"&&!Array.isArray(saved[k])&&base[k]&&typeof base[k]==="object")merge(base[k],saved[k]);else base[k]=saved[k];}return base;}
+let lsOK=true;
+try{localStorage.setItem("__t","1");localStorage.removeItem("__t");}catch(e){lsOK=false;}
+async function loadState(){
+  let raw=null;
+  if(lsOK){try{raw=localStorage.getItem(KEY);}catch(e){}}
+  else if(window.storage){try{const r=await window.storage.get(KEY);raw=r&&r.value;}catch(e){}}
+  if(raw){try{S=merge(JSON.parse(JSON.stringify(DEFAULT)),JSON.parse(raw));}catch(e){}}
+}
+let saveT=null;
+function save(){clearTimeout(saveT);saveT=setTimeout(()=>{const d=JSON.stringify(S);if(lsOK){try{localStorage.setItem(KEY,d);return;}catch(e){}}if(window.storage){window.storage.set(KEY,d).catch(()=>{});}},150);}
+
+/* ============ HELPERS ============ */
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const dayStr=d=>{d=d||new Date();return d.getFullYear()+"-"+(d.getMonth()+1)+"-"+d.getDate();};
+function touchDay(){const t=dayStr();if(S.stats.lastDay===t)return;const y=new Date();y.setDate(y.getDate()-1);S.stats.streak=(S.stats.lastDay===dayStr(y))?S.stats.streak+1:1;S.stats.lastDay=t;save();}
+function toast(t,ms){const el=$("#toast");el.textContent=t;el.classList.add("on");clearTimeout(el._t);el._t=setTimeout(()=>el.classList.remove("on"),ms||2200);}
+function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+function addUnique(list,items,cap){(items||[]).forEach(x=>{x=String(x).trim();if(!x)return;const i=list.findIndex(y=>y.toLowerCase()===x.toLowerCase());if(i>=0)list.splice(i,1);list.push(x);});while(list.length>cap)list.shift();}
+function greeting(){const h=new Date().getHours();return h<11?"おはよう":h<18?"こんにちは":"こんばんは";}
+function nextLesson(){return LESSONS.find(l=>l.level===S.level&&!S.done.includes(l.id));}
+function dueIds(ids){const now=Date.now();return ids.filter(id=>S.cards[id]&&S.cards[id].due<=now);}
+function md(t){
+  let h=esc(t);
+  h=h.replace(/\[\[([\s\S]+?)\]\]/g,(m,p)=>`<span class="listen"><button class="play" data-act="sayText" data-text="${p}">▶ Play audio</button><span class="hid" data-act="reveal">${p}</span></span>`);
+  h=h.replace(/\*\*(.+?)\*\*/g,"<b>$1</b>").replace(/__(.+?)__/g,"<b>$1</b>");
+  h=h.replace(/^#{1,4}\s*(.+)$/gm,"<b>$1</b>");
+  h=h.replace(/^\s*[-*]\s+/gm,"• ");
+  h=h.replace(/`([^`]+)`/g,"<code>$1</code>");
+  return h.replace(/\n/g,"<br>");
+}
+
+/* ============ SPEECH OUT ============ */
+const synth=window.speechSynthesis||null;
+let voices=[];
+function loadVoices(){if(synth)voices=synth.getVoices()||[];}
+if(synth){loadVoices();synth.onvoiceschanged=loadVoices;}
+function pickVoice(lang){
+  const L=lang.toLowerCase();
+  const list=voices.filter(v=>v.lang.replace("_","-").toLowerCase().startsWith(L.slice(0,2)));
+  return list.find(v=>/kyoko|o-ren|siri|premium|enhanced/i.test(v.name)&&v.lang.toLowerCase().replace("_","-")===L)||list.find(v=>v.lang.toLowerCase().replace("_","-")===L)||list[0]||null;
+}
+const JP=/[\u3040-\u30ff\u3400-\u9fff\uff66-\uff9f\u3005]/;
+function cleanSpeech(t){
+  return t.replace(/<<MEM>>[\s\S]*$/,"")
+   .replace(/\[\[|\]\]/g,"")
+   .replace(/([\u3400-\u9fff\u3005]+)[（(]([\u3040-\u30ff]+)[)）]/g,"$1")
+   .replace(/[*_#`>|]/g," ")
+   .replace(/\p{Extended_Pictographic}/gu,"")
+   .replace(/[→←↑↓•]/g,", ");
+}
+function segments(t){
+  const segs=[];let cur=null;
+  for(const ch of t){
+    const isJ=JP.test(ch), isL=/[A-Za-z]/.test(ch);
+    const kind=isJ?"ja":isL?"en":null;
+    if(!cur){cur={k:kind||"en",t:ch};continue;}
+    if(kind&&kind!==cur.k&&cur.t.trim().length&&(/[A-Za-z\u3040-\u9fff]/.test(cur.t))){segs.push(cur);cur={k:kind,t:ch};}
+    else{if(kind&&!/[A-Za-z\u3040-\u9fff]/.test(cur.t))cur.k=kind;cur.t+=ch;}
+  }
+  if(cur)segs.push(cur);
+  return segs.filter(s=>/[A-Za-z\u3040-\u9fff\u30a0-\u30ff]/.test(s.t));
+}
+function speak(text,opts){
+  opts=opts||{};
+  if(!synth){toast("Speech isn't supported in this browser");return;}
+  synth.cancel();
+  const segs=segments(cleanSpeech(text)).filter(s=>s.k==="ja"||S.settings.speakEnglish||opts.forceEnglish);
+  const rate=(opts.rate||S.settings.rate);
+  segs.forEach(s=>{
+    const u=new SpeechSynthesisUtterance(s.t.trim());
+    u.lang=s.k==="ja"?"ja-JP":"en-US";
+    const v=pickVoice(u.lang);if(v)u.voice=v;
+    u.rate=s.k==="ja"?rate:Math.min(1,rate+0.1);
+    u.pitch=s.k==="ja"?1.1:1.05;
+    synth.speak(u);
+  });
+}
+function stopSpeak(){if(synth)synth.cancel();}
+let unlocked=false;
+document.addEventListener("touchend",()=>{if(unlocked||!synth)return;unlocked=true;try{const u=new SpeechSynthesisUtterance(" ");u.volume=0;synth.speak(u);}catch(e){}},{once:false,passive:true});
+
+/* ============ SPEECH IN ============ */
+let rec=null;
+function micSupported(){return !!(window.SpeechRecognition||window.webkitSpeechRecognition);}
+function startMic(onText,onDone){
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!SR){micHelp("unsupported");return false;}
+  stopSpeak();
+  try{rec=new SR();}catch(e){micHelp("blocked");return false;}
+  rec.lang=S.settings.micLang;rec.interimResults=true;rec.continuous=false;rec.maxAlternatives=1;
+  let finalT="",errored=false;
+  rec.onresult=e=>{let interim="";for(let i=e.resultIndex;i<e.results.length;i++){const r=e.results[i];if(r.isFinal)finalT+=r[0].transcript;else interim+=r[0].transcript;}onText((finalT+interim).trim());};
+  rec.onerror=e=>{errored=true;UI.listening=false;refreshMic();
+    if(e.error==="not-allowed"||e.error==="service-not-allowed"||e.error==="audio-capture")micHelp("blocked");
+    else if(e.error==="no-speech")toast("I didn't hear anything — tap and try again");
+    else if(e.error!=="aborted")toast("Mic problem: "+e.error);};
+  rec.onend=()=>{UI.listening=false;refreshMic();if(!errored&&onDone)onDone(finalT.trim());};
+  try{rec.start();UI.listening=true;refreshMic();return true;}catch(e){UI.listening=false;micHelp("blocked");return false;}
+}
+function stopMic(){if(rec){try{rec.stop();}catch(e){}}}
+function refreshMic(){const b=$("#micBtn");if(b)b.classList.toggle("live",UI.listening);if(UI.voice)renderVoice();}
+function micHelp(kind){
+  sheet(`<div class="h2" style="margin-bottom:10px">🎤 The microphone is blocked</div>
+  <p class="sub" style="margin-bottom:12px">${kind==="unsupported"?"This browser doesn't support speech recognition.":"Your phone or browser said no to the mic."} Here's how to fix it:</p>
+  <ol>
+   <li><b>Open the app in Safari</b>, not inside the Claude app. Claude's preview window always blocks the mic.</li>
+   <li>iPhone <b>Settings → Apps → Safari → Microphone</b> → set to <b>Ask</b> or <b>Allow</b>.</li>
+   <li><b>Settings → General → Keyboard → Enable Dictation</b> must be on. Safari's speech recognition runs through it.</li>
+   <li>If it still fails from the home-screen icon, open the same link in regular Safari. Some iOS versions block the mic in home-screen web apps.</li>
+   <li><b>Backup that always works:</b> tap the text box and press the 🎤 on your iPhone keyboard. Switch the keyboard to 日本語 to dictate in Japanese.</li>
+  </ol>
+  <button class="btn" style="margin-top:14px" data-act="closeSheet">Got it</button>`);
+}
+
+/* ============ AI ============ */
+function systemPrompt(mode){
+  const p=S.profile, L=LV[S.level], les=S.currentLesson&&lessonById(S.currentLesson);
+  const due=dueIds(Object.keys(CARDS)).length;
+  return `You are Yuki (ゆき), a 26-year-old Japanese tutor from Kyoto who studied linguistics at Waseda. You are this student's personal tutor inside a learning app. You're warm, upbeat, a little playful, and honest. You correct every mistake kindly but clearly. You have your own personality and opinions; you're not a textbook.
+
+STUDENT
+- Name: ${S.name||"unknown"}
+- Level: JLPT ${L.label} (${L.name}). Goal: ${S.goal||"not stated"}
+- Lessons finished: ${S.done.length?S.done.map(id=>(lessonById(id)||{}).title).filter(Boolean).slice(-15).join(", "):"none yet"}
+- Things you know about them: ${p.facts.join("; ")||"nothing yet"}
+- Weak spots: ${p.weak.slice(-15).join("; ")||"none recorded"}
+- Strong spots: ${p.strong.slice(-10).join("; ")||"none recorded"}
+- Recently learned: ${p.learned.slice(-25).join("; ")||"nothing yet"}
+- Quiz record: ${S.stats.quizRight} right, ${S.stats.quizWrong} wrong. Flashcards due: ${due}.
+${les?`\nCURRENT LESSON: "${les.title}" — ${les.desc} (${LV[les.level].label}, unit "${les.unit}"). Teach it in small steps: short explanation → 2-3 examples → a quick practice question, then wait for their answer. Never dump the whole lesson at once. When they've shown they understand the core of it, congratulate them and tell them they can tap "✓ Done".`:""}
+
+HOW TO TEACH
+- Match their level. N5: mostly kana, simple kanji with reading in brackets like 学校(がっこう). Higher levels: natural Japanese.
+- Use romaji only for total beginners and only at first; push them toward kana.
+- Real, useful example sentences. Explain why, not just what.
+- If they make a mistake, show: what they wrote → the correct version → a one-line reason.
+- If they seem frustrated or tired, ease off, encourage, or switch to something fun.
+- Follow their requests directly: if they ask for a quiz, give a quiz; a roleplay, play the role; flashcard-style drilling, do it.
+- QUIZZES: one question at a time, wait for the answer, say right or wrong with a short reason, keep a running score (e.g. 3/4), finish after 10 or when they say stop, then summarize what to review.
+- LISTENING: when you want them to listen without reading, wrap the Japanese in double square brackets like [[きょうは いい てんき ですね]]. The app hides it behind a play button.
+- Keep replies short and chatty: usually under 120 words. Use line breaks, not big headers or tables.
+${mode==="voice"?`- VOICE CALL: they are talking to you out loud and hearing your reply through text-to-speech. Reply in 1-3 short spoken sentences. No lists, no markdown, no brackets, no romaji. Speak like a friend on a call. Keep the conversation going.`:""}
+
+MEMORY (very important)
+At the very end of EVERY reply, on its own line, write <<MEM>> followed by compact JSON with anything NEW from this turn. Fields (all optional): "facts" (things about the student's life, interests or preferences), "weak" (specific items they got wrong or struggle with), "strong" (things they clearly mastered), "learned" (new words or patterns taught, as "word = meaning"), "right" (number of quiz answers correct this turn), "wrong" (number incorrect this turn), "lessonDone" (true only when the current lesson's core is mastered). If nothing new: <<MEM>>{}. Never mention this line to the student.`;
+}
+function buildMessages(){
+  const msgs=[];
+  S.chat.slice(-30).forEach(m=>{
+    if(m.err)return;
+    const role=m.role==="user"?"user":"assistant";
+    const content=(m.role==="user"&&m.api)?m.api:m.text;
+    if(!msgs.length&&role!=="user")return;
+    if(msgs.length&&msgs[msgs.length-1].role===role)msgs[msgs.length-1].content+="\n\n"+content;
+    else msgs.push({role,content});
+  });
+  return msgs;
+}
+async function callAI(mode){
+  const key=S.settings.apiKey.trim();
+  const headers={"Content-Type":"application/json"};
+  let model="claude-sonnet-4-6";
+  if(key){headers["x-api-key"]=key;headers["anthropic-version"]="2023-06-01";headers["anthropic-dangerous-direct-browser-access"]="true";model=S.settings.model;}
+  const res=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers,body:JSON.stringify({model,max_tokens:1000,system:systemPrompt(mode),messages:buildMessages()})});
+  let data=null;try{data=await res.json();}catch(e){}
+  if(!res.ok||!data||data.error){const msg=(data&&data.error&&data.error.message)||("HTTP "+res.status);const err=new Error(msg);err.status=res.status;throw err;}
+  return (data.content||[]).map(b=>b.text||"").join("").trim();
+}
+function parseMem(raw){
+  const i=raw.lastIndexOf("<<MEM>>");
+  if(i<0)return{text:raw,mem:{}};
+  const text=raw.slice(0,i).trim();let mem={};
+  const m=raw.slice(i+7).match(/\{[\s\S]*\}/);
+  if(m){try{mem=JSON.parse(m[0]);}catch(e){}}
+  return{text,mem};
+}
+function applyMem(mem){
+  const p=S.profile;
+  addUnique(p.facts,mem.facts,30);
+  addUnique(p.learned,mem.learned,300);
+  if(mem.strong){addUnique(p.strong,mem.strong,30);p.weak=p.weak.filter(w=>!mem.strong.some(s=>s.toLowerCase()===w.toLowerCase()));}
+  addUnique(p.weak,mem.weak,30);
+  if(+mem.right)S.stats.quizRight+=+mem.right;
+  if(+mem.wrong)S.stats.quizWrong+=+mem.wrong;
+  if(mem.lessonDone&&S.currentLesson&&!S.done.includes(S.currentLesson)){S.done.push(S.currentLesson);toast("✅ Lesson complete!");}
+}
+async function send(display,apiText,mode){
+  display=(display||"").trim();if(!display||UI.busy)return;
+  UI.busy=true;touchDay();
+  S.chat.push({role:"user",text:display,api:apiText||undefined});S.stats.msgs++;
+  while(S.chat.length>200)S.chat.shift();
+  save();
+  if(!UI.voice&&UI.tab!=="chat"){UI.tab="chat";render();}else appendLast();
+  showTyping(true);
+  if(UI.voice){UI.vstate="thinking";renderVoice();}
+  try{
+    const raw=await callAI(UI.voice?"voice":mode);
+    const {text,mem}=parseMem(raw);
+    applyMem(mem);
+    S.chat.push({role:"assistant",text:text||"…"});save();
+    showTyping(false);appendLast();
+    if(UI.voice){UI.vstate="speaking";renderVoice();speak(text);}
+    else if(S.settings.autoSpeakChat)speak(text);
+  }catch(err){
+    showTyping(false);
+    const noKey=!S.settings.apiKey.trim();
+    const msg=noKey?"I need my own AI connection to think when I'm running outside Claude. Open <b>Me → AI setup</b> and paste your key — it takes two minutes.":
+      (err.status===401?"Your API key was rejected. Check it in <b>Me → AI setup</b>.":err.status===429?"Too many requests at once — wait a few seconds and try again.":err.status===400&&/credit|balance/i.test(err.message)?"Your API account is out of credit. Top it up in the Anthropic Console.":"I couldn't connect ("+esc(err.message)+"). Check your internet and try again.");
+    S.chat.push({role:"assistant",text:msg,err:true});save();appendLast();
+    if(UI.voice){UI.vstate="idle";renderVoice();toast("Connection problem — see the chat");}
+  }
+  UI.busy=false;
+  if(UI.voice&&UI.vstate!=="speaking"){UI.vstate="idle";renderVoice();}
+}
+
+/* ============ VIEWS ============ */
+function render(){
+  document.querySelectorAll("#tabs button").forEach(b=>b.classList.toggle("on",b.dataset.tab===UI.tab));
+  $("#tabs").classList.toggle("hidden",!S.onboarded);
+  const main=$("#main");
+  if(!S.onboarded){main.innerHTML=vOnboard();return;}
+  main.innerHTML=({home:vHome,chat:vChat,learn:vLearn,practice:vPractice,me:vMe}[UI.tab]||vHome)();
+  main.scrollTop=0;
+  if(UI.tab==="chat")afterChat();
+}
+
+function vOnboard(){
+  const step=UI.ob;
+  if(step===0)return`<div class="pad" style="padding-top:60px;text-align:center">
+    <div class="av big" style="margin:0 auto 18px;width:90px;height:90px;font-size:40px">ゆ</div>
+    <div class="h1">はじめまして！</div>
+    <p class="sub" style="margin:10px 0 28px">I'm Yuki, your Japanese tutor. I'll teach you, quiz you, talk with you out loud, and remember how you're doing.</p>
+    <input id="obName" class="field" placeholder="What should I call you?" autocomplete="given-name" value="${esc(S.name)}">
+    <button class="btn" data-act="ob" data-step="1" style="margin-top:8px">Next</button></div>`;
+  if(step===1)return`<div class="pad" style="padding-top:40px">
+    <div class="h1">How much Japanese do you know?</div><p class="sub" style="margin:8px 0 18px">No wrong answer. You can change it anytime.</p>
+    ${[["n5","🌱","Total beginner","I can't read anything yet"],["n5b","あ","I know some kana","I can read a bit of hiragana"],["n4","🌿","Basic","I know N5 stuff: です, ます, simple kanji"],["n3","🌳","Intermediate","I can hold simple conversations"],["n2","🏯","Advanced","I want polish and real-world Japanese"]].map(([v,i,t,d])=>`<button class="row" data-act="obLevel" data-v="${v}"><span class="ri">${i}</span><span class="rt"><b>${t}</b><span>${d}</span></span></button>`).join("")}</div>`;
+  if(step===2)return`<div class="pad" style="padding-top:40px">
+    <div class="h1">Why are you learning?</div><p class="sub" style="margin:8px 0 18px">I'll use this to pick examples you'll actually use.</p>
+    ${[["✈️","Travel in Japan"],["🎌","Anime, manga & games"],["💼","Work or business"],["🏠","Moving to / living in Japan"],["❤️","Friends, partner or family"],["🧠","Just for fun"]].map(([i,t])=>`<button class="row" data-act="obGoal" data-v="${esc(t)}"><span class="ri">${i}</span><span class="rt"><b>${t}</b></span></button>`).join("")}</div>`;
+  return"";
+}
+
+function vHome(){
+  const next=nextLesson(), dueAll=dueIds(Object.keys(CARDS)).length, weak=S.profile.weak.slice(-6).reverse();
+  return`<div class="pad">
+  <div class="hello"><div class="av big">ゆ</div><div><div class="h1">${greeting()}${S.name?", "+esc(S.name):""}</div>
+  <div class="sub">🔥 ${S.stats.streak||0} day streak · ${LV[S.level].label} ${LV[S.level].name}</div></div></div>
+  ${S.currentLesson&&lessonById(S.currentLesson)&&!S.done.includes(S.currentLesson)?`<button class="card hero" data-act="tab" data-tab="chat"><div class="tag">IN PROGRESS</div><div class="h2">${esc(lessonById(S.currentLesson).title)}</div><div class="go">Continue with Yuki →</div></button>`:
+   next?`<button class="card hero" data-act="lesson" data-id="${next.id}"><div class="tag">YOUR NEXT LESSON · ${esc(next.unit)}</div><div class="h2">${esc(next.title)}</div><div class="sub" style="margin-top:4px">${esc(next.desc)}</div><div class="go">Start with Yuki →</div></button>`:
+   `<div class="card"><b>You've finished every ${LV[S.level].label} lesson! 🎉</b><p class="sub" style="margin-top:6px">Move up a level in Me, or ask Yuki for a review session.</p></div>`}
+  <div class="grid2">
+    <button class="tile" data-act="voice"><span class="ico">🎙️</span>Talk out loud<small>Voice conversation</small></button>
+    <button class="tile" data-act="tab" data-tab="chat"><span class="ico">💬</span>Chat<small>Ask Yuki anything</small></button>
+    <button class="tile" data-act="review"><span class="ico">🃏</span>Review<small>${dueAll?dueAll+" cards due":"Flashcards"}</small></button>
+    <button class="tile" data-act="quiz" data-q="mixed"><span class="ico">🧩</span>Quick quiz<small>10 questions</small></button>
+  </div>
+  ${weak.length?`<div class="sec">Yuki noticed you struggle with</div><div class="card"><div class="tags">${weak.map(w=>`<span class="tg w">${esc(w)}</span>`).join("")}</div><button class="btn sm ghost" style="margin-top:12px" data-act="quiz" data-q="weak">Drill these with Yuki</button></div>`:""}
+  <div class="sec">Progress</div>
+  <div class="card"><div class="stat3">
+    <div class="stat"><b style="color:var(--matcha)">${S.done.length}</b><span>Lessons done</span></div>
+    <div class="stat"><b style="color:var(--sky)">${Object.keys(S.cards).length}</b><span>Cards learned</span></div>
+    <div class="stat"><b style="color:var(--sakura)">${S.stats.quizRight}</b><span>Quiz answers right</span></div>
+  </div></div></div>`;
+}
+
+function vChat(){
+  const les=S.currentLesson&&lessonById(S.currentLesson);
+  const chips=les?["I don't get it","Give me an example","Quiz me on this","Next step","Say it slower 🔊"]:["Quiz me","Teach me something new","Let's practice talking","Explain simpler","Say it slower 🔊"];
+  return`<div class="chat">
+  <div class="chathead"><div class="av">ゆ</div><div class="ct"><b>Yuki</b><small>${les?"📖 "+esc(les.title):"Your tutor · "+LV[S.level].label}</small></div>
+   ${les?`${S.done.includes(les.id)?"":`<button class="mini ok" data-act="lessonDone">✓ Done</button>`}<button class="mini" data-act="lessonExit">✕</button>`:""}
+   <button class="iconbtn" data-act="voice" aria-label="Voice call">📞</button></div>
+  <div id="msgs" class="msgs">${S.chat.length?S.chat.map(msgHTML).join(""):emptyChat()}</div>
+  <div class="chatfoot"><div class="chips">${chips.map(c=>`<button class="chip" data-act="chip" data-t="${esc(c)}">${esc(c)}</button>`).join("")}</div>
+  <div class="inputbar"><button id="micBtn" class="iconbtn${UI.listening?" live":""}" data-act="mic" aria-label="Speak">🎤</button>
+  <textarea id="inp" rows="1" placeholder="Type, or tap 🎤 to speak…" enterkeyhint="send"></textarea>
+  <button class="send" data-act="send" aria-label="Send">↑</button></div></div></div>`;
+}
+function emptyChat(){return`<div style="text-align:center;padding:30px 10px" class="sub"><div class="av big" style="margin:0 auto 12px">ゆ</div>Ask me anything, or try one of the buttons below.</div>`;}
+function msgHTML(m,i){
+  if(m.role==="user")return`<div class="m u"><div class="bub">${esc(m.text)}</div></div>`;
+  if(m.err)return`<div class="m a"><div class="av">ゆ</div><div class="err">${m.text}<br><button class="mini" style="margin-top:8px" data-act="tab" data-tab="me">Open AI setup</button></div></div>`;
+  return`<div class="m a"><div class="av">ゆ</div><div class="bubwrap"><div class="bub">${md(m.text)}</div><button class="say" data-act="sayMsg" data-i="${i}">🔊 Listen</button></div></div>`;
+}
+function afterChat(){
+  const box=$("#msgs");if(box)box.scrollTop=box.scrollHeight;
+  const inp=$("#inp");if(!inp)return;
+  const grow=()=>{inp.style.height="auto";inp.style.height=Math.min(inp.scrollHeight,120)+"px";};
+  inp.addEventListener("input",grow);
+  inp.addEventListener("keydown",e=>{if(e.key==="Enter"&&!e.shiftKey&&!e.isComposing){e.preventDefault();doSend();}});
+}
+function doSend(){const inp=$("#inp");if(!inp)return;const t=inp.value;inp.value="";inp.style.height="auto";send(t);}
+function appendLast(){
+  if(UI.tab!=="chat"||!$("#msgs")){return;}
+  const box=$("#msgs");const i=S.chat.length-1;
+  if(i===0)box.innerHTML="";
+  box.insertAdjacentHTML("beforeend",msgHTML(S.chat[i],i));
+  const t=$("#typing");if(t)box.appendChild(t);
+  box.scrollTop=box.scrollHeight;
+}
+function showTyping(on){
+  const box=$("#msgs");if(!box)return;const t=$("#typing");
+  if(on&&!t){box.insertAdjacentHTML("beforeend",`<div class="m a" id="typing"><div class="av">ゆ</div><div class="bub"><div class="dots"><i></i><i></i><i></i></div></div></div>`);box.scrollTop=box.scrollHeight;}
+  if(!on&&t)t.remove();
+}
+
+function vLearn(){
+  const units=CUR[S.level]||[];
+  const total=units.reduce((a,[,ls])=>a+ls.length,0), done=units.reduce((a,[,ls])=>a+ls.filter(l=>S.done.includes(l[0])).length,0);
+  return`<div class="pad"><div class="h1">Lessons</div>
+  <div class="chips" style="margin:12px 0 6px">${Object.entries(LV).map(([k,v])=>`<button class="chip${S.level===k?" on":""}" data-act="setLevel" data-v="${k}">${v.label} ${v.name}</button>`).join("")}</div>
+  <div class="sub">${done} of ${total} done</div><div class="bar"><i style="width:${total?Math.round(done/total*100):0}%"></i></div>
+  <p class="sub" style="margin:10px 0 4px">Tap any lesson and Yuki teaches it step by step. Go in any order.</p>
+  ${units.map(([u,ls])=>`<div class="sec">${esc(u)}</div>${ls.map(([id,t,d])=>{const ok=S.done.includes(id);return`<button class="row${ok?" done":""}" data-act="lesson" data-id="${id}"><span class="ri">${ok?"✓":"▶"}</span><span class="rt"><b>${esc(t)}</b><span>${esc(d)}</span></span></button>`;}).join("")}`).join("")}
+  </div>`;
+}
+
+function vPractice(){
+  if(UI.fc)return vCard();
+  if(UI.chart)return vChart();
+  return`<div class="pad"><div class="h1">Practice</div>
+  <div class="sec">Flashcards — work offline, remember what you miss</div>
+  ${Object.entries(DECKS).map(([k,d])=>{const learned=d.ids.filter(i=>S.cards[i]).length,due=dueIds(d.ids).length;
+    return`<button class="row" data-act="deck" data-d="${k}"><span class="ri">${d.icon}</span><span class="rt"><b>${d.name}</b><span>${learned}/${d.ids.length} learned${due?" · <b style='display:inline;color:var(--sakura)'>"+due+" due</b>":""}</span></span></button>`;}).join("")}
+  <div class="sec">Charts — tap any character to hear it</div>
+  <div class="grid2"><button class="tile" data-act="chart" data-c="hira"><span class="ico">あ</span>Hiragana chart</button><button class="tile" data-act="chart" data-c="kata"><span class="ico">ア</span>Katakana chart</button></div>
+  <div class="sec">Quizzes with Yuki</div>
+  ${QUIZZES.map(([id,i,t,d])=>`<button class="row" data-act="quiz" data-q="${id}"><span class="ri">${i}</span><span class="rt"><b>${t}</b><span>${d}</span></span></button>`).join("")}
+  </div>`;
+}
+function vChart(){
+  const isH=UI.chart==="hira", rows=isH?HR:KR;
+  const weakSet=new Set(S.profile.weak.map(w=>w.split(" ")[0]));
+  const cells=rows.map((r,ri)=>{const ro=RR[ri].split(" ");return[...r].map((ch,ci)=>ch===" "||!ro[ci]||ro[ci]==="-"?`<div class="kc blank"></div>`:`<button class="kc${weakSet.has(ch)?" weak":""}" data-act="sayText" data-text="${ch}"><b>${ch}</b><span>${ro[ci]}</span></button>`).join("");}).join("");
+  const combos=(isH?HIRA:KATA).filter(([c])=>c.length===2);
+  return`<div class="pad"><button class="mini" data-act="closeChart">← Back</button>
+  <div class="h1" style="margin:14px 0 4px">${isH?"Hiragana":"Katakana"}</div><p class="sub" style="margin-bottom:14px">Tap to hear. Red borders are ones you've missed.</p>
+  <div class="kgrid">${cells}</div>
+  <div class="sec">Combinations</div><div class="kgrid" style="grid-template-columns:repeat(3,1fr)">${combos.map(([c,r])=>`<button class="kc" data-act="sayText" data-text="${c}"><b>${c}</b><span>${r}</span></button>`).join("")}</div>
+  <button class="btn" style="margin-top:18px" data-act="deck" data-d="${isH?"hira":"kata"}">Practice with flashcards</button></div>`;
+}
+function startDeck(d){
+  const ids=d==="all"?Object.keys(S.cards):DECKS[d].ids;
+  let q=shuffle(dueIds(ids)).slice(0,20);
+  if(d!=="all"&&q.length<20)q=q.concat(ids.filter(i=>!S.cards[i]).slice(0,Math.min(8,20-q.length)));
+  if(!q.length){toast(d==="all"?"Nothing due right now — pick a deck":"All caught up here! 🎉");if(d==="all"){UI.tab="practice";render();}return;}
+  UI.fc={deck:d,q,i:0,flip:false,right:0,wrong:0,missed:[],requeued:{}};UI.tab="practice";render();
+  setTimeout(()=>speakCard(),250);
+}
+function speakCard(){const f=UI.fc;if(!f||f.i>=f.q.length)return;speak(CARDS[f.q[f.i]].say,{rate:0.85});}
+function vCard(){
+  const f=UI.fc;
+  if(f.i>=f.q.length){
+    const missed=[...new Set(f.missed)];
+    return`<div class="pad" style="text-align:center;padding-top:50px"><div style="font-size:64px">${f.wrong===0?"🌸":"💪"}</div>
+    <div class="h1" style="margin:10px 0">${f.wrong===0?"Perfect round!":"Round done!"}</div>
+    <p class="sub">${f.right} right · ${f.wrong} missed</p>
+    ${missed.length?`<div class="card" style="margin-top:18px;text-align:left"><b>You missed:</b><div class="tags" style="margin-top:8px">${missed.map(id=>`<span class="tg w">${esc(CARDS[id].label)}</span>`).join("")}</div>
+    <button class="btn sm" style="margin-top:12px" data-act="askMisses">Ask Yuki for tricks to remember these</button></div>`:""}
+    <button class="btn ghost" style="margin-top:12px" data-act="deck" data-d="${f.deck}">Another round</button>
+    <button class="btn ghost" style="margin-top:8px" data-act="closeDeck">Done</button></div>`;
+  }
+  const c=CARDS[f.q[f.i]];
+  return`<div class="pad"><div style="display:flex;justify-content:space-between;align-items:center"><button class="mini" data-act="closeDeck">✕ Stop</button><span class="sub">${f.i+1} / ${f.q.length}</span></div>
+  <div class="bar"><i style="width:${Math.round(f.i/f.q.length*100)}%"></i></div>
+  <div class="fc" data-act="flip"><div class="fcin">
+   <div class="fcf${c.front.length>2?" long":""}">${esc(c.front)}</div>
+   ${f.flip?`${c.sub?`<div class="fcs">${esc(c.sub)}</div>`:""}<div class="fcb">${esc(c.back)}</div>`:`<div class="sub">Think of the answer, then tap to flip</div>`}
+  </div></div>
+  <button class="btn ghost sm" data-act="sayCard" style="margin-bottom:10px">🔊 Hear it again</button>
+  ${f.flip?`<div class="grid2"><button class="btn ghost" style="border-color:var(--red)" data-act="grade" data-ok="0">✗ Missed it</button><button class="btn" style="background:var(--matcha)" data-act="grade" data-ok="1">✓ Got it</button></div>`:`<button class="btn" data-act="flip">Show answer</button>`}
+  </div>`;
+}
+const INT=[0,10*60e3,864e5,3*864e5,7*864e5,16*864e5,35*864e5];
+function grade(ok){
+  const f=UI.fc,id=f.q[f.i],c=S.cards[id]||{box:0,due:0},card=CARDS[id];
+  if(ok){c.box=Math.min(c.box+1,6);c.due=Date.now()+INT[c.box];f.right++;
+    if(c.box>=3){S.profile.weak=S.profile.weak.filter(w=>w!==card.label);}}
+  else{c.box=0;c.due=Date.now();f.wrong++;f.missed.push(id);addUnique(S.profile.weak,[card.label],30);
+    if(!f.requeued[id]){f.requeued[id]=1;f.q.push(id);}}
+  S.cards[id]=c;S.stats.cards++;touchDay();save();
+  f.i++;f.flip=false;render();setTimeout(speakCard,200);
+}
+
+function vMe(){
+  const st=S.settings, keySet=!!st.apiKey.trim();
+  const sw=(k,on,label)=>`<div class="toggle"><span>${label}</span><button class="sw${on?" on":""}" data-act="toggle" data-k="${k}" aria-label="${label}"></button></div>`;
+  return`<div class="pad"><div class="h1">Me</div>
+  <div class="sec">Profile</div><div class="card">
+   <label class="sub">Name</label><input class="field" data-set="name" value="${esc(S.name)}">
+   <label class="sub">Level</label><div class="chips" style="margin:6px 0 10px">${Object.entries(LV).map(([k,v])=>`<button class="chip${S.level===k?" on":""}" data-act="setLevel" data-v="${k}">${v.label}</button>`).join("")}</div>
+   <label class="sub">Goal</label><input class="field" data-set="goal" value="${esc(S.goal)}" placeholder="e.g. travel to Tokyo next spring">
+  </div>
+  <div class="sec">🧠 AI setup ${keySet?"· <span style='color:var(--matcha)'>connected</span>":"· <span style='color:var(--gold)'>needed outside Claude</span>"}</div>
+  <div class="card">
+   <p class="sub" style="margin-bottom:8px">Yuki's brain is Claude, through your own Anthropic API key. It's pay-as-you-go and the key is stored only on this phone.</p>
+   <input class="field" id="keyIn" type="password" placeholder="sk-ant-…" value="${esc(st.apiKey)}" autocomplete="off" autocapitalize="off" spellcheck="false">
+   <label class="sub">Brain</label>
+   <select class="field" data-set="model">
+     <option value="claude-sonnet-5-5"${st.model==="claude-sonnet-5-5"?" selected":""}>Smart (Sonnet) — best tutor</option>
+     <option value="claude-haiku-4-5-20251001"${st.model==="claude-haiku-4-5-20251001"?" selected":""}>Fast & cheap (Haiku)</option>
+   </select>
+   <div class="grid2"><button class="btn sm" data-act="saveKey">Save key</button><button class="btn sm ghost" data-act="testAI">Test Yuki</button></div>
+   <button class="btn sm ghost" style="margin-top:8px" data-act="keyHelp">How do I get a key?</button>
+  </div>
+  <div class="sec">🔊 Voice</div><div class="card">
+   ${sw("autoSpeakChat",st.autoSpeakChat,"Read replies aloud in chat")}
+   ${sw("speakEnglish",st.speakEnglish,"Read English parts too")}
+   <div class="toggle"><span>Speaking speed</span><input type="range" min="0.5" max="1.2" step="0.05" value="${st.rate}" data-set="rate" style="width:45%"></div>
+   <div class="toggle"><span>Mic listens for</span><div class="chips"><button class="chip${st.micLang==="ja-JP"?" on":""}" data-act="micLang" data-v="ja-JP">日本語</button><button class="chip${st.micLang==="en-US"?" on":""}" data-act="micLang" data-v="en-US">English</button></div></div>
+   <button class="btn sm ghost" style="margin-top:8px" data-act="testVoice">Test voice</button>
+  </div>
+  <div class="sec">What Yuki remembers about you</div><div class="card">
+   ${S.profile.facts.length?`<div class="tags">${S.profile.facts.map(f=>`<span class="tg">${esc(f)}</span>`).join("")}</div>`:`<p class="sub">Nothing yet — chat with her and she'll pick things up.</p>`}
+   ${S.profile.strong.length?`<p class="sub" style="margin:12px 0 6px">Strong at</p><div class="tags">${S.profile.strong.slice(-12).map(f=>`<span class="tg s">${esc(f)}</span>`).join("")}</div>`:""}
+   ${S.profile.weak.length?`<p class="sub" style="margin:12px 0 6px">Working on</p><div class="tags">${S.profile.weak.slice(-12).map(f=>`<span class="tg w">${esc(f)}</span>`).join("")}</div>`:""}
+   <p class="sub" style="margin-top:12px">${S.profile.learned.length} words & patterns taught · ${S.stats.msgs} messages · ${S.stats.cards} cards reviewed</p>
+  </div>
+  <div class="sec">Data</div><div class="card">
+   <div class="grid2"><button class="btn sm ghost" data-act="exportData">Back up</button><button class="btn sm ghost" data-act="importData">Restore</button></div>
+   <button class="btn sm ghost" style="margin-top:8px" data-act="clearChat">Clear chat (keeps progress)</button>
+   <button class="btn sm ghost" style="margin-top:8px;color:var(--red)" data-act="resetAll">Reset everything</button>
+  </div></div>`;
+}
+
+/* ============ VOICE CALL ============ */
+function openVoice(){UI.voice=true;UI.vstate="idle";UI.vyou="";$("#voice").classList.remove("hidden");renderVoice();
+  if(!S.chat.length||S.chat[S.chat.length-1].role!=="assistant"){/* nothing */}}
+function closeVoice(){UI.voice=false;stopMic();stopSpeak();$("#voice").classList.add("hidden");if(UI.tab==="chat")render();}
+function renderVoice(){
+  if(!UI.voice)return;
+  const last=[...S.chat].reverse().find(m=>m.role==="assistant");
+  const st=UI.listening?"listening":UI.vstate;
+  const label={idle:"Tap the mic and talk to me",listening:"Listening… tap again when you're done",thinking:"Thinking…",speaking:"Speaking… tap the mic to interrupt"}[st];
+  $("#voice").innerHTML=`<div class="vtop"><button class="mini" data-act="closeVoice">✕ End</button>
+   <div class="chips"><button class="chip${S.settings.micLang==="ja-JP"?" on":""}" data-act="micLang" data-v="ja-JP">I speak 日本語</button><button class="chip${S.settings.micLang==="en-US"?" on":""}" data-act="micLang" data-v="en-US">English</button></div></div>
+   <div class="orbwrap"><div class="orb ${st}">ゆ</div><div class="vstat">${label}</div>
+   <div class="vtext">${last&&!last.err?md(last.text):last&&last.err?last.text:"Say hi! Try 「こんにちは」 or ask me something in English."}</div>
+   <div class="vyou">${UI.vyou?"You: "+esc(UI.vyou):""}</div></div>
+   <div class="vctrl"><button class="vside" data-act="vRepeat">🔁<small>Repeat</small></button>
+   <button class="bigmic${UI.listening?" live":""}" data-act="vMic">${UI.listening?"■":"🎤"}</button>
+   <button class="vside" data-act="vSlow">🐢<small>Slower</small></button></div>`;
+}
+setInterval(()=>{if(UI.voice&&UI.vstate==="speaking"&&synth&&!synth.speaking&&!synth.pending){UI.vstate="idle";renderVoice();}},400);
+function voiceMic(){
+  if(UI.listening){stopMic();return;}
+  stopSpeak();UI.vyou="";
+  startMic(t=>{UI.vyou=t;const y=document.querySelector(".vyou");if(y)y.textContent=t?"You: "+t:"";},
+    final=>{if(final){UI.vyou=final;send(final,null,"voice");}else{UI.vstate="idle";renderVoice();}});
+}
+
+/* ============ SHEET ============ */
+function sheet(html){const s=$("#sheet");s.innerHTML=`<div class="sh">${html}</div>`;s.classList.remove("hidden");}
+function closeSheet(){$("#sheet").classList.add("hidden");$("#sheet").innerHTML="";}
+$("#sheet").addEventListener("click",e=>{if(e.target.id==="sheet")closeSheet();});
+
+/* ============ ACTIONS ============ */
+function startLesson(id){
+  const l=lessonById(id);if(!l)return;
+  S.currentLesson=id;if(l.level!==S.level)S.level=l.level;save();
+  UI.tab="chat";render();
+  send(`📖 Start lesson: ${l.title}`,`Let's start the lesson "${l.title}" (${l.desc}). Teach me step by step at my level, starting from the basics of this topic.`);
+}
+const QUIZ_PROMPTS={
+  mixed:"Give me a 10-question mixed quiz at my level (vocab, grammar, kanji, reading). One question at a time.",
+    vocab:"Give me a 10-question vocabulary quiz at my level, mixing Japanese→English and English→Japanese. One at a time.",
+  grammar:"Give me a 10-question grammar quiz at my level: fill-in-the-blank particles and verb forms. One at a time.",
+  kanji:"Give me a 10-question kanji quiz at my level: readings and meanings. One at a time.",
+  listen:"Give me a 10-question listening quiz. Put each Japanese sentence in [[double brackets]] so it's hidden, then ask me a question about it. One at a time.",
+  translate:"Give me a 10-sentence English→Japanese translation challenge at my level, using things I've learned. One at a time, correct each one carefully.",
+  roleplay:"Let's do a roleplay. Pick a realistic situation for my level and goal (café, station, hotel, shop, meeting someone new), set the scene in one line, then start speaking in character in Japanese. Correct me gently as we go."
+};
+function startQuiz(q){
+  const t=QUIZZES.find(x=>x[0]===q);
+  let p=QUIZ_PROMPTS[q];
+  if(q==="weak")p=`Drill my weak spots with a 10-question quiz, one at a time: ${S.profile.weak.slice(-12).join(", ")||"pick what learners at my level usually struggle with"}.`;
+  S.currentLesson=null;save();UI.tab="chat";render();
+  send(`🧩 ${t?t[2]:"Quiz"}`,p);
+}
+const ACT={
+  tab:el=>{UI.tab=el.dataset.tab;if(UI.tab!=="practice"){UI.fc=null;UI.chart=null;}render();},
+  ob:el=>{const n=$("#obName");S.name=n?n.value.trim():S.name;UI.ob=+el.dataset.step;render();},
+  obLevel:el=>{const v=el.dataset.v;S.level=v==="n5b"?"n5":v;S._kana=v==="n5b";UI.ob=2;render();},
+  obGoal:el=>{S.goal=el.dataset.v;S.onboarded=true;
+    S.chat=[{role:"assistant",text:`はじめまして${S.name?"、"+S.name+"さん":""}！ I'm Yuki 🌸\n\nHere's how we'll work together:\n• **Learn** has lessons — tap one and I'll teach it step by step\n• **Practice** has flashcards and kana charts that work even offline\n• Tap 📞 up top to talk to me out loud\n• Or just type anything: "quiz me", "what does すみません mean?", "let's roleplay ordering ramen"\n\nI'll remember what you're good at and what trips you up. Ready? Try saying こんにちは!`}];
+    if(S._kana){S.done.push("intro","sounds");}delete S._kana;
+    touchDay();save();UI.tab="home";render();},
+  lesson:el=>startLesson(el.dataset.id),
+  lessonDone:()=>{if(S.currentLesson&&!S.done.includes(S.currentLesson))S.done.push(S.currentLesson);const n=nextLesson();S.currentLesson=null;save();toast("✅ Lesson complete!");render();
+    if(n)setTimeout(()=>sheet(`<div class="h2">Nice work! 🎉</div><p class="sub" style="margin:8px 0 16px">Next up: <b>${esc(n.title)}</b></p><button class="btn" data-act="lesson" data-id="${n.id}">Start it now</button><button class="btn ghost" style="margin-top:8px" data-act="closeSheet">Later</button>`),300);},
+  lessonExit:()=>{S.currentLesson=null;save();render();},
+  setLevel:el=>{S.level=el.dataset.v;save();render();},
+  send:()=>doSend(),
+  chip:el=>{const t=el.dataset.t;if(t.startsWith("Say it slower")){const last=[...S.chat].reverse().find(m=>m.role==="assistant"&&!m.err);if(last)speak(last.text,{rate:0.6});return;}send(t);},
+  mic:()=>{if(UI.listening){stopMic();return;}const inp=$("#inp");startMic(t=>{if(inp){inp.value=t;inp.dispatchEvent(new Event("input"));}},final=>{if(final&&inp&&inp.value.trim())doSend();});},
+  sayMsg:el=>{const m=S.chat[+el.dataset.i];if(m)speak(m.text);},
+  sayText:el=>speak(el.dataset.text,{rate:0.8}),
+  reveal:el=>el.classList.toggle("show"),
+  voice:()=>openVoice(),
+  closeVoice:()=>closeVoice(),
+  vMic:()=>voiceMic(),
+  vRepeat:()=>{const l=[...S.chat].reverse().find(m=>m.role==="assistant"&&!m.err);if(l){UI.vstate="speaking";renderVoice();speak(l.text);}},
+  vSlow:()=>{const l=[...S.chat].reverse().find(m=>m.role==="assistant"&&!m.err);if(l){UI.vstate="speaking";renderVoice();speak(l.text,{rate:0.6});}},
+  micLang:el=>{S.settings.micLang=el.dataset.v;save();if(UI.voice)renderVoice();else render();},
+  review:()=>startDeck("all"),
+  deck:el=>startDeck(el.dataset.d),
+  flip:()=>{if(UI.fc&&!UI.fc.flip){UI.fc.flip=true;render();}},
+  sayCard:()=>speakCard(),
+  grade:el=>grade(el.dataset.ok==="1"),
+  closeDeck:()=>{UI.fc=null;render();},
+  askMisses:()=>{const ms=[...new Set(UI.fc.missed)].map(id=>CARDS[id].label);UI.fc=null;send("🃏 Help me remember the cards I missed",`I just did flashcards and missed these: ${ms.join(", ")}. Give me memorable tricks or mnemonics for each, then quiz me on them one at a time.`);},
+  chart:el=>{UI.chart=el.dataset.c;render();},
+  closeChart:()=>{UI.chart=null;render();},
+  quiz:el=>startQuiz(el.dataset.q),
+  toggle:el=>{const k=el.dataset.k;S.settings[k]=!S.settings[k];save();el.classList.toggle("on",S.settings[k]);},
+  saveKey:()=>{S.settings.apiKey=$("#keyIn").value.trim();save();toast(S.settings.apiKey?"Key saved on this phone 🔐":"Key removed");render();},
+  testAI:async()=>{const v=$("#keyIn");if(v){S.settings.apiKey=v.value.trim();save();}toast("Calling Yuki…");
+    try{const key=S.settings.apiKey;const h={"Content-Type":"application/json"};let model="claude-sonnet-4-6";if(key){h["x-api-key"]=key;h["anthropic-version"]="2023-06-01";h["anthropic-dangerous-direct-browser-access"]="true";model=S.settings.model;}
+      const r=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:h,body:JSON.stringify({model,max_tokens:60,messages:[{role:"user",content:"Say a one-line cheerful hello in Japanese with English in brackets."}]})});
+      const d=await r.json();if(!r.ok||d.error)throw new Error((d.error&&d.error.message)||r.status);
+      const t=(d.content||[]).map(b=>b.text||"").join("");toast("✅ "+t,4000);speak(t);}
+    catch(e){toast("❌ "+e.message,5000);}},
+  keyHelp:()=>sheet(`<div class="h2" style="margin-bottom:10px">Getting Yuki's brain (API key)</div><ol>
+    <li>Go to <b>console.anthropic.com</b> in Safari and sign up.</li>
+    <li>Open <b>Billing</b> and add a little credit. Set a monthly spend limit there so you're never surprised.</li>
+    <li>Open <b>API Keys → Create Key</b>, name it "Yuki", and copy it.</li>
+    <li>Come back here, paste it in the box, tap <b>Save key</b>, then <b>Test Yuki</b>.</li></ol>
+    <p class="sub" style="margin-top:10px">The key lives only on this phone. The app file itself has no key in it, so sharing the link doesn't share your key. Pick "Fast & cheap" if you want it to cost less.</p>
+    <button class="btn" style="margin-top:14px" data-act="closeSheet">Got it</button>`),
+  testVoice:()=>speak("こんにちは！ゆきです。 Hi, this is how I sound.",{forceEnglish:true}),
+  exportData:()=>{const d=JSON.stringify({...S,settings:{...S.settings,apiKey:""}});sheet(`<div class="h2">Backup</div><p class="sub" style="margin:8px 0">Copy this and keep it somewhere safe (Notes works). Your API key isn't included.</p><textarea class="field" rows="6" readonly>${esc(d)}</textarea><button class="btn" data-act="copyBackup">Copy</button><button class="btn ghost" style="margin-top:8px" data-act="closeSheet">Close</button>`);},
+  copyBackup:()=>{const t=document.querySelector("#sheet textarea");if(navigator.clipboard)navigator.clipboard.writeText(t.value).then(()=>toast("Copied"),()=>{t.select();toast("Select all and copy");});else{t.select();toast("Select all and copy");}},
+  importData:()=>sheet(`<div class="h2">Restore</div><p class="sub" style="margin:8px 0">Paste a backup below.</p><textarea id="impT" class="field" rows="6"></textarea><button class="btn" data-act="doImport">Restore</button><button class="btn ghost" style="margin-top:8px" data-act="closeSheet">Cancel</button>`),
+  doImport:()=>{try{const d=JSON.parse($("#impT").value);const key=S.settings.apiKey;S=merge(JSON.parse(JSON.stringify(DEFAULT)),d);S.settings.apiKey=key;save();closeSheet();toast("Restored ✅");render();}catch(e){toast("That doesn't look like a backup");}},
+  clearChat:()=>{if(confirm("Clear the chat? Your progress and what Yuki knows about you stay.")){S.chat=[];S.currentLesson=null;save();toast("Chat cleared");}},
+  resetAll:()=>{if(confirm("Erase EVERYTHING — progress, cards, memory, chat?")){const key=S.settings.apiKey;S=JSON.parse(JSON.stringify(DEFAULT));S.settings.apiKey=key;UI.ob=0;UI.tab="home";save();render();}},
+  closeSheet:()=>closeSheet()
+};
+document.addEventListener("click",e=>{
+  const el=e.target.closest("[data-act]");if(!el)return;
+  const fn=ACT[el.dataset.act];if(!fn)return;
+  if(el.closest("#sheet")&&el.dataset.act!=="closeSheet"&&el.dataset.act!=="copyBackup"&&el.dataset.act!=="doImport")closeSheet();
+  fn(el,e);
+});
+document.addEventListener("change",e=>{
+  const el=e.target;const k=el.dataset&&el.dataset.set;if(!k)return;
+  if(k==="name"||k==="goal")S[k]=el.value.trim();
+  else if(k==="rate")S.settings.rate=parseFloat(el.value);
+  else if(k==="model")S.settings.model=el.value;
+  save();if(k==="rate")speak("この速さでどうですか？",{});
+});
+
+/* ============ iPHONE LAYOUT ============ */
+function fitViewport(){const vv=window.visualViewport;const h=vv?vv.height:window.innerHeight;document.documentElement.style.setProperty("--vh",h+"px");window.scrollTo(0,0);const b=$("#msgs");if(b)b.scrollTop=b.scrollHeight;}
+if(window.visualViewport){visualViewport.addEventListener("resize",fitViewport);}
+window.addEventListener("resize",fitViewport);
+(function icon(){try{const c=document.createElement("canvas");c.width=c.height=180;const x=c.getContext("2d");const g=x.createLinearGradient(0,0,180,180);g.addColorStop(0,"#f4a3c0");g.addColorStop(1,"#a8577a");x.fillStyle=g;x.fillRect(0,0,180,180);x.fillStyle="#2a1520";x.font="bold 110px 'Hiragino Sans',sans-serif";x.textAlign="center";x.textBaseline="middle";x.fillText("ゆ",90,98);$("#touchIcon").href=c.toDataURL("image/png");}catch(e){}})();
+
+/* ============ START ============ */
+loadState().then(()=>{fitViewport();render();});
+</script>
+</body>
+</html>
