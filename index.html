@@ -15,6 +15,7 @@
   --ink:#151722; --ink2:#1d2030; --ink3:#272b3f; --line:#33384f;
   --text:#eef0f7; --dim:#9298b3; --sakura:#f4a3c0; --sakura2:#d97a9f;
   --matcha:#9fd67c; --sky:#7cb8f4; --gold:#f2c36b; --red:#f27c7c;
+  color-scheme:dark;
   --vh:100dvh; --safeB:env(safe-area-inset-bottom,0px); --safeT:env(safe-area-inset-top,0px);
 }
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
@@ -216,7 +217,7 @@ input,textarea,select{font:inherit;font-size:16px;color:var(--text)}
 .seg{display:flex;background:#ffffff10;border-radius:14px;padding:3px}
 .seg button{min-width:44px;min-height:38px;border-radius:11px;font-size:14px;font-weight:800;color:var(--dim);padding:0 8px}
 .seg button.on{background:var(--text);color:var(--ink)}
-.orbwrap{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.orbwrap{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:22px 0 6px}
 .orbwrap>*{flex-shrink:0}
 .orbwrap.compact{justify-content:flex-start;gap:12px;padding-top:6px}
 .orbwrap.compact .orb{width:110px;height:110px;font-size:42px}
@@ -272,6 +273,56 @@ input,textarea,select{font:inherit;font-size:16px;color:var(--text)}
 .obnav{display:flex;gap:8px;margin-top:18px}
 .obnav .btn{flex:1}
 .obnav .btn.ghost{flex:0 0 96px}
+/* progress, calendar, badges */
+.today{display:flex;gap:8px;margin:10px 0 2px}
+.tmain{flex:1;min-width:0;display:flex;align-items:center;gap:12px;text-align:left;background:var(--ink2);border:1px solid var(--line);border-radius:20px;padding:10px 14px;min-height:66px}
+.tring{position:relative;width:46px;height:46px;flex-shrink:0}.tring i{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-style:normal;font-size:17px}
+.ring{display:block}
+.tt{flex:1;min-width:0}.tt b{display:block;font-size:15px}.tt span{display:block;font-size:12.5px;color:var(--dim);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tdue{flex-shrink:0;width:78px;border-radius:20px;background:linear-gradient(140deg,#4a2c3c,#2a2234);border:1px solid #6b3f55;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.tdue b{font-size:20px;color:var(--sakura)}.tdue span{font-size:11px;color:var(--dim);font-weight:700}
+.caret{font-size:12px;color:var(--dim)}
+.todaycard{display:flex;align-items:center;gap:14px;position:relative}
+.tcring{position:relative;width:112px;height:112px;flex-shrink:0}
+.tcin{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none}
+.tcin b{font-size:30px;line-height:1.05}.tcin span{font-size:11.5px;color:var(--dim);font-weight:700}.tcin .ok{color:var(--matcha)}
+.goalgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.gopt{display:flex;flex-direction:column;align-items:flex-start;gap:2px;text-align:left;min-height:56px;padding:10px 14px;border-radius:14px;background:var(--ink2);border:1px solid var(--line)}
+.gopt b{font-size:15px}.gopt span{font-size:12px;color:var(--dim)}
+.gopt.on{border-color:var(--sakura);background:#3a2433}.gopt.on b{color:var(--sakura)}
+.tcside{flex:1;display:grid;gap:8px}.tcside b{display:block;font-size:15px}.tcside span{font-size:12px;color:var(--dim)}
+.calhead{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}.calhead b{font-size:17px}
+.calgrid{display:grid;grid-template-columns:repeat(7,1fr);gap:5px}
+.cw{text-align:center;font-size:11.5px;font-weight:800;color:var(--dim);padding-bottom:2px}
+.cd{position:relative;aspect-ratio:1;min-height:40px;border-radius:12px;background:var(--ink);font-size:14px;font-weight:700;color:var(--dim);display:flex;align-items:center;justify-content:center}
+.cd.blank{background:none}.cd.fut{opacity:.35}
+.cd.l1{background:#f4a3c033;color:var(--text)}.cd.l2{background:#f4a3c077;color:var(--text)}.cd.l3{background:var(--matcha);color:#173012}
+.cd.fz{background:#7cb8f433;color:var(--text)}
+.cd.now{box-shadow:0 0 0 2px var(--sakura)}
+.cd i{position:absolute;right:2px;top:1px;font-style:normal;font-size:10px}.cd i.dot{right:auto;top:auto;bottom:4px;width:5px;height:5px;border-radius:50%;background:#173012}
+.calkey{display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:10px;font-size:12px;color:var(--dim)}.calkey .k{display:inline-block;width:11px;height:11px;border-radius:4px;margin-right:5px;vertical-align:-1px}
+.k.l1{background:#f4a3c077}.k.l3{background:var(--matcha)}
+.week{position:relative;display:flex;gap:6px;align-items:flex-end;height:130px}
+.wk{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;height:100%}
+.wv{font-size:11px;color:var(--dim);font-weight:700;min-height:14px}
+.wb{flex:1;width:100%;max-width:34px;border-radius:9px;background:var(--ink);display:flex;align-items:flex-end;overflow:hidden}
+.wb i{display:block;width:100%;background:var(--sakura);border-radius:9px;min-height:0}
+.wl{font-size:12px;font-weight:800;color:var(--dim)}.wk.now .wl{color:var(--sakura)}
+.wgoal{position:absolute;left:0;right:0;border-top:2px dashed #9fd67c88;pointer-events:none}
+.count{display:flex;align-items:baseline;gap:10px;margin-bottom:10px}.count b{font-size:40px;color:var(--sakura)}.count span{font-size:15px;font-weight:700}
+.badges{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.bdg{background:var(--ink2);border:1px solid var(--line);border-radius:16px;padding:12px;opacity:.45;filter:grayscale(1)}
+.bdg.on{opacity:1;filter:none;border-color:#6b5a2a;background:linear-gradient(150deg,#3a3218,#1d2030)}
+.bdg i{font-style:normal;font-size:26px;display:block}.bdg b{display:block;font-size:14px;margin-top:4px}.bdg span{font-size:12px;color:var(--dim)}
+.wod{display:flex;align-items:center;gap:12px;background:linear-gradient(150deg,#2b3350,#1d2030);border-color:#3c4670;margin-top:14px}
+.wodt{flex:1;min-width:0}.wodt small{display:block;font-size:12px;font-weight:800;color:var(--sky)}.wodt b{display:block;font-size:30px;margin:2px 0}.wodt span{font-size:14px;color:var(--dim)}
+.wbrow{display:flex;align-items:center;gap:10px;width:100%;text-align:left;padding:10px 0;border-bottom:1px solid var(--line);min-height:52px}
+.wbrow:last-child{border-bottom:none}
+.wbj{font-size:19px;font-weight:700;min-width:84px}.wbe{flex:1;min-width:0;font-size:14px}.wbe small{display:block;color:var(--dim);font-size:12px}.wbd{font-size:10px;letter-spacing:1px;color:var(--matcha);flex-shrink:0}
+.mehead{display:flex;align-items:center;gap:14px;background:linear-gradient(150deg,#3a2433,#22243a);border-color:#5a3a4c}
+.mht{flex:1;min-width:0}.mht b{display:block;font-size:19px}.mht span{display:block;font-size:13px;color:var(--dim);margin-top:2px}.mht .mhs{color:var(--text);font-weight:700;margin-top:6px}
+.chev{font-size:22px;color:var(--dim);flex-shrink:0}
+#tabs button{font-size:11px}
 @keyframes dot{0%,80%,100%{opacity:.25}40%{opacity:1}}
 @keyframes throb{0%,100%{transform:scale(1)}50%{transform:scale(1.06)}}
 @keyframes breathe{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
@@ -287,6 +338,7 @@ input,textarea,select{font:inherit;font-size:16px;color:var(--text)}
     <button data-act="tab" data-tab="home"><span class="ti">🗺️</span>Path</button>
     <button data-act="tab" data-tab="chat"><span class="ti">💬</span>Yuki</button>
     <button data-act="tab" data-tab="practice"><span class="ti">🃏</span>Practice</button>
+    <button data-act="tab" data-tab="progress"><span class="ti">📅</span>Progress</button>
     <button data-act="tab" data-tab="me"><span class="ti">👤</span>Me</button>
   </nav>
 </div>
@@ -297,7 +349,7 @@ input,textarea,select{font:inherit;font-size:16px;color:var(--text)}
 <script>
 "use strict";
 // Bump this on every change so phones can spot a new version and offer to update
-const APP_VERSION="2026.10.04-27";
+const APP_VERSION="2026.10.05-1";
 /* ============ DATA ============ */
 const LV = {
   n5:{label:"N5",name:"Beginner",color:"#9fd67c"},
@@ -490,11 +542,12 @@ const KANJI_LV={none:"none yet",few:"under 50",some:"50–300",many:"300+"};
 /* ============ STATE ============ */
 const KEY="yuki-sensei-v3";
 const DEFAULT={
-  v:20,onboarded:false,name:"",level:"n5",goal:"",
+  v:21,onboarded:false,name:"",level:"n5",goal:"",
   about:{done:false,focus:[],hira:"",kata:"",kanji:"",location:"",native:"English",minutes:15,notes:""},
   placement:null,plan:null,course:null,
   profile:{facts:[],weak:[],strong:[],learned:[]},
-  stats:{msgs:0,quizRight:0,quizWrong:0,cards:0,streak:0,lastDay:""},
+  stats:{msgs:0,quizRight:0,quizWrong:0,cards:0,streak:0,lastDay:"",calls:0},
+  days:{},daily:{goal:50,freeze:1,best:0,exam:"",examName:"",remind:"19:00",badges:[],init:false},
   done:[],cards:{},chat:[],currentLesson:null,
   threads:{main:{title:"Chat with Yuki",kind:"free",msgs:[],at:0}},chatId:"main",
   settings:{apiKey:"",model:"claude-haiku-4-5-20251001",rate:0.9,autoSpeakChat:false,speakEnglish:true,micLang:"ja-JP",
@@ -502,7 +555,7 @@ const DEFAULT={
     tts:"quest",azKey:"",azRegion:"eastus",azEn:"en-US-AvaMultilingualNeural",azJa:"ja-JP-NanamiNeural",ttsChars:{month:"",n:0},captions:true}
 };
 let S=JSON.parse(JSON.stringify(DEFAULT));
-const UI={tab:"home",ob:0,obEdit:false,place:null,planCtx:null,lp:null,fc:null,chart:null,voice:false,vstate:"idle",vyou:"",busy:false,listening:false};
+const UI={me:null,cal:null,tab:"home",ob:0,obEdit:false,place:null,planCtx:null,lp:null,fc:null,chart:null,voice:false,vstate:"idle",vyou:"",busy:false,listening:false};
 
 function merge(base,saved){for(const k in saved){if(saved[k]&&typeof saved[k]==="object"&&!Array.isArray(saved[k])&&base[k]&&typeof base[k]==="object")merge(base[k],saved[k]);else base[k]=saved[k];}return base;}
 let lsOK=true;
@@ -543,7 +596,20 @@ function migrate(st){
   const arr=x=>Array.isArray(x)?x:[], num=x=>Number.isFinite(+x)?+x:0;
   const obj=x=>x&&typeof x==="object"&&!Array.isArray(x)?x:{};
   ["facts","weak","strong","learned"].forEach(k=>st.profile[k]=arr(st.profile[k]).map(String));
-  ["msgs","quizRight","quizWrong","cards","streak"].forEach(k=>st.stats[k]=num(st.stats[k]));
+  ["msgs","quizRight","quizWrong","cards","streak","calls"].forEach(k=>st.stats[k]=num(st.stats[k]));
+  // v20 → v21: study days (calendar, streak, daily goal, badges). The old streak becomes study days.
+  st.days=obj(st.days);
+  Object.keys(st.days).forEach(k=>{const r=st.days[k];if(!/^\d{4}-\d{2}-\d{2}$/.test(k)||!r||typeof r!=="object"){delete st.days[k];return;}
+    ["xp","sec","cards","words","msgs","calls"].forEach(f=>r[f]=num(r[f]));r.les=arr(r.les).map(String).slice(-12);});
+  if((st.v||0)<21){
+    const ld=String(st.stats.lastDay||"").split("-").map(Number);
+    if(ld.length===3&&ld[0]>2000)for(let i=0;i<Math.min(Math.max(1,st.stats.streak),60);i++){const k=isoDay(new Date(ld[0],ld[1]-1,ld[2]-i));if(!st.days[k])st.days[k]={xp:1,sec:0,cards:0,words:0,msgs:0,calls:0,les:[]};}
+    st.daily=obj(st.daily);st.daily.goal=goalForMinutes(num(st.about.minutes)||15);st.daily.best=Math.max(num(st.stats.streak),num(st.daily.best));
+  }
+  const D=st.daily=obj(st.daily);
+  if(!GOALS.some(([v])=>v===+D.goal))D.goal=50;else D.goal=+D.goal;
+  D.freeze=Math.max(0,Math.min(2,num(D.freeze)));D.best=num(D.best);D.badges=arr(D.badges).filter(b=>Array.isArray(b)&&b[0]);
+  ["exam","examName","remind"].forEach(k=>{if(typeof D[k]!=="string")D[k]="";});if(D.exam&&!/^\d{4}-\d{2}-\d{2}$/.test(D.exam))D.exam="";if(D.remind&&!/^\d{2}:\d{2}$/.test(D.remind))D.remind="19:00";
   st.done=arr(st.done);st.chat=arr(st.chat).filter(m=>m&&typeof m.text==="string");st.cards=obj(st.cards);
   for(const id in st.cards){const c=st.cards[id];if(!CARDS[id]||!c||typeof c!=="object")delete st.cards[id];else{c.box=Math.max(0,Math.min(6,num(c.box)));c.due=num(c.due);}}
   if(!LV[st.level])st.level="n5";
@@ -616,7 +682,7 @@ function save(){clearTimeout(saveT);saveT=setTimeout(saveNow,150);}
 const $=s=>document.querySelector(s);
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const dayStr=d=>{d=d||new Date();return d.getFullYear()+"-"+(d.getMonth()+1)+"-"+d.getDate();};
-function touchDay(){const t=dayStr();if(S.stats.lastDay===t)return;const y=new Date();y.setDate(y.getDate()-1);S.stats.streak=(S.stats.lastDay===dayStr(y))?S.stats.streak+1:1;S.stats.lastDay=t;save();}
+
 function toast(t,ms){const el=$("#toast");el.textContent=t;el.classList.add("on");clearTimeout(el._t);el._t=setTimeout(()=>el.classList.remove("on"),ms||2200);}
 function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
 function addUnique(list,items,cap){(items||[]).forEach(x=>{x=String(x).trim();if(!x)return;const i=list.findIndex(y=>y.toLowerCase()===x.toLowerCase());if(i>=0)list.splice(i,1);list.push(x);});while(list.length>cap)list.shift();}
@@ -680,6 +746,11 @@ function cleanSpeech(t){
    .replace(/[*_#`>|]/g," ")
    .replace(/\p{Extended_Pictographic}/gu,"")
    .replace(/[→←↑↓•]/g,", ");
+}
+// Text for the call captions: markdown and hidden bits removed, bullets kept as bullets
+function captionText(t){
+  return String(t).replace(/<<(MEM|SAY)>>[\s\S]*$/,"").replace(/\[\[|\]\]/g,"").replace(/\*\*|__|`/g,"")
+    .replace(/^#{1,4}\s*/gm,"").replace(/^\s*[-*•]\s+/gm,"• ").replace(/[ \t]+\n/g,"\n").replace(/\n{2,}/g,"\n").trim();
 }
 function segments(t){
   const segs=[];let cur=null;
@@ -1104,7 +1175,8 @@ function resetAudio(){
   qa=null;playId++;const a=questPlayer();a.src=SILENT_MP3;a.play().then(()=>{a.dataset.ok="1";}).catch(()=>{});
   vlog("↺ voice reset");
 }
-function sayAgain(m){if(!m)return;resetAudio();if(UI.voice){UI.vstate="speaking";renderVoice();}speak(m.text,{say:m.say});}
+function sayAgain(m,rate){if(!m)return;resetAudio();if(UI.voice){UI.vstate="speaking";renderVoice();}speak(m.text,{say:m.say,rate});}
+const lastReply=()=>[...S.chat].reverse().find(m=>m.role==="assistant"&&!m.err);
 // Is any voice (iPhone or natural) talking right now?
 function isSpeaking(){return natBusy||natPlaying||natLoading||(synth&&(synth.speaking||synth.pending));}
 let unlocked=false;
@@ -1295,7 +1367,11 @@ async function apiRequest(body,cheap){
     // If Sonnet declines a message, the API retries it on a fallback model instead of failing.
     headers["anthropic-beta"]="server-side-fallback-2026-07-01";body.fallbacks="default";
   }
-  const go=async(h,b)=>{const res=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:h,body:JSON.stringify({model,...b})});let data=null;try{data=await res.json();}catch(e){}return{res,data};};
+  // 60 s limit: a stuck connection gives a clear error instead of "thinking" forever
+  const go=async(h,b)=>{const ac=window.AbortController?new AbortController():null,tm=setTimeout(()=>ac&&ac.abort(),60000);
+    try{const res=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:h,body:JSON.stringify({model,...b}),signal:ac?ac.signal:undefined});let data=null;try{data=await res.json();}catch(e){}return{res,data};}
+    catch(e){throw new Error(e&&e.name==="AbortError"?"no answer after 60 seconds":(e&&e.message)||"network error");}
+    finally{clearTimeout(tm);}};
   let {res,data}=await go(headers,body);
   if(smart&&res.status===400&&data&&data.error&&/fallback|beta/i.test(data.error.message||"")){
     const h={...headers};delete h["anthropic-beta"];const b={...body};delete b.fallbacks;({res,data}=await go(h,b));
@@ -1347,15 +1423,16 @@ function applyMem(mem){
   if(+mem.wrong)S.stats.quizWrong+=+mem.wrong;
   if(Array.isArray(mem.used))markUsed(mem.used.map(String));
   if(Array.isArray(mem.path)){const added=mem.path.slice(0,2).filter(t=>addCustom(t));if(added.length)toast("⭐ Yuki added to your path: "+added.join(", "),3500);}
-  if(mem.lessonDone&&S.currentLesson&&!S.done.includes(S.currentLesson)){S.done.push(S.currentLesson);toast("✅ Lesson complete!");}
+  if(mem.lessonDone&&S.currentLesson&&!S.done.includes(S.currentLesson)){S.done.push(S.currentLesson);addXP(15,null,(lessonById(S.currentLesson)||{}).title);toast("✅ Lesson complete!");}
 }
 async function send(display,apiText,mode){
   display=(display||"").trim();if(!display||UI.busy)return;
-  UI.busy=true;touchDay();
+  UI.busy=true;
+  if(UI.voice){S.stats.calls++;addXP(3,"calls");}else addXP(2,"msgs");
   const box=S.chat;  // the reply goes to the chat this was sent from, even if you switch chats meanwhile
   box.push({role:"user",text:display,api:apiText||undefined});S.stats.msgs++;
-  if(activeCourse()&&!apiText)markUsed(detectUsed(display));
-  while(S.chat.length>200)S.chat.shift();
+  if(activeCourse()&&(!apiText||mode==="voice"))markUsed(detectUsed(kanaize(display)));
+  while(box.length>200)box.shift();
   save();
   if(!UI.voice&&UI.tab!=="chat"){UI.tab="chat";render();}else appendLast();
   showTyping(true);
@@ -1419,6 +1496,7 @@ const curNode=()=>pathNodes().find(n=>!nodeDone(n))||null;
 function markNode(key,quiet){
   ensurePlan();if(S.plan.done[key])return;
   S.plan.done[key]=true;save();
+  const nd=pathNodes().find(n=>n.key===key);addXP(key.startsWith("ck:")?10:15,null,nd?nodeLabel(nd):"Lesson");
   if(!quiet)toast("✓ Done! Next step unlocked",1800);
 }
 function planAuto(t,k){
@@ -1485,8 +1563,8 @@ function lpNext(){
     if(lp.kind==="kana")markNode(lp.node.key,true);render();}else{render();lpSay();}}
 }
 function lpSay(){const lp=UI.lp;if(!lp)return;
-  if(lp.step==="learn"){const it=lp.items[lp.i];setTimeout(()=>speak(lp.kind==="kana"?it[0]:wordSay(it[0]),{rate:0.85}),150);}
-  else if(lp.step==="quiz"){const q=lp.qs[lp.qi];if(q&&q.dir==="jp")setTimeout(()=>speak(q.say,{rate:0.85}),150);}}
+  if(lp.step==="learn"){const it=lp.items[lp.i];speak(lp.kind==="kana"?it[0]:wordSay(it[0]),{rate:0.85});}
+  else if(lp.step==="quiz"){const q=lp.qs[lp.qi];if(q&&q.dir==="jp")speak(q.say,{rate:0.85});}}
 function vLesson(){
   const lp=UI.lp,n=lp.node,u=COURSE[n.unit];
   const steps=lp.kind==="words"?["Learn","Practise",isSpeakingKey(n.key)?"🎙️ Speak":"💬 Chat"]:["Learn","Practise"];
@@ -1614,7 +1692,7 @@ function detectUsed(text){
 function markUsed(list){
   const c=activeCourse();if(!c||!list||!list.length)return;
   let added=0;
-  list.forEach(jp=>{if(c.targets.includes(jp)&&!c.used.includes(jp)){c.used.push(jp);bumpWord("w:"+jp,true);added++;}});
+  list.forEach(jp=>{if(c.targets.includes(jp)&&!c.used.includes(jp)){c.used.push(jp);bumpWord("w:"+jp,true);added++;addXP(5,"words");}});
   if(!added)return;
   save();
   if(c.used.length>=c.targets.length&&!(S.plan&&S.plan.done[c.key])){markNode(c.key,true);toast("🎉 All 5 words used! Tap Finish lesson when you're ready",3000);
@@ -1689,6 +1767,184 @@ function unitHeadInner(u){
   return`<span class="uhe" style="background:${U.c}22;color:${U.c}">${U.e}</span><span class="uh"><small>${esc(U.title.toUpperCase())} · ${dn}/${ns.length}</small><b>${esc(U.sub)}</b></span><span style="font-size:22px;color:var(--dim)">›</span>`;
 }
 
+/* ============ PROGRESS: daily goal, XP, streak, calendar, badges ============ */
+// Every day you study gets a record in S.days["YYYY-MM-DD"]: XP, seconds, cards, words, messages, calls and
+// what you finished. The streak, the calendar, the weekly chart and the badges are all worked out from it.
+const GOALS=[[20,"Casual","~5 min"],[50,"Regular","~15 min"],[100,"Serious","~30 min"],[150,"Intense","~1 hour"]];
+const goalForMinutes=m=>m>=60?150:m>=30?100:m>=15?50:20;
+function dayRec(d){d=d||isoDay();if(!S.days[d])S.days[d]={xp:0,sec:0,cards:0,words:0,msgs:0,calls:0,les:[]};return S.days[d];}
+const dayActive=d=>{const r=S.days[d];return!!(r&&(r.xp>0||r.frozen));};
+const shiftDay=(iso,n)=>{const [y,m,d]=iso.split("-").map(Number);return isoDay(new Date(y,m-1,d+n));};
+function streakInfo(){
+  const t=isoDay(),y=shiftDay(t,-1);
+  const start=dayActive(t)?t:dayActive(y)?y:null;
+  if(!start)return{n:0,today:false};
+  let n=0,d=start;while(dayActive(d)&&n<3660){n++;d=shiftDay(d,-1);}
+  return{n,today:start===t};
+}
+// Missed exactly one day? A streak freeze (earned every 7 days, max 2) covers it automatically.
+function checkFreeze(){
+  const t=isoDay(),y=shiftDay(t,-1),y2=shiftDay(t,-2);
+  if(!dayActive(y)&&dayActive(y2)&&S.daily.freeze>0){
+    dayRec(y).frozen=true;S.daily.freeze--;save();
+    setTimeout(()=>toast("❄️ A streak freeze saved your streak yesterday!",3500),900);
+  }
+}
+// Study time: the gaps between taps, as long as you're active (a gap over 2 minutes isn't counted)
+let lastAct=0;
+function track(){
+  const now=Date.now();
+  if(document.visibilityState!=="visible"||!S.onboarded){lastAct=0;return;}
+  if(lastAct&&now-lastAct<120000){dayRec().sec+=Math.round((now-lastAct)/1000);save();}
+  lastAct=now;
+}
+function addXP(n,kind,label){
+  if(!S.onboarded)return;
+  track();
+  const d=dayRec(),before=d.xp,goal=S.daily.goal;
+  d.xp+=n;if(kind&&typeof d[kind]==="number")d[kind]++;
+  if(label){d.les.push(String(label).slice(0,60));if(d.les.length>12)d.les.shift();}
+  if(before===0){
+    const st=streakInfo();
+    if(st.n>S.daily.best)S.daily.best=st.n;
+    if(st.n>1&&st.n%7===0&&S.daily.freeze<2){S.daily.freeze++;setTimeout(()=>toast("🔥 "+st.n+"-day streak! You earned a ❄️ streak freeze",3500),500);}
+    else if(st.n>1)setTimeout(()=>toast("🔥 "+st.n+"-day streak!",1800),500);
+  }
+  if(before<goal&&d.xp>=goal){d.goal=true;setTimeout(()=>toast("🎯 Daily goal reached! おつかれさま！",3000),900);}
+  checkBadges();save();
+  const tr=$("#todayRing");if(tr)tr.outerHTML=todayStrip();
+}
+const totalXP=()=>Object.values(S.days).reduce((a,d)=>a+(d.xp||0),0);
+const wordCount=()=>Object.keys(S.cards).filter(i=>i.startsWith("w:")||i.startsWith("v:")).length;
+const BADGES=[
+ ["first","🌱","First steps","Finish your first lesson",()=>Object.keys(doneMap()).length+S.done.length>=1],
+ ["s3","🔥","On fire","A 3-day streak",()=>S.daily.best>=3],
+ ["s7","🔥","One whole week","A 7-day streak",()=>S.daily.best>=7],
+ ["s30","🌋","Unstoppable","A 30-day streak",()=>S.daily.best>=30],
+ ["w25","💬","25 words","Learn 25 words",()=>wordCount()>=25],
+ ["w100","📚","100 words","Learn 100 words",()=>wordCount()>=100],
+ ["c100","🃏","Card shark","Review 100 flashcards",()=>S.stats.cards>=100],
+ ["call","📞","First call","Answer Yuki out loud",()=>S.stats.calls>=1],
+ ["call50","🎙️","Chatterbox","50 spoken answers",()=>S.stats.calls>=50],
+ ["rp","🎭","Actor","Finish a roleplay",()=>Object.keys(doneMap()).some(k=>k.startsWith("cr:"))],
+ ["unit","🏆","Unit complete","Finish a whole unit",()=>COURSE.some((u,ui)=>u.ls.every(l=>doneMap()["cl:"+l.id])&&doneMap()["ck:"+ui]&&doneMap()["cr:"+ui])],
+ ["hira","あ","Hiragana hero","Learn every hiragana",()=>DECKS.hira.ids.every(i=>S.cards[i])],
+ ["kata","ア","Katakana master","Learn every katakana",()=>DECKS.kata.ids.every(i=>S.cards[i])],
+ ["goal5","🎯","Goal getter","Hit your daily goal 5 times",()=>Object.values(S.days).filter(d=>d.goal).length>=5],
+ ["hour5","⏱️","Dedicated","Study 5 hours in total",()=>Object.values(S.days).reduce((a,d)=>a+(d.sec||0),0)>=18000],
+ ["grad","🎓","Graduate","Finish the N5 conversation course",()=>!!doneMap()["cr:"+(COURSE.length-1)]]
+];
+function checkBadges(silent){
+  const got=S.daily.badges;
+  BADGES.forEach(([id,ic,t])=>{if(got.some(b=>b[0]===id))return;let ok=false;try{ok=BADGES.find(b=>b[0]===id)[4]();}catch(e){}
+    if(ok){got.push([id,isoDay()]);if(!silent)setTimeout(()=>toast("🏅 New badge: "+ic+" "+t,3200),1400);}});
+}
+// A word from the core list, the same one all day
+function wordOfDay(){let h=7;for(const c of isoDay())h=(h*31+c.charCodeAt(0))>>>0;return VOCAB[h%VOCAB.length];}
+function ring(v,max,size,stroke){
+  stroke=stroke||8;const r=size/2-stroke/2-1,c=2*Math.PI*r,p=max?Math.min(1,v/max):0,h=size/2;
+  return`<svg class="ring" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" aria-hidden="true"><circle cx="${h}" cy="${h}" r="${r}" fill="none" stroke="var(--ink3)" stroke-width="${stroke}"/><circle cx="${h}" cy="${h}" r="${r}" fill="none" stroke="${p>=1?"var(--matcha)":"var(--sakura)"}" stroke-width="${stroke}" stroke-linecap="round" stroke-dasharray="${c.toFixed(1)}" stroke-dashoffset="${(c*(1-p)).toFixed(1)}" transform="rotate(-90 ${h} ${h})"/></svg>`;
+}
+function todayStrip(){
+  const d=S.days[isoDay()]||{xp:0},g=S.daily.goal,st=streakInfo(),due=dueIds(Object.keys(S.cards)).length;
+  const late=S.daily.remind&&d.xp<g&&new Date().toTimeString().slice(0,5)>=S.daily.remind;
+  return`<div id="todayRing" class="today"><button class="tmain" data-act="tab" data-tab="progress"><span class="tring">${ring(d.xp,g,46,6)}<i>${d.xp>=g?"✓":"🎯"}</i></span>
+    <span class="tt"><b>${d.xp>=g?"Goal done today!":late?"⏰ Study time!":"Daily goal"}</b><span>${d.xp}/${g} XP · 🔥 ${st.n} day${st.n===1?"":"s"}${st.n&&!st.today?" · study today to keep it":""}</span></span></button>
+    ${due?`<button class="tdue" data-act="review"><b>${due}</b><span>to review</span></button>`:""}</div>`;
+}
+const fmtMin=s=>{const m=Math.round((s||0)/60);return m<60?m+" min":Math.floor(m/60)+" h "+(m%60)+" min";};
+const MONTHS=["January","February","March","April","May","June","July","August","September","October","November","December"];
+function calendarHTML(){
+  const now=isoDay(),cm=UI.cal||now.slice(0,7),[y,m]=cm.split("-").map(Number);
+  const first=new Date(y,m-1,1),days=new Date(y,m,0).getDate(),lead=(first.getDay()+6)%7,g=S.daily.goal;
+  let cells="";for(let i=0;i<lead;i++)cells+=`<span class="cd blank"></span>`;
+  for(let d=1;d<=days;d++){
+    const k=isoDay(new Date(y,m-1,d)),r=S.days[k],xp=r?r.xp:0,fut=k>now;
+    const lv=r&&r.frozen&&!xp?"fz":xp>=g?"l3":xp>=g/2?"l2":xp>0?"l1":"";
+    cells+=`<button class="cd ${lv}${k===now?" now":""}${fut?" fut":""}" data-act="calDay" data-d="${k}">${d}${k===S.daily.exam?`<i>🎌</i>`:r&&r.frozen&&!xp?`<i>❄️</i>`:r&&r.goal?`<i class="dot"></i>`:""}</button>`;
+  }
+  const mDays=Object.entries(S.days).filter(([k])=>k.startsWith(cm)),act=mDays.filter(([,r])=>r.xp>0).length;
+  return`<div class="calhead"><button class="mini" data-act="calMove" data-n="-1" aria-label="Previous month">‹</button><b>${MONTHS[m-1]} ${y}</b><button class="mini" data-act="calMove" data-n="1" aria-label="Next month">›</button></div>
+   <div class="calgrid">${["M","T","W","T","F","S","S"].map(x=>`<span class="cw">${x}</span>`).join("")}${cells}</div>
+   <div class="calkey"><span><i class="k l1"></i>studied</span><span><i class="k l3"></i>goal met</span><span>❄️ freeze</span><span>🎌 your big day</span></div>
+   <p class="sub" style="margin-top:8px">${act} study day${act===1?"":"s"} this month · ${mDays.reduce((a,[,r])=>a+(r.xp||0),0)} XP · ${fmtMin(mDays.reduce((a,[,r])=>a+(r.sec||0),0))}</p>`;
+}
+function weekHTML(){
+  const t=isoDay(),ds=[...Array(7)].map((_,i)=>shiftDay(t,i-6)),xs=ds.map(k=>(S.days[k]||{}).xp||0),max=Math.max(S.daily.goal,...xs);
+  const wd=["S","M","T","W","T","F","S"];
+  return`<div class="week">${ds.map((k,i)=>{const [y,m,d]=k.split("-").map(Number),x=xs[i];return`<div class="wk${k===t?" now":""}"><span class="wv">${x||""}</span><span class="wb"><i style="height:${Math.round(x/max*100)}%;${x>=S.daily.goal?"background:var(--matcha)":""}"></i></span><span class="wl">${wd[new Date(y,m-1,d).getDay()]}</span></div>`;}).join("")}
+   <span class="wgoal" style="bottom:calc(22px + ${Math.round(S.daily.goal/max*86)}px)"></span></div>
+   <p class="sub" style="margin-top:8px">This week: ${xs.reduce((a,b)=>a+b,0)} XP · ${fmtMin(ds.reduce((a,k)=>a+((S.days[k]||{}).sec||0),0))} · ${xs.filter(Boolean).length}/7 days</p>`;
+}
+function vProgress(){
+  const d=S.days[isoDay()]||{xp:0,sec:0},g=S.daily.goal,st=streakInfo(),D=S.daily;
+  const all=Object.values(S.days),got=new Set(D.badges.map(b=>b[0]));
+  const left=D.exam?Math.round((new Date(D.exam+"T00:00")-new Date(isoDay()+"T00:00"))/864e5):null;
+  return`<div class="pad"><div class="h1">Progress</div>
+  <div class="card todaycard"><div class="tcring">${ring(d.xp,g,112,10)}<div class="tcin"><b>${d.xp}</b><span>of ${g} XP</span>${d.xp>=g?`<span class="ok">✓ goal</span>`:""}</div></div>
+    <div class="tcside"><div><b>🔥 ${st.n}</b><span>day streak${st.n&&!st.today?" · study today!":""}</span></div><div><b>❄️ ${D.freeze}</b><span>streak freeze${D.freeze===1?"":"s"}</span></div><div><b>⏱️ ${fmtMin(d.sec)}</b><span>studied today</span></div></div></div>
+  <p class="sub" style="margin:2px 2px 6px">Daily goal</p><div class="goalgrid">${GOALS.map(([v,t,m])=>`<button class="gopt${g===v?" on":""}" data-act="goalSet" data-v="${v}"><b>${t}</b><span>${v} XP · ${m}</span></button>`).join("")}</div>
+  <p class="sub" style="margin:6px 2px 0">XP: flashcard 1–2 · word used in a talk 5 · message 2 (spoken 3) · lesson 15. A freeze is earned every 7 streak days (max 2) and covers one missed day by itself.</p>
+  <div class="sec">📅 Study calendar</div><div class="card">${calendarHTML()}</div>
+  <div class="sec">📊 Last 7 days</div><div class="card">${weekHTML()}</div>
+  <div class="sec">🎌 Countdown</div><div class="card">
+   ${D.exam?`<div class="count"><b>${left>0?left:left===0?"🎉":"✓"}</b><span>${left>0?"days until "+esc(D.examName||"your big day"):left===0?esc(D.examName||"Your big day")+" is today — がんばって！":esc(D.examName||"Your big day")+" has passed"}</span></div>`:`<p class="sub" style="margin-bottom:8px">A trip, a JLPT exam, meeting someone? Set the date and Yuki counts down (it shows on the calendar as 🎌).</p>`}
+   <div class="grid2"><input class="field" type="date" data-set="daily.exam" value="${esc(D.exam)}" aria-label="Date"><input class="field" data-set="daily.examName" value="${esc(D.examName)}" placeholder="e.g. Trip to Osaka" maxlength="40"></div>
+   ${D.exam?`<button class="btn sm ghost" data-act="examClear">Remove date</button>`:""}</div>
+  <div class="sec">⏰ Daily reminder</div><div class="card">
+   <p class="sub" style="margin-bottom:8px">Pick a time. From then on, the app shows "Study time!" until your goal is done, and you can add a daily alarm to your iPhone Calendar.</p>
+   <div class="toggle"><span>Study time</span><input class="field" type="time" data-set="daily.remind" value="${esc(D.remind)}" style="width:130px;margin:0"></div>
+   <button class="btn sm" style="margin-top:10px" data-act="addReminder">📅 Add a daily alarm to my iPhone Calendar</button></div>
+  <div class="sec">📈 All time</div><div class="card"><div class="stat3">
+   <div class="stat"><b style="color:var(--sakura)">${totalXP()}</b><span>XP</span></div>
+   <div class="stat"><b style="color:var(--sky)">${wordCount()}</b><span>words</span></div>
+   <div class="stat"><b style="color:var(--matcha)">${Object.keys(doneMap()).length+S.done.length}</b><span>lessons</span></div>
+   <div class="stat"><b style="color:var(--gold)">${D.best}</b><span>best streak</span></div>
+   <div class="stat"><b>${S.stats.cards}</b><span>cards reviewed</span></div>
+   <div class="stat"><b>${fmtMin(all.reduce((a,r)=>a+(r.sec||0),0))}</b><span>studied</span></div></div>
+   <button class="row" style="margin:12px 0 0" data-act="wordBank"><span class="ri">📒</span><span class="rt"><b>My word bank</b><span>Every word you've learned and how well you know it</span></span></button></div>
+  <div class="sec">🏅 Badges · ${got.size}/${BADGES.length}</div><div class="badges">${BADGES.map(([id,ic,t,ds])=>`<div class="bdg${got.has(id)?" on":""}"><i>${ic}</i><b>${t}</b><span>${ds}</span></div>`).join("")}</div>
+  </div>`;
+}
+function daySheet(k){
+  const r=S.days[k],[y,m,d]=k.split("-").map(Number),dt=new Date(y,m-1,d);
+  const title=dt.toLocaleDateString(undefined,{weekday:"long",day:"numeric",month:"long"});
+  sheet(`<div class="h2" style="margin-bottom:10px">${esc(title)}</div>
+   ${k===S.daily.exam?`<div class="card" style="border-color:var(--sakura)">🎌 <b>${esc(S.daily.examName||"Your big day")}</b></div>`:""}
+   ${r&&(r.xp||r.frozen)?`${r.frozen&&!r.xp?`<p class="sub">❄️ A streak freeze covered this day.</p>`:`<div class="stat3" style="margin-bottom:10px">
+     <div class="stat"><b style="color:var(--sakura)">${r.xp}</b><span>XP${r.goal?" 🎯":""}</span></div><div class="stat"><b>${fmtMin(r.sec)}</b><span>studied</span></div><div class="stat"><b>${r.cards||0}</b><span>cards</span></div>
+     <div class="stat"><b>${r.words||0}</b><span>words used</span></div><div class="stat"><b>${r.msgs||0}</b><span>messages</span></div><div class="stat"><b>${r.calls||0}</b><span>spoken</span></div></div>
+     ${r.les&&r.les.length?`<p class="sub" style="margin-bottom:6px">Finished</p><div class="card" style="padding:4px 14px">${r.les.map(l=>`<div class="urow"><i>✓</i><span>${esc(l)}</span></div>`).join("")}</div>`:""}`}`
+   :`<p class="sub">${k>isoDay()?"Not here yet.":k===isoDay()?"Nothing yet today — a few flashcards count!":"No study this day."}</p>`}
+   <button class="btn" style="margin-top:12px" data-act="closeSheet">Close</button>`);
+}
+function wordBankSheet(){
+  const ids=Object.keys(S.cards).filter(i=>i.startsWith("w:")||i.startsWith("v:")).sort((a,b)=>S.cards[a].box-S.cards[b].box);
+  const dots=b=>"●".repeat(Math.min(6,b))+"○".repeat(6-Math.min(6,b));
+  sheet(`<div class="h2">📒 My word bank · ${ids.length}</div><p class="sub" style="margin:6px 0 10px">Weakest first. Tap a word to hear it. ●●●●●● = you know it well.</p>
+   ${ids.length?`<div class="card" style="padding:2px 12px">${ids.map(i=>{const c=CARDS[i];return`<button class="wbrow" data-act="sayText" data-text="${esc(c.say)}"><span class="wbj">${esc(c.front)}</span><span class="wbe">${esc(c.back)}${c.sub?`<small>${esc(c.sub)}</small>`:""}</span><span class="wbd">${dots(S.cards[i].box)}</span></button>`;}).join("")}</div>
+   <button class="btn" data-act="deck" data-d="words">Practise my words</button>`:`<p class="sub">No words yet. Do a lesson on the path and they'll show up here.</p>`}
+   <button class="btn ghost" style="margin-top:8px" data-act="closeSheet">Close</button>`);
+}
+// A repeating daily event with an alarm, as an .ics file the iPhone's Calendar app can add
+function reminderICS(){
+  const [h,mi]=(S.daily.remind||"19:00").split(":"),t=new Date(),p=n=>String(n).padStart(2,"0");
+  const start=new Date(t.getFullYear(),t.getMonth(),t.getDate()+1);
+  const stamp=new Date().toISOString().replace(/[-:]/g,"").replace(/\.\d+/,"");
+  const url=location.href.split(/[?#]/)[0];
+  return["BEGIN:VCALENDAR","VERSION:2.0","PRODID:-//Yuki Sensei//EN","CALSCALE:GREGORIAN","BEGIN:VEVENT",
+    "UID:yuki-daily-"+Date.now()+"@yuki-sensei","DTSTAMP:"+stamp,
+    "DTSTART:"+start.getFullYear()+p(start.getMonth()+1)+p(start.getDate())+"T"+p(h)+p(mi)+"00","DURATION:PT15M","RRULE:FREQ=DAILY",
+    "SUMMARY:🌸 Japanese with Yuki","DESCRIPTION:Keep your streak going! "+S.daily.goal+" XP a day.","URL:"+url,
+    "BEGIN:VALARM","TRIGGER:PT0M","ACTION:DISPLAY","DESCRIPTION:Time for Japanese with Yuki 🌸","END:VALARM","END:VEVENT","END:VCALENDAR"].join("\r\n");
+}
+function addReminder(){
+  const ics=reminderICS(),blob=new Blob([ics],{type:"text/calendar"});
+  const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="yuki-reminder.ics";document.body.appendChild(a);a.click();a.remove();
+  setTimeout(()=>sheet(`<div class="h2" style="margin-bottom:8px">📅 Daily alarm</div><p class="sub" style="margin-bottom:10px">Your iPhone should now offer <b>Add to Calendar</b> for a daily event at ${esc(S.daily.remind)} with an alert. Tap <b>Add All</b>.</p>
+    <p class="sub" style="margin-bottom:12px">Nothing showed up? Open Yuki in Safari (not from the home screen) and tap the button again: Safari always shows the Calendar prompt.</p><button class="btn" data-act="closeSheet">OK</button>`),600);
+}
+
 /* ============ VIEWS ============ */
 function render(){
   document.querySelectorAll("#tabs button").forEach(b=>b.classList.toggle("on",b.dataset.tab===UI.tab));
@@ -1697,7 +1953,7 @@ function render(){
   if(UI.place){main.innerHTML=vPlace();main.scrollTop=0;return;}
   if(UI.lp){$("#tabs").classList.add("hidden");main.innerHTML=vLesson();main.onscroll=null;return;}
   if(!S.onboarded||UI.obEdit){main.innerHTML=vOnboard();main.scrollTop=0;return;}
-  main.innerHTML=({home:vHome,chat:vChat,learn:vLearn,practice:vPractice,me:vMe}[UI.tab]||vHome)();
+  main.innerHTML=({home:vHome,chat:vChat,learn:vLearn,practice:vPractice,progress:vProgress,me:vMe}[UI.tab]||vHome)();
   main.scrollTop=0;
   if(UI.tab==="chat")afterChat();
   main.onscroll=UI.tab==="home"?pathScroll:null;
@@ -1798,8 +2054,10 @@ function vHome(){
   });
   const cu=cur?cur.unit:units.length-1;
   const learned=Object.keys(S.cards).filter(i=>i.startsWith("w:")).length;
-  return`<div class="ptop"><button class="pill" data-act="levelSheet">🇯🇵 ${LV[S.level].label}</button><span class="pill">💬 ${learned} words</span><span class="pill fire">🔥 ${S.stats.streak||0}</span></div>
+  const stI=streakInfo();
+  return`<div class="ptop"><button class="pill" data-act="levelSheet">🇯🇵 ${LV[S.level].label} <span class="caret">▾</span></button><button class="pill" data-act="wordBank">💬 ${learned}</button><button class="pill${stI.n?" fire":""}" data-act="tab" data-tab="progress">🔥 ${stI.n}</button></div>
   <div class="pathwrap">
+  ${todayStrip()}
   ${!S.about.done?`<button class="row" data-act="aboutEdit" style="margin-top:8px;border-color:#3f5a46"><span class="ri">✍️</span><span class="rt"><b>Help Yuki get to know you</b><span>2 minutes · makes your lessons fit you</span></span></button>`:""}
   ${S.course&&!(S.plan&&S.plan.done[S.course.key])&&S.threads[S.course.key]?`<button class="row" data-act="resumeCourse" style="margin-top:8px;border-color:var(--sakura)"><span class="ri">${S.course.speaking?"🎙️":"💬"}</span><span class="rt"><b>Continue: ${esc(S.course.title)}</b><span>${S.course.used.length}/${S.course.targets.length} words used · ${S.course.speaking?"speaking lesson":"chat lesson"}</span></span></button>`:""}
   <button id="unitHead" data-act="unitSheet" data-u="${cu}">${unitHeadInner(cu)}</button>
@@ -1831,7 +2089,7 @@ function msgHTML(m,i){
   // Yuki's avatar only on the first of several messages in a row
   const prev=S.chat[i-1],cont=prev&&prev.role==="assistant";
   const av=cont?`<div style="width:30px;flex-shrink:0"></div>`:`<div class="av" style="width:30px;height:30px;font-size:14px;margin-top:2px">ゆ</div>`;
-  if(m.err)return`<div class="m a${cont?" cont":""}">${av}<div class="err">${m.text}<br><button class="mini" style="margin-top:8px" data-act="tab" data-tab="me">Open setup</button></div></div>`;
+  if(m.err)return`<div class="m a${cont?" cont":""}">${av}<div class="err">${m.text}<br><button class="mini" style="margin-top:8px" data-act="meSec" data-v="ai">Open setup</button></div></div>`;
   return`<div class="m a${cont?" cont":""}">${av}<div class="bubwrap"><div class="bub withsay"><div class="bt">${md(m.text)}</div><button class="say" data-act="sayMsg" data-i="${i}" aria-label="Listen">🔊</button></div></div></div>`;
 }
 function afterChat(){
@@ -1873,15 +2131,20 @@ function vPractice(){
   if(UI.fc)return vCard();
   if(UI.chart)return vChart();
   const weak=S.profile.weak.slice(-6).reverse();
+  const w=wordOfDay(),inDeck=!!S.cards["v:"+w[0]];
   return`<div class="pad"><div class="h1">Practice</div>
+  <div class="card wod"><div class="wodt"><small>🌅 Word of the day</small><b>${esc(w[0])}</b><span>${w[1]!==w[0]?esc(w[1])+" · ":""}${esc(w[2])}</span></div>
+   <button class="iconbtn" data-act="sayText" data-text="${esc(w[1])}" aria-label="Listen">🔊</button></div>
+  <div class="grid2" style="margin:-2px 0 4px"><button class="btn sm ghost" data-act="wodAdd">${inDeck?"✓ In flashcards":"＋ Flashcards"}</button><button class="btn sm ghost" data-act="wodYuki">💬 Use it with Yuki</button></div>
+  ${dueIds(Object.keys(S.cards)).length?`<button class="row" data-act="review" style="margin-top:12px;border-color:var(--sakura)"><span class="ri">🔁</span><span class="rt"><b>Review ${dueIds(Object.keys(S.cards)).length} due cards</b><span>All decks mixed · about ${Math.max(1,Math.round(Math.min(20,dueIds(Object.keys(S.cards)).length)/4))} min</span></span></button>`:""}
   ${weak.length?`<div class="sec">Yuki noticed you struggle with</div><div class="card"><div class="tags">${weak.map(w=>`<span class="tg w">${esc(w)}</span>`).join("")}</div><button class="btn sm ghost" style="margin-top:12px" data-act="quiz" data-q="weak">Drill these with Yuki</button></div>`:""}
   <button class="row" data-act="allLessons" style="margin-top:12px"><span class="ri">📚</span><span class="rt"><b>All lessons</b><span>Pick any lesson, in any order</span></span></button>
-  <div class="sec">Flashcards — work offline, remember what you miss</div>
+  <div class="sec">🃏 Flashcards · work offline</div>
   ${Object.entries(DECKS).map(([k,d])=>{const learned=d.ids.filter(i=>S.cards[i]).length,due=dueIds(d.ids).length;
     return`<button class="row" data-act="deck" data-d="${k}"><span class="ri">${d.icon}</span><span class="rt"><b>${d.name}</b><span>${learned}/${d.ids.length} learned${due?" · <b style='display:inline;color:var(--sakura)'>"+due+" due</b>":""}</span></span></button>`;}).join("")}
-  <div class="sec">Charts — tap any character to hear it</div>
+  <div class="sec">🔤 Kana charts · tap to hear</div>
   <div class="grid2"><button class="tile" data-act="chart" data-c="hira"><span class="ico">あ</span>Hiragana chart</button><button class="tile" data-act="chart" data-c="kata"><span class="ico">ア</span>Katakana chart</button></div>
-  <div class="sec">Quizzes with Yuki</div>
+  <div class="sec">🧩 Quizzes with Yuki</div>
   ${QUIZZES.map(([id,i,t,d])=>`<button class="row" data-act="quiz" data-q="${id}"><span class="ri">${i}</span><span class="rt"><b>${t}</b><span>${d}</span></span></button>`).join("")}
   </div>`;
 }
@@ -1902,7 +2165,7 @@ function startDeck(d){
   if(d!=="all"&&q.length<20)q=q.concat(ids.filter(i=>!S.cards[i]).slice(0,Math.min(8,20-q.length)));
   if(!q.length){toast(d==="all"?"Nothing due right now — pick a deck":"All caught up here! 🎉");if(d==="all"){UI.tab="practice";render();}return;}
   UI.fc={deck:d,q,i:0,flip:false,right:0,wrong:0,missed:[],requeued:{}};UI.tab="practice";render();
-  setTimeout(()=>speakCard(),250);
+  speakCard();
 }
 function speakCard(){const f=UI.fc;if(!f||f.i>=f.q.length)return;speak(CARDS[f.q[f.i]].say,{rate:0.85});}
 function vCard(){
@@ -1935,35 +2198,32 @@ function grade(ok){
     if(c.box>=3){S.profile.weak=S.profile.weak.filter(w=>w!==card.label);}}
   else{c.box=0;c.due=Date.now();f.wrong++;f.missed.push(id);addUnique(S.profile.weak,[card.label],30);
     if(!f.requeued[id]){f.requeued[id]=1;f.q.push(id);}}
-  S.cards[id]=c;S.stats.cards++;touchDay();save();
-  f.i++;f.flip=false;if(f.i>=f.q.length)planAuto("C",f.deck);render();setTimeout(speakCard,200);
+  S.cards[id]=c;S.stats.cards++;addXP(ok?2:1,"cards");save();
+  f.i++;f.flip=false;if(f.i>=f.q.length)planAuto("C",f.deck);render();speakCard();
 }
 
 function vMe(){
   const st=S.settings, keySet=!!st.apiKey.trim();
   const sw=(k,on,label)=>`<div class="toggle"><span>${label}</span><button class="sw${on?" on":""}" data-act="toggle" data-k="${k}" aria-label="${label}"></button></div>`;
-  return`<div class="pad"><div class="h1">Me</div>
-  <div class="sec">Profile</div><div class="card">
+    const secs={
+   profile:()=>`<div class="card">
    <label class="sub">Name</label><input class="field" data-set="name" value="${esc(S.name)}">
    <label class="sub">Level</label><div class="chips" style="margin:6px 0 10px">${Object.entries(LV).map(([k,v])=>`<button class="chip${S.level===k?" on":""}" data-act="setLevel" data-v="${k}">${v.label}</button>`).join("")}</div>
    <label class="sub">Goal</label><input class="field" data-set="goal" value="${esc(S.goal)}" placeholder="e.g. travel to Tokyo next spring">
   </div>
-  <div class="sec">Progress</div><div class="card"><div class="stat3">
-    <div class="stat"><b style="color:var(--matcha)">${S.done.length}</b><span>Lessons done</span></div>
-    <div class="stat"><b style="color:var(--sky)">${Object.keys(S.cards).length}</b><span>Cards learned</span></div>
-    <div class="stat"><b style="color:var(--gold)">${S.stats.streak||0}</b><span>Day streak</span></div>
-  </div></div>
   <div class="sec">📋 Your learner card</div><div class="card">
    <p class="sub" style="margin-bottom:10px">${esc(learnerCard())}</p>
    <div class="grid2"><button class="btn sm ghost" data-act="aboutEdit">Edit my answers</button><button class="btn sm ghost" data-act="placeStart">🎯 Level check</button></div>
   </div>
-  <div class="sec">💬 How Yuki talks</div><div class="card" style="padding-top:6px">${styleControls()}</div>
+  `,
+   talk:()=>`<div class="card" style="padding-top:6px">${styleControls()}</div>
   <div class="sec">💰 Credit saver</div><div class="card">
    <p class="sub" style="margin-bottom:8px">How many recent messages Yuki re-reads each time. Fewer = cheaper. Your learner card and what she remembers are always sent, so she never forgets who you are.</p>
    ${chipRow("histSet","history",String(st.history),[["6","Light (6)"],["12","Normal (12)"],["24","Long (24)"]])}
    <p class="sub" style="margin-top:10px">Cheapest setup: Fast & cheap brain + Short replies + Light.</p>
   </div>
-  <div class="sec">🧠 AI setup ${keySet?"· <span style='color:var(--matcha)'>connected</span>":"· <span style='color:var(--gold)'>needed outside Claude</span>"}</div>
+  `,
+   ai:()=>`
   <div class="card">
    <p class="sub" style="margin-bottom:8px">Yuki's brain is Claude, through your own Anthropic API key. It's pay-as-you-go and the key is stored only on this phone.</p>
    <input class="field" id="keyIn" type="password" placeholder="sk-ant-…" value="${esc(st.apiKey)}" autocomplete="off" autocapitalize="off" spellcheck="false">
@@ -1976,10 +2236,11 @@ function vMe(){
    <div class="grid2"><button class="btn sm" data-act="saveKey">Save key</button><button class="btn sm ghost" data-act="testAI">Test Yuki</button></div>
    <button class="btn sm ghost" style="margin-top:8px" data-act="keyHelp">How do I get a key?</button>
   </div>
-  <div class="sec">🔊 Voice</div><div class="card">
+  `,
+   voice:()=>`<div class="card">
    <p class="sub" style="margin-bottom:6px">Voice engine</p>
    ${chipRow("ttsSet","tts",st.tts,[["quest","🎌 "+(REC_VOICES[st.jaRec]||REC_VOICES.ryusei).name.split(" ")[0]+" everywhere"],["device","Recordings + iPhone"],["azure","✨ Azure"],["voicevox","Own server"]])}
-   ${st.tts==="quest"?`<p class="sub" style="margin:10px 0 0">Free, no key: all Japanese — lessons, chat, calls — is spoken by ${esc((REC_VOICES[st.jaRec]||REC_VOICES.ryusei).name.split(" ")[0])}. Words you're learning play instantly from recordings; new sentences come live from the free VOICEVOX service <b>tts.quest</b> (can take a few seconds; if it's busy, that sentence uses the iPhone voice). English parts are ${esc((REC_VOICES[st.jaRec]||REC_VOICES.ryusei).name.split(" ")[0])} too (with a Japanese accent), or your iPhone voice if you prefer.</p>
+   ${st.tts==="quest"?`<p class="sub" style="margin:10px 0 0">Free, no key: all Japanese — lessons, chat, calls — is spoken by ${esc((REC_VOICES[st.jaRec]||REC_VOICES.ryusei).name.split(" ")[0])}. Words you're learning play instantly from recordings; new sentences come live from the free VOICEVOX service <b>tts.quest</b> (can take a few seconds; if it's busy, that sentence uses the iPhone voice). English parts use your iPhone's voice (or ${esc((REC_VOICES[st.jaRec]||REC_VOICES.ryusei).name.split(" ")[0])} with a Japanese accent, if you prefer).</p>
     <p class="sub" style="margin:10px 0 6px">Voice</p>${chipRow("recSet","jaRec",st.jaRec==="off"?"ryusei":st.jaRec,Object.entries(REC_VOICES).map(([k,v])=>[k,v.name.split(" ")[0]]))}
     <p class="sub" style="margin:12px 0 6px">English parts</p>${chipRow("enVoiceSet","enVoice",st.enVoice,[["ryusei",(REC_VOICES[st.jaRec]||REC_VOICES.ryusei).name.split(" ")[0]+" (Japanese accent)"],["iphone","iPhone voice"]])}
     ${st.enVoice==="iphone"?voicePicker("en","English voice",st.voiceEn):""}
@@ -2021,13 +2282,15 @@ function vMe(){
    <div class="toggle"><span>Mic listens for</span><div class="chips"><button class="chip${st.micLang==="ja-JP"?" on":""}" data-act="micLang" data-v="ja-JP">日本語</button><button class="chip${st.micLang==="en-US"?" on":""}" data-act="micLang" data-v="en-US">English</button></div></div>
    <div class="grid2" style="margin-top:8px"><button class="btn sm ghost" data-act="testVoice">Test voice</button><button class="btn sm ghost" data-act="${st.tts==="azure"?"azHelp":"voiceHelp"}">${st.tts==="azure"?"Setup help":"Get better voices"}</button></div>
   </div>
-  <div class="sec">What Yuki remembers about you</div><div class="card">
+  `,
+   memory:()=>`<div class="card">
    ${S.profile.facts.length?`<div class="tags">${S.profile.facts.map(f=>`<span class="tg">${esc(f)}</span>`).join("")}</div>`:`<p class="sub">Nothing yet — chat with her and she'll pick things up.</p>`}
    ${S.profile.strong.length?`<p class="sub" style="margin:12px 0 6px">Strong at</p><div class="tags">${S.profile.strong.slice(-12).map(f=>`<span class="tg s">${esc(f)}</span>`).join("")}</div>`:""}
    ${S.profile.weak.length?`<p class="sub" style="margin:12px 0 6px">Working on</p><div class="tags">${S.profile.weak.slice(-12).map(f=>`<span class="tg w">${esc(f)}</span>`).join("")}</div>`:""}
    <p class="sub" style="margin-top:12px">${S.profile.learned.length} words & patterns taught · ${S.stats.msgs} messages · ${S.stats.cards} cards reviewed</p>
   </div>
-  <div class="sec">App</div><div class="card">
+  `,
+   app:()=>`<div class="card">
    <p class="sub">Version ${APP_VERSION}. Your progress saves automatically on this phone after everything you do. The app updates itself: new versions load automatically when you open Yuki (or the next time you leave it, if you're in the middle of something).</p>
    <button class="btn sm ghost" style="margin-top:10px" data-act="checkUpdate">Check for updates</button>
   </div>
@@ -2036,8 +2299,25 @@ function vMe(){
    <button class="btn sm ghost" style="margin-top:8px" data-act="clearChat">Clear chat (keeps progress)</button>
    <button class="btn sm ghost" style="margin-top:8px" data-act="planReset">Restart path dates from today</button>
    <button class="btn sm ghost" style="margin-top:8px;color:var(--red)" data-act="resetAll">Reset everything</button>
-  </div></div>`;
+  </div>`
+  };
+  if(UI.me&&secs[UI.me]){const t=ME_SECS.find(x=>x[0]===UI.me);
+    return`<div class="pad"><button class="mini" data-act="meSec" data-v="">‹ Me</button><div class="h1" style="margin:12px 0 14px">${t[1]} ${t[2]}</div>${secs[UI.me]()}</div>`;}
+  const stI=streakInfo();
+  return`<div class="pad"><div class="h1">Me</div>
+   <div class="card mehead"><div class="av big">${esc((S.name||"ゆ").slice(0,1).toUpperCase())}</div><div class="mht"><b>${esc(S.name||"Learner")}</b><span>JLPT ${LV[S.level].label} · ${esc(S.goal||"No goal set yet")}</span>
+    <span class="mhs">🔥 ${stI.n} · 💬 ${wordCount()} words · ⭐ ${totalXP()} XP</span></div></div>
+   ${ME_SECS.map(([k,ic,t,d])=>`<button class="row" data-act="meSec" data-v="${k}"><span class="ri">${ic}</span><span class="rt"><b>${t}</b><span>${typeof d==="function"?d():d}</span></span><span class="chev">›</span></button>`).join("")}
+   <p class="sub" style="text-align:center;margin-top:14px">Yuki Sensei · version ${APP_VERSION}</p></div>`;
 }
+const ME_SECS=[
+ ["profile","👤","Profile","Name, level, goal and your learner card"],
+ ["talk","💬","How Yuki talks","Reply length, English vs Japanese, credit saver"],
+ ["voice","🔊","Voice",()=>engineName()],
+ ["ai","🧠","AI setup",()=>S.settings.apiKey.trim()?"✓ Connected · "+(S.settings.model==="claude-sonnet-5-5"?"Smart":"Fast & cheap"):"Add your key to talk to Yuki"],
+ ["memory","💭","What Yuki remembers",()=>S.profile.facts.length+" facts · "+S.profile.weak.length+" things to work on"],
+ ["app","⚙️","App & data","Updates, backup, restore, reset"]
+];
 
 // Nudge to download a Premium English voice if the phone doesn't have one yet
 function englishTip(){
@@ -2058,7 +2338,7 @@ function voicePicker(lang,label,cur){
 }
 
 /* ============ VOICE CALL ============ */
-function openVoice(){UI.voice=true;UI.vstate="idle";UI.vyou="";$("#voice").classList.remove("hidden");renderVoice();
+function openVoice(){if(UI.listening)stopMic(true);UI.voice=true;UI.vstate="idle";UI.vyou="";$("#voice").classList.remove("hidden");renderVoice();
   if(!S.chat.length||S.chat[S.chat.length-1].role!=="assistant"){/* nothing */}}
 function closeVoice(){UI.voice=false;stopMic(true);stopSpeak();$("#voice").classList.add("hidden");if(UI.tab==="chat")render();}
 function renderVoice(){
@@ -2067,7 +2347,7 @@ function renderVoice(){
   const st=UI.listening?"listening":UI.vstate;
   const other=UI.micLang==="ja-JP"?"en-US":"ja-JP";
   const label={idle:"Tap 🎤 日本語 or 🎤 English to answer",listening:MIC.paused?"⏸ Paused · tap 🎤 Continue, or ➤ Send":"Starting the mic ("+(UI.micLang==="en-US"?"English":"日本語")+")… talk when it says Hearing you",thinking:"Thinking…",speaking:"Yuki is talking · tap 🎤 to answer"}[st];
-  const cap=last&&!last.err?esc(cleanSpeech(last.text).replace(/\s+\n/g,"\n").trim()).replace(/\n+/g,"<br>"):last&&last.err?"Connection problem — check the chat.":"Say hi! Try 「こんにちは」 or ask me anything in English.";
+  const cap=last&&!last.err?esc(captionText(last.text)).replace(/\n+/g,"<br>"):last&&last.err?"Connection problem — check the chat.":"Say hi! Try 「こんにちは」 or ask me anything in English.";
   const cc=S.settings.captions,len=S.settings.style.length;
   $("#voice").innerHTML=`<div class="vtop"><button class="iconbtn" data-act="closeVoice" aria-label="Close">✕</button>
    <div class="vtitle" data-act="voiceLog" role="button" title="Voice log"><b>Yuki</b><small>${useQuest()?"🎌 "+(REC_VOICES[S.settings.jaRec]||REC_VOICES.ryusei).name.split(" ")[0]+"'s voice":useVV()?"🎌 "+(REC_VOICES[S.settings.jaRec]||REC_VOICES.himari).name.split(" ")[0]+"'s voice":useNatural()?"✨ natural voice":"voice call"}</small></div>
@@ -2083,7 +2363,6 @@ function renderVoice(){
     <button class="micbtn send" data-act="vSend" aria-label="Send"><span>➤</span>Send</button>
     <button class="vbtn" data-act="closeVoice"><i class="vend">📞</i>End</button>
    </div>`:`<div class="vctrl">
-    <button class="vbtn" data-act="vRepeat"><i>🔁</i>Repeat</button>
     <button class="vbtn" data-act="vSlow"><i>🐢</i>Slower</button>
     <button class="micbtn ja" data-act="vMic" data-v="ja-JP" aria-label="Speak Japanese"><span>🎤</span>日本語</button>
     <button class="micbtn en" data-act="vMic" data-v="en-US" aria-label="Speak English"><span>🎤</span>English</button>
@@ -2094,7 +2373,7 @@ setInterval(()=>{if(UI.voice&&UI.vstate==="speaking"&&!isSpeaking()){UI.vstate="
 function voiceMic(lang){
   lang=lang||S.settings.micLang;
   if(UI.listening){if(MIC.paused||lang!==UI.micLang){resumeMic(lang);return;}stopMic();return;}
-  if(UI.busy)return;
+  if(UI.busy){toast("Yuki is still thinking — one moment",1500);return;}
   stopSpeak();UI.vyou="";S.settings.micLang=lang;
   startMic(t=>{UI.vyou=t;const y=document.querySelector(".vlive");if(y)y.textContent=t||"…";},
     final=>{if(final){UI.vyou=final;send(final,hasKanji(final)?final+"\n(said out loud; the phone's voice typing added the kanji automatically — I can't read kanji yet, please reply in kana)":null,"voice");}else{UI.vstate="idle";renderVoice();}},lang);
@@ -2134,12 +2413,21 @@ function startQuiz(q){
   send(`🧩 ${t?t[2]:"Quiz"}`,p);
 }
 const ACT={
-  tab:el=>{if(el.dataset.tab!==UI.tab)stopSpeak();UI.tab=el.dataset.tab;if(UI.tab!=="practice"){UI.fc=null;UI.chart=null;}render();},
+  tab:el=>{const t=el.dataset.tab;if(t!==UI.tab)stopSpeak();if(t!=="me"||UI.tab==="me")UI.me=null;UI.tab=t;if(t!=="practice"){UI.fc=null;UI.chart=null;}render();},
+  goalSet:el=>{S.daily.goal=+el.dataset.v;const d=S.days[isoDay()];if(d)d.goal=d.xp>=S.daily.goal;save();rerender();},
+  calMove:el=>{const [y,m]=(UI.cal||isoDay().slice(0,7)).split("-").map(Number),d=new Date(y,m-1+(+el.dataset.n),1);UI.cal=isoDay(d).slice(0,7);rerender();},
+  calDay:el=>daySheet(el.dataset.d),
+  examClear:()=>{S.daily.exam="";S.daily.examName="";save();rerender();},
+  addReminder:()=>addReminder(),
+  wordBank:()=>wordBankSheet(),
+  meSec:el=>{UI.tab="me";UI.me=el.dataset.v||null;render();},
+  wodAdd:()=>{const w=wordOfDay(),id="v:"+w[0];if(!S.cards[id]){S.cards[id]={box:0,due:Date.now()};save();toast("＋ Added to your Core words flashcards");}else toast("Already in your flashcards ✓");rerender();},
+  wodYuki:()=>{const w=wordOfDay();S.chatId="main";linkChat();UI.tab="chat";render();send("🌅 Word of the day: "+w[0],`Today's word is ${w[0]} (${w[1]}) = ${w[2]}. Teach it to me in 2-3 short example sentences at my level, then ask me to make my own sentence with it.`);},
   ob:el=>{if(el.dataset.step==="exit"){UI.obEdit=false;render();return;}const n=$("#obName");S.name=n?n.value.trim():S.name;UI.ob=+el.dataset.step;render();},
   obLevel:el=>{const v=el.dataset.v;S.level=v==="n5b"?"n5":v;S._kana=v==="n5b";if(S._kana&&!S.about.hira)S.about.hira="some";UI.ob=2;render();},
   obGoal:el=>{S.goal=el.dataset.v;UI.ob=3;save();render();},
   obFocus:el=>{const f=S.about.focus,v=el.dataset.v,i=f.indexOf(v);if(i>=0)f.splice(i,1);else f.push(v);save();rerender();},
-  obSet:el=>{const k=el.dataset.k;S.about[k]=k==="minutes"?+el.dataset.v:el.dataset.v;save();rerender();},
+  obSet:el=>{const k=el.dataset.k;S.about[k]=k==="minutes"?+el.dataset.v:el.dataset.v;if(k==="minutes")S.daily.goal=goalForMinutes(+el.dataset.v);save();rerender();},
   styleSet:el=>{S.settings.style[el.dataset.k]=el.dataset.v;save();rerender();},
   styleSimple:el=>{S.settings.style.simple=!S.settings.style.simple;save();el.classList.toggle("on",S.settings.style.simple);},
   histSet:el=>{S.settings.history=+el.dataset.v;save();rerender();},
@@ -2147,23 +2435,23 @@ const ACT={
   placeStart:el=>startPlace(el&&el.dataset.ob?+el.dataset.ob:0),
   placeAns:el=>{const P=UI.place;const k=+el.dataset.k,[,,opts,c]=PLACE[P.i];P.ans.push(k===c);toast(k===c?"✓ Correct":"Answer: "+opts[c],1400);P.i++;render();},
   placeStop:()=>{const ob=UI.place.ob;UI.place=null;if(ob)UI.ob=ob;render();},
-  placeUse:()=>{const P=UI.place,r=P.result;S.placement=r;S.level=r.level;
+  placeUse:()=>{const P=UI.place,r=P.result;S.placement=r;S.level=r.level;addXP(10,null,"Level check");
     if(r.bands.kana[0]===r.bands.kana[1]&&!S.about.hira)S.about.hira="all";
     const ob=P.ob;UI.place=null;save();toast("Level set to "+LV[r.level].label);
     if(ob)UI.ob=ob===1?2:ob;render();},
   placeKeep:()=>{const P=UI.place;S.placement=P.result;const ob=P.ob;UI.place=null;save();if(ob)UI.ob=ob===1?2:ob;render();},
   obFinish:()=>{S.about.done=true;
-    if(UI.obEdit){UI.obEdit=false;save();toast("Saved — Yuki will use this from now on");UI.tab="me";render();return;}
+    if(UI.obEdit){UI.obEdit=false;save();toast("Saved — Yuki will use this from now on");UI.tab="me";UI.me="profile";render();return;}
     S.onboarded=true;
     S.chatId="main";linkChat();S.chat.splice(0,S.chat.length,{role:"assistant",text:`はじめまして${S.name?"、"+S.name+"さん":""}！ I'm Yuki 🌸\n\nHere's how we'll work together:\n• **Learn** has lessons — tap one and I'll teach it step by step\n• **Practice** has flashcards and kana charts that work even offline\n• Tap 📞 up top to talk to me out loud\n• Or just type anything: "quiz me", "what does すみません mean?", "let's roleplay ordering ramen"\n\nI'll remember what you're good at and what trips you up. Ready? Try saying こんにちは!`});
     if(S._kana){S.done.push("intro","sounds");}delete S._kana;
-    touchDay();save();UI.tab="home";render();},
+    S.daily.goal=goalForMinutes(S.about.minutes);checkBadges(true);S.daily.init=true;save();UI.tab="home";render();},
   lesson:el=>{UI.planCtx=null;startLesson(el.dataset.id);},
-  lessonDone:()=>{if(S.currentLesson&&!S.done.includes(S.currentLesson))S.done.push(S.currentLesson);S.currentLesson=null;save();toast("✅ Lesson complete! Next step unlocked");UI.tab="home";render();},
+  lessonDone:()=>{if(S.currentLesson&&!S.done.includes(S.currentLesson)){S.done.push(S.currentLesson);addXP(15,null,(lessonById(S.currentLesson)||{}).title);}S.currentLesson=null;save();toast("✅ Lesson complete! Next step unlocked");UI.tab="home";render();},
   lessonExit:()=>{S.currentLesson=null;save();render();},
   setLevel:el=>{S.level=el.dataset.v;save();rerender();},
   send:()=>{if(UI.listening){MIC.onDone=()=>doSend();stopMic();return;}doSend();},
-  chip:el=>{const t=el.dataset.t;if(t.startsWith("Say it slower")){const last=[...S.chat].reverse().find(m=>m.role==="assistant"&&!m.err);if(last)speak(last.text,{rate:0.6});return;}send(t);},
+  chip:el=>{const t=el.dataset.t;if(t.startsWith("Say it slower")){sayAgain(lastReply(),0.6);return;}send(t);},
   mic:el=>{const lang=el.dataset.v;
     if(UI.listening){if(MIC.paused||lang!==UI.micLang){resumeMic(lang);return;}stopMic();return;}
     const inp=$("#inp");const before=inp?inp.value.trim():"";
@@ -2239,7 +2527,7 @@ const ACT={
   vLen:el=>{S.settings.style.length=el.dataset.v;save();renderVoice();},
   vCaptions:()=>{S.settings.captions=!S.settings.captions;save();renderVoice();},
   vRepeat:()=>sayAgain([...S.chat].reverse().find(m=>m.role==="assistant"&&!m.err)),
-  vSlow:()=>{const l=[...S.chat].reverse().find(m=>m.role==="assistant"&&!m.err);if(l){UI.vstate="speaking";renderVoice();speak(l.text,{rate:0.6,say:l.say});}},
+  vSlow:()=>sayAgain(lastReply(),0.6),
   micLang:el=>{S.settings.micLang=el.dataset.v;save();toast(el.dataset.v==="ja-JP"?"🎤 Listening for Japanese — speak Japanese and it types in Japanese":"🎤 Listening for English",2200);if(UI.voice)renderVoice();else rerender();},
   review:()=>startDeck("all"),
   deck:el=>startDeck(el.dataset.d),
@@ -2257,12 +2545,12 @@ const ACT={
   lpPick:el=>{const lp=UI.lp,q=lp.qs[lp.qi];if(lp.picked!=null)return;lp.picked=el.dataset.v;const ok=lp.picked===q.a;
     if(ok)lp.right++;bumpWord(lp.kind==="kana"?q.it[3]:"w:"+q.it[0],ok);
     if(!ok&&!lp.requeued[lp.qi]){lp.requeued[lp.qi]=1;lp.qs.push({...q,opts:shuffle(q.opts.slice())});}
-    save();touchDay();render();},
+    addXP(ok?2:1,"cards");save();render();},
   lpTalk:()=>{const n=UI.lp.node;startTalk(n);},
   lpClose:()=>{UI.lp=null;UI.tab="home";render();},
   courseDone:()=>{stopSpeak();const c=S.course;if(c)markNode(c.key,!!(S.plan&&S.plan.done[c.key]));S.course=null;if(UI.voice)closeVoice();S.chatId="main";linkChat();save();UI.tab="home";render();},
   keepPractising:()=>{const c=activeCourse();if(c){c.keep=true;save();}if(UI.voice)renderVoice();else rerenderChatHead();toast("Keep going! Tap ✓ Finish whenever you want to move on",2200);},
-  courseExit:()=>{S.course=null;if(UI.voice)closeVoice();S.chatId="main";linkChat();save();UI.tab="home";render();},
+  courseExit:()=>{stopSpeak();S.course=null;if(UI.voice)closeVoice();S.chatId="main";linkChat();save();UI.tab="home";render();},
   chatsSheet:()=>chatsSheet(),
   openChat:el=>{if(S.chatId!==el.dataset.id)stopSpeak();S.chatId=el.dataset.id;linkChat();S.threads[S.chatId].at=Date.now();save();UI.tab="chat";render();},
   resumeCourse:()=>{const c=S.course;if(!c)return;S.chatId=c.key;linkChat();save();UI.tab="chat";render();if(c.speaking)openVoice();},
@@ -2295,13 +2583,14 @@ const ACT={
   exportData:()=>{const d=JSON.stringify({...S,settings:{...S.settings,apiKey:"",azKey:"",questKey:""}});sheet(`<div class="h2">Backup</div><p class="sub" style="margin:8px 0">Copy this and keep it somewhere safe (Notes works). Your API keys aren't included.</p><textarea class="field" rows="6" readonly>${esc(d)}</textarea><button class="btn" data-act="copyBackup">Copy</button><button class="btn ghost" style="margin-top:8px" data-act="closeSheet">Close</button>`);},
   copyBackup:()=>{const t=document.querySelector("#sheet textarea");if(navigator.clipboard)navigator.clipboard.writeText(t.value).then(()=>toast("Copied"),()=>{t.select();toast("Select all and copy");});else{t.select();toast("Select all and copy");}},
   importData:()=>sheet(`<div class="h2">Restore</div><p class="sub" style="margin:8px 0">Paste a backup below.</p><textarea id="impT" class="field" rows="6"></textarea><button class="btn" data-act="doImport">Restore</button><button class="btn ghost" style="margin-top:8px" data-act="closeSheet">Cancel</button>`),
-  doImport:()=>{try{const d=JSON.parse($("#impT").value);const key=S.settings.apiKey,az=S.settings.azKey;S=migrate(merge(JSON.parse(JSON.stringify(DEFAULT)),d));S.settings.apiKey=key;S.settings.azKey=az;linkChat();save();closeSheet();toast("Restored ✅");render();}catch(e){toast("That doesn't look like a backup");}},
+  doImport:()=>{try{const d=JSON.parse($("#impT").value);const key=S.settings.apiKey,az=S.settings.azKey,qk=S.settings.questKey;S=migrate(merge(JSON.parse(JSON.stringify(DEFAULT)),d));S.settings.apiKey=key;S.settings.azKey=az;S.settings.questKey=qk;linkChat();save();closeSheet();toast("Restored ✅");render();}catch(e){toast("That doesn't look like a backup");}},
   clearChat:()=>{if(confirm("Clear the chat? Your progress and what Yuki knows about you stay.")){S.chat.length=0;S.currentLesson=null;save();toast("Chat cleared");}},
-  resetAll:()=>{if(confirm("Erase EVERYTHING — progress, cards, memory, chat?")){const key=S.settings.apiKey,az=S.settings.azKey;S=JSON.parse(JSON.stringify(DEFAULT));S.settings.apiKey=key;S.settings.azKey=az;linkChat();UI.ob=0;UI.obEdit=false;UI.place=null;UI.tab="home";save();render();}},
+  resetAll:()=>{if(confirm("Erase EVERYTHING — progress, cards, memory, chat?")){const key=S.settings.apiKey,az=S.settings.azKey,qk=S.settings.questKey;S=JSON.parse(JSON.stringify(DEFAULT));S.settings.apiKey=key;S.settings.azKey=az;S.settings.questKey=qk;linkChat();UI.ob=0;UI.obEdit=false;UI.place=null;UI.tab="home";save();render();}},
   checkUpdate:()=>checkUpdate(true),
   closeSheet:()=>closeSheet()
 };
 document.addEventListener("click",e=>{
+  track();
   const el=e.target.closest("[data-act]");if(!el)return;
   const fn=ACT[el.dataset.act];if(!fn)return;
   if(el.closest("#sheet")&&!["closeSheet","copyBackup","doImport","addSuggest","addLesson","copyDock","questTest","iphoneVoiceTest"].includes(el.dataset.act))closeSheet();
@@ -2315,6 +2604,7 @@ document.addEventListener("change",e=>{
   else if(k==="azEn"||k==="azJa"){S.settings[k]=el.value;save();speak(k==="azEn"?"Hi! This is how I'll sound in English.":"こんにちは、ゆきです。よろしくね！",{forceEnglish:true});return;}
   else if(k==="voice.en"||k==="voice.ja"){S.settings[k==="voice.en"?"voiceEn":"voiceJa"]=el.value;save();speak(k==="voice.en"?"Hi! This is how I'll sound in English.":"こんにちは、ゆきです。",{forceEnglish:true});return;}
   else if(k==="rate")S.settings.rate=parseFloat(el.value);
+  else if(k.startsWith("daily.")){S.daily[k.slice(6)]=el.value.trim();save();if(UI.tab==="progress")rerender();return;}
   else if(k==="model")S.settings.model=el.value;
   save();if(k==="rate")speak("この速さでどうですか？",{});
 });
@@ -2342,8 +2632,8 @@ function liveDiffers(html){
 // Safe moment = nothing in progress that a reload would interrupt
 function canReloadNow(){
   const a=document.activeElement,typing=a&&/INPUT|TEXTAREA/.test(a.tagName)&&a.value;
-  const midCards=UI.fc&&UI.fc.i>0&&UI.fc.i<UI.fc.q.length;
-  return !UI.busy&&!UI.voice&&!UI.listening&&!UI.place&&!midCards&&!typing;
+  const midCards=UI.fc&&UI.fc.i<UI.fc.q.length,sheetOpen=!$("#sheet").classList.contains("hidden");
+  return !UI.busy&&!UI.voice&&!UI.listening&&!UI.place&&!UI.lp&&!midCards&&!sheetOpen&&!typing;
 }
 function applyUpdate(){
   // Loop guard: never auto-reload more than once every 2 minutes
@@ -2362,7 +2652,7 @@ function checkUpdate(manual){
   }).catch(()=>{if(manual)toast("Couldn't check — are you online?");});
 }
 document.addEventListener("visibilitychange",()=>{
-  if(document.visibilityState==="visible")pingVV();
+  if(document.visibilityState==="visible"){pingVV();lastAct=0;if(S.onboarded){checkFreeze();if(UI.tab==="home"||UI.tab==="progress")rerender();}}
   if(document.visibilityState==="hidden"){stopSpeak();saveNow();if(updPending)applyUpdate();return;}
   if(updPending){if(applyUpdate())return;}
   if(Date.now()-lastCheck>60e3)checkUpdate(false);
@@ -2371,7 +2661,7 @@ document.addEventListener("visibilitychange",()=>{
 setInterval(()=>{if(document.visibilityState==="visible")checkUpdate(false);},15*60e3);
 
 /* ============ START ============ */
-loadState().then(()=>{fitViewport();render();pingVV();setTimeout(()=>checkUpdate(false),1500);});
+loadState().then(()=>{if(S.onboarded){checkFreeze();if(!S.daily.init){checkBadges(true);S.daily.init=true;save();}}fitViewport();render();pingVV();setTimeout(()=>checkUpdate(false),1500);});
 </script>
 </body>
 </html>

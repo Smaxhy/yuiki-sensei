@@ -45,8 +45,24 @@ Safari → Add to Home Screen.
   other levels are built from `CUR[level]` (lessons + a 🏆 unit review). `pathNodes()` /
   `pathUnits()`; custom ⭐ lessons in `S.plan.custom` ({id,title,before,level}) from the
   "⭐ Add a lesson" sheet or Yuki's `path` MEM field. Progress in `S.plan.done`.
-- **Tabs**: Path, Yuki (chat), Practice, Me. "All lessons" (`UI.tab="learn"`) opens from the
+- **Tabs**: Path, Yuki (chat), Practice, Progress, Me. "All lessons" (`UI.tab="learn"`) opens from the
   path, the level sheet, or Practice.
+- **Progress system** (state v21): every study day has a record `S.days["YYYY-MM-DD"]` = {xp, sec, cards,
+  words, msgs, calls, les[], goal?, frozen?}. `addXP(n, kind, label)` is the single entry point (flashcard
+  1–2, lesson practice 1–2, word used in a talk 5, message 2 / spoken 3, path node 15 (kana 10), CUR lesson
+  15, level check 10). Study time = gaps between taps under 2 min (`track()`, on every click).
+  `S.daily` = {goal (20/50/100/150, from onboarding minutes via `goalForMinutes`), freeze (0–2, +1 every
+  7 streak days), best, exam/examName (countdown, 🎌 on the calendar), remind ("HH:MM"), badges [[id,date]],
+  init}. `streakInfo()` counts consecutive active/frozen days ending today or yesterday; `checkFreeze()`
+  (on open and on return) spends a freeze when exactly yesterday was missed. The old `stats.streak` was
+  turned into study days in the v21 migration. Progress tab (`vProgress`): today ring + goal picker,
+  `calendarHTML()` month grid (tap a day → `daySheet`), `weekHTML()` 7-day bars, countdown, daily reminder
+  (in-app "Study time!" on Home after `remind`, plus `addReminder()` = a repeating .ics event with an alert
+  for the iPhone Calendar), all-time stats, `BADGES` (16, `checkBadges`), word bank (`wordBankSheet`).
+  Home shows `todayStrip()` (goal ring, streak, cards due). Practice shows the word of the day
+  (`wordOfDay()`, from VOCAB, same all day; add to flashcards / use it with Yuki).
+- **Me tab**: a profile header plus rows that open sub-pages (`UI.me` = profile, talk, voice, ai, memory,
+  app; `ME_SECS`, `ACT.meSec`). The chat error bubble opens AI setup directly.
 - **Yuki the AI tutor**: 26, from Kyoto, warm and playful, corrects mistakes clearly.
   Calls the Anthropic Messages API directly from the browser (`apiRequest()`) using the
   owner's API key, which is saved only in localStorage (never in the repo).
@@ -164,7 +180,7 @@ Safari → Add to Home Screen.
   Default `micLang="ja-JP"`.
   Yuki is told English via the Japanese mic arrives as katakana and English-mode Japanese as
   look-alikes ("Ohio"). Captions toggle sits top-right on the call screen.
-  Has Repeat and Slower buttons. If the mic is blocked, it shows iPhone fix-it steps.
+  Has "🔁 Say it again" (under the captions) and Slower buttons. If the mic is blocked, it shows iPhone fix-it steps.
 - **Listening**: Japanese wrapped in [[double brackets]] in AI replies shows as a hidden,
   tap-to-play audio clip.
 - **Flashcards**: decks for hiragana, katakana, 80 core words, and 50 kanji, using
@@ -172,11 +188,12 @@ Safari → Add to Home Screen.
 - **Kana charts**: tap any character to hear it; ones missed get a red border.
 - **Quizzes**: mixed, weak spots, vocab, grammar, kanji, listening, translation, and
   roleplay, all run by Yuki in chat one question at a time.
-- **Me tab**: profile, API key and model picker with a "Test Yuki" button, voice
-  settings, what Yuki remembers, and backup/restore as JSON (key excluded).
+- **Reliability**: `apiRequest` gives up after 60 s (AbortController) so Yuki can't hang on "thinking";
+  auto-update never reloads during a lesson, flashcards or an open sheet (`canReloadNow`); call captions use
+  `captionText()` (markdown removed, bullets kept); spoken answers with kanji still tick course words.
 
 ## Technical notes
-- State object `S` (currently `v:20`) saved to localStorage key `yuki-sensei-v3`. Keep it backward
+- State object `S` (currently `v:21`) saved to localStorage key `yuki-sensei-v3`. Keep it backward
   compatible. Saved data (and restored backups) go through `migrate()`; if the shape
   changes, bump `DEFAULT.v` and add a step there instead of wiping progress.
 - Clicks route through `data-act` attributes to the `ACT` object.
