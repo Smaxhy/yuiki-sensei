@@ -89,7 +89,10 @@ Safari → Add to Home Screen.
   Japanese segments play from the recordings when they match, otherwise live from the free public
   VOICEVOX service tts.quest (`questUrl` → mp3StreamingUrl, played on one shared <audio> element
   unlocked on first tap; speaker id from `REC_VOICES`); English parts use Ryusei or the iPhone voice; any
-  failure (busy/unreachable) falls back to the iPhone voice for that segment; a "retryAfter ≤ 4 s" answer is retried once. With
+  failure falls back to the iPhone voice. `questUrl` keeps retrying "retryAfter" answers (up to
+  ~25 s, like tts.quest's own browser example) and records `questLastErr`; with Ryusei for English
+  the whole reply is ONE request. Optional free tts.quest key `S.settings.questKey` (never in
+  backups); Me → Voice → "Test Ryusei's live voice" shows the exact error. With
   `enVoice="ryusei"` (default again at the owner's request; "iphone" optional) English is sent to VOICEVOX too, lower-cased with contractions
   expanded (`englishForVV`), neighbouring live segments merged into one request.
   All recordings and tts.quest clips play through one shared <audio> element (`questPlayer`,

@@ -289,7 +289,7 @@ input,textarea,select{font:inherit;font-size:16px;color:var(--text)}
 <script>
 "use strict";
 // Bump this on every change so phones can spot a new version and offer to update
-const APP_VERSION="2026.10.04-13";
+const APP_VERSION="2026.10.04-14";
 /* ============ DATA ============ */
 const LV = {
   n5:{label:"N5",name:"Beginner",color:"#9fd67c"},
@@ -490,7 +490,7 @@ const DEFAULT={
   done:[],cards:{},chat:[],currentLesson:null,
   threads:{main:{title:"Chat with Yuki",kind:"free",msgs:[],at:0}},chatId:"main",
   settings:{apiKey:"",model:"claude-haiku-4-5-20251001",rate:0.9,autoSpeakChat:false,speakEnglish:true,micLang:"ja-JP",
-    style:{length:"short",english:"balanced",script:"auto",simple:false},history:12,voiceEn:"",voiceJa:"",handsFree:true,jaRec:"ryusei",vvUrl:"",enVoice:"ryusei",
+    style:{length:"short",english:"balanced",script:"auto",simple:false},history:12,voiceEn:"",voiceJa:"",handsFree:true,jaRec:"ryusei",vvUrl:"",enVoice:"ryusei",questKey:"",
     tts:"quest",azKey:"",azRegion:"eastus",azEn:"en-US-AvaMultilingualNeural",azJa:"ja-JP-NanamiNeural",ttsChars:{month:"",n:0},captions:true}
 };
 let S=JSON.parse(JSON.stringify(DEFAULT));
@@ -567,6 +567,7 @@ function migrate(st){
   // v15 → v16: shorter replies by default, hands-free calls
   if((st.v||0)<16){if(S2.style&&S2.style.length==="normal")S2.style.length="short";S2.handsFree=true;}
   S2.handsFree=S2.handsFree!==false;
+  if(typeof S2.questKey!=="string")S2.questKey="";
   // v12 → v13: the mic listens in Japanese by default (English mode turned "ohayou" into "Ohio")
   if((st.v||0)<13)S2.micLang="ja-JP";
   // v13 → v14: separate chats per lesson; the old single chat becomes "Chat with Yuki"
@@ -834,16 +835,25 @@ function questPlayer(){if(!qa){qa=new Audio();qa.preload="auto";qa.playsInline=t
 function unlockPlayer(){const a=questPlayer();if(a.dataset.ok||natPlaying)return;a.src=SILENT_MP3;a.play().then(()=>{a.dataset.ok="1";}).catch(()=>{});}
 document.addEventListener("touchend",unlockPlayer,{passive:true});
 document.addEventListener("pointerdown",unlockPlayer,{passive:true});
+// Asks tts.quest for Ryusei audio. Without a key the free service often answers "wait N seconds";
+// like its official browser example, keep waiting and retrying (up to ~25 s in total).
+let questLastErr="";
 async function questUrl(text){
   const key=vvSpeaker()+"|"+text;
   if(questCache.has(key))return questCache.get(key);
   const p=(async()=>{
-    const ask=async()=>{const r=await withTimeout(fetch(`${QUEST_API}?speaker=${vvSpeaker()}&text=${encodeURIComponent(text)}`),15000);return r.json();};
-    let j=await ask();
-    // the free service sometimes says "wait N seconds"; wait (up to 4 s) and try once more
-    if(!j.success&&j.retryAfter&&j.retryAfter<=4){await new Promise(r=>setTimeout(r,j.retryAfter*1000+200));j=await ask();}
-    if(!j.success)throw new Error(j.errorMessage||"busy");
-    return j.mp3StreamingUrl||j.mp3DownloadUrl||j.wavDownloadUrl;
+    const qk=(S.settings.questKey||"").trim();
+    const url=`${QUEST_API}?speaker=${vvSpeaker()}&text=${encodeURIComponent(text)}${qk?"&key="+encodeURIComponent(qk):""}`;
+    let waited=0;
+    for(let attempt=0;attempt<6;attempt++){
+      let r,j;
+      try{r=await withTimeout(fetch(url),20000);}catch(e){questLastErr=e.message==="timeout"?"no answer (timeout)":"can't connect ("+e.message+")";throw new Error(questLastErr);}
+      try{j=await r.json();}catch(e){questLastErr="HTTP "+r.status;throw new Error(questLastErr);}
+      if(j.mp3StreamingUrl)return j.mp3StreamingUrl;
+      if(j.retryAfter!=null&&waited+ +j.retryAfter<=25){const w=(+j.retryAfter+1)*1000;waited+=w/1000;natLoading=true;await new Promise(res=>setTimeout(res,w));continue;}
+      questLastErr=j.errorMessage||("HTTP "+r.status);throw new Error(questLastErr);
+    }
+    questLastErr="busy for too long";throw new Error(questLastErr);
   })();
   questCache.set(key,p);p.catch(()=>questCache.delete(key));
   if(questCache.size>80)questCache.delete(questCache.keys().next().value);
@@ -866,10 +876,10 @@ const enRyusei=()=>S.settings.enVoice==="ryusei";
 // English parts: Ryusei too (live) when enVoice is "ryusei", else the iPhone voice
 async function speakQuest(segs,rate,text,opts){
   if(enRyusei()){
-    // merge neighbours so a mixed reply is a few live requests instead of many
-    const merged=[];segs.forEach(sg=>{const k=sg.k==="ja"&&RECORDED.has(recKey(sg.t))?"rec":"live",t=sg.k==="en"?englishForVV(sg.t):sg.t;
-      const last=merged[merged.length-1];if(last&&last.mode==="live"&&k==="live")last.t+=" "+t;else merged.push({mode:k,k:sg.k,t,orig:sg.t});});
-    segs=merged.map(m=>({k:"ja",t:m.t,orig:m.orig,live:m.mode==="live"}));
+    // the whole reply in ONE live request (a single word you've learned still plays from the recording)
+    const whole=segs.map(sg=>sg.k==="en"?englishForVV(sg.t):sg.t).join(" ").replace(/\s+/g," ").trim();
+    const single=segs.length===1&&segs[0].k==="ja"&&RECORDED.has(recKey(segs[0].t));
+    segs=single?[{k:"ja",t:segs[0].t}]:[{k:"ja",t:whole,orig:segs.map(x=>x.t).join(" ")}];
   }
   const my=++natSeq;natBusy=true;
   const recUrl=sg=>{const k=recKey(sg.t);return RECORDED.has(k)?recUrlFor(k):null;};
@@ -881,11 +891,11 @@ async function speakQuest(segs,rate,text,opts){
       if(!jobs[i]){await sayDevice(segs[i].t.trim(),"en-US",rate);continue;}
       // (with enVoice "ryusei" every segment is sent as "ja", so it never reaches the iPhone English voice unless the service fails)
       natLoading=true;let url=null;try{url=typeof jobs[i]==="string"?jobs[i]:await jobs[i];}catch(e){
-        if(!questNote){questNote=true;toast(/busy|limit|wait/i.test(e.message)?"Ryusei's live voice is busy — using the iPhone voice for a moment":"Couldn't reach Ryusei's live voice — using the iPhone voice",3500);}}
+        if(!questNote){questNote=true;toast("Ryusei's voice didn't answer ("+e.message+"). Tap Me → Voice → Test Ryusei for details.",4500);}}
       natLoading=false;if(my!==natSeq)return;
       if(url){try{await playUrl(url,my,rate);continue;}catch(e){}}
       if(my!==natSeq)return;
-      if(segs[i].orig!==undefined)await speakPlainDevice(segs[i].t,rate);else await sayDevice(segs[i].t.trim(),"ja-JP",rate);
+      if(segs[i].orig!==undefined)await speakPlainDevice(segs[i].orig,rate);else await sayDevice(segs[i].t.trim(),"ja-JP",rate);
     }
   }finally{if(my===natSeq){natBusy=false;natLoading=false;}}
 }
@@ -1721,6 +1731,11 @@ function vMe(){
     <p class="sub" style="margin:10px 0 6px">Voice</p>${chipRow("recSet","jaRec",st.jaRec==="off"?"ryusei":st.jaRec,Object.entries(REC_VOICES).map(([k,v])=>[k,v.name.split(" ")[0]]))}
     <p class="sub" style="margin:12px 0 6px">English parts</p>${chipRow("enVoiceSet","enVoice",st.enVoice,[["ryusei",(REC_VOICES[st.jaRec]||REC_VOICES.ryusei).name.split(" ")[0]+" (Japanese accent)"],["iphone","iPhone voice"]])}
     ${st.enVoice==="iphone"?voicePicker("en","English voice",st.voiceEn):""}
+    <button class="btn sm" style="margin-top:12px" data-act="questTest">🔎 Test Ryusei's live voice</button>
+    <details style="margin-top:10px"><summary class="sub" style="min-height:44px;display:flex;align-items:center">Optional: free tts.quest key (faster, fewer "busy")</summary>
+     <p class="sub" style="margin:6px 0">Get a free key at <b>su-shiki.com/api</b>, paste it here. It's only used to ask tts.quest for Ryusei's audio and stays on this phone.</p>
+     <input class="field" id="questKeyIn" type="password" placeholder="tts.quest key (optional)" value="${esc(st.questKey)}" autocomplete="off" autocapitalize="off" spellcheck="false">
+     <button class="btn sm ghost" data-act="saveQuestKey">Save key</button></details>
     <p class="sub" style="margin-top:6px">Voice: ${esc((REC_VOICES[st.jaRec]||REC_VOICES.ryusei).credit)} · live audio by tts.quest</p>${st.enVoice==="iphone"?englishTip():""}`:""}
    ${st.tts==="device"?`<p class="sub" style="margin:10px 0 0">Free, no key: every word from your lessons, flashcards and kana is spoken by ${esc((REC_VOICES[st.jaRec]||REC_VOICES.himari).name.split(" ")[0])} (recorded), including when Yuki uses them in chat. Other sentences use your best iPhone voice.</p>`:""}
    ${st.tts==="voicevox"?`
@@ -1918,6 +1933,21 @@ const ACT={
     <p class="sub" style="margin-top:10px">Free Spaces fall asleep after a couple of days unused. Yuki wakes yours when you open the app; the very first sentence after a long break may use the iPhone voice while it wakes (about a minute).</p>
     <button class="btn ghost" style="margin-top:10px" data-act="closeSheet">Done</button>`),
   copyDock:()=>{const t=$("#vvDock");if(navigator.clipboard)navigator.clipboard.writeText(t.value).then(()=>toast("Copied ✓"),()=>{t.select();toast("Select all and copy");});else{t.select();toast("Select all and copy");}},
+  saveQuestKey:()=>{const v=$("#questKeyIn");S.settings.questKey=v?v.value.trim():"";questCache.clear();save();toast(S.settings.questKey?"Key saved — tap Test Ryusei":"Key removed");},
+  questTest:async()=>{
+    sheet(`<div class="h2">🔎 Testing Ryusei's live voice…</div><p class="sub" style="margin-top:8px">Asking tts.quest to say a test sentence. This can take up to 30 seconds if it's busy.</p>`);
+    const t0=Date.now();questCache.clear();
+    try{const url=await questUrl("こんにちは、りゅうせいです。テストです。");
+      const secs=((Date.now()-t0)/1000).toFixed(1);
+      sheet(`<div class="h2">✅ Ryusei's voice works</div><p class="sub" style="margin:8px 0 14px">tts.quest answered in ${secs} s. Playing the test now…</p><button class="btn" data-act="closeSheet">Great</button>`);
+      questNote=false;const my=++natSeq;playUrl(url,my).catch(e=>toast("Got the audio but it wouldn't play ("+e.message+"). Check the volume buttons / silent mode.",5000));}
+    catch(e){
+      const m=e.message||"";const busy=/busy|too many|retry|limit|timeout|429/i.test(m);const net=/connect|load failed|network|fetch/i.test(m);
+      sheet(`<div class="h2">❌ Couldn't get Ryusei's voice</div>
+       <p class="sub" style="margin:8px 0">Reason: <b>${esc(m)}</b></p>
+       <p class="sub" style="margin-bottom:12px">${busy?"The free service is busy right now. Try again in a minute, or add a free tts.quest key (Me → Voice) so you get priority.":net?"Your phone couldn't reach tts.quest. Check your internet (Wi-Fi or mobile data), turn off any VPN / content blocker for this site, then try again.":"tts.quest refused the request. Try again later, or add a free tts.quest key in Me → Voice."}</p>
+       <p class="sub" style="margin-bottom:14px">Meanwhile, words you've learned still play from Ryusei's recordings.</p>
+       <button class="btn" data-act="questTest">Try again</button><button class="btn ghost" style="margin-top:8px" data-act="closeSheet">Close</button>`);}},
   enVoiceSet:el=>{S.settings.enVoice=el.dataset.v;save();rerender();speak("Hi! This is how I sound in English.",{forceEnglish:true});},
   ttsSet:el=>{S.settings.tts=el.dataset.v;natFailNote=false;vvNote=false;questNote=false;save();rerender();pingVV();},
   saveAz:()=>{const v=$("#azKeyIn");S.settings.azKey=v?v.value.trim():"";natCache.clear();natFailNote=false;save();toast(S.settings.azKey?"Key saved — tap Test voice 🔊":"Key removed");rerender();},
@@ -1998,7 +2028,7 @@ const ACT={
     <p class="sub" style="margin-top:10px">The key lives only on this phone. The app file itself has no key in it, so sharing the link doesn't share your key. Pick "Fast & cheap" if you want it to cost less.</p>
     <button class="btn" style="margin-top:14px" data-act="closeSheet">Got it</button>`),
   testVoice:()=>{questNote=false;speak("こんにちは！ゆきです。きょうも いっしょに がんばりましょう。 Hi, this is how I sound.",{forceEnglish:true});},
-  exportData:()=>{const d=JSON.stringify({...S,settings:{...S.settings,apiKey:"",azKey:""}});sheet(`<div class="h2">Backup</div><p class="sub" style="margin:8px 0">Copy this and keep it somewhere safe (Notes works). Your API keys aren't included.</p><textarea class="field" rows="6" readonly>${esc(d)}</textarea><button class="btn" data-act="copyBackup">Copy</button><button class="btn ghost" style="margin-top:8px" data-act="closeSheet">Close</button>`);},
+  exportData:()=>{const d=JSON.stringify({...S,settings:{...S.settings,apiKey:"",azKey:"",questKey:""}});sheet(`<div class="h2">Backup</div><p class="sub" style="margin:8px 0">Copy this and keep it somewhere safe (Notes works). Your API keys aren't included.</p><textarea class="field" rows="6" readonly>${esc(d)}</textarea><button class="btn" data-act="copyBackup">Copy</button><button class="btn ghost" style="margin-top:8px" data-act="closeSheet">Close</button>`);},
   copyBackup:()=>{const t=document.querySelector("#sheet textarea");if(navigator.clipboard)navigator.clipboard.writeText(t.value).then(()=>toast("Copied"),()=>{t.select();toast("Select all and copy");});else{t.select();toast("Select all and copy");}},
   importData:()=>sheet(`<div class="h2">Restore</div><p class="sub" style="margin:8px 0">Paste a backup below.</p><textarea id="impT" class="field" rows="6"></textarea><button class="btn" data-act="doImport">Restore</button><button class="btn ghost" style="margin-top:8px" data-act="closeSheet">Cancel</button>`),
   doImport:()=>{try{const d=JSON.parse($("#impT").value);const key=S.settings.apiKey,az=S.settings.azKey;S=migrate(merge(JSON.parse(JSON.stringify(DEFAULT)),d));S.settings.apiKey=key;S.settings.azKey=az;linkChat();save();closeSheet();toast("Restored ✅");render();}catch(e){toast("That doesn't look like a backup");}},
@@ -2010,7 +2040,7 @@ const ACT={
 document.addEventListener("click",e=>{
   const el=e.target.closest("[data-act]");if(!el)return;
   const fn=ACT[el.dataset.act];if(!fn)return;
-  if(el.closest("#sheet")&&!["closeSheet","copyBackup","doImport","addSuggest","addLesson","copyDock"].includes(el.dataset.act))closeSheet();
+  if(el.closest("#sheet")&&!["closeSheet","copyBackup","doImport","addSuggest","addLesson","copyDock","questTest"].includes(el.dataset.act))closeSheet();
   fn(el,e);
 });
 document.addEventListener("change",e=>{
