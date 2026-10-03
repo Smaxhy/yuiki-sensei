@@ -296,7 +296,7 @@ input,textarea,select{font:inherit;font-size:16px;color:var(--text)}
 <script>
 "use strict";
 // Bump this on every change so phones can spot a new version and offer to update
-const APP_VERSION="2026.10.04-16";
+const APP_VERSION="2026.10.04-17";
 /* ============ DATA ============ */
 const LV = {
   n5:{label:"N5",name:"Beginner",color:"#9fd67c"},
@@ -695,7 +695,7 @@ const natCache=new Map();
 // "playback" lets voices play even when the iPhone's silent switch is on (Safari 16.4+)
 // ("playback" alone would block the microphone, so calls and the 🎤 switch to "play-and-record")
 function setAudioMode(m){try{if(navigator.audioSession&&navigator.audioSession.type!==m)navigator.audioSession.type=m;}catch(e){}}
-setAudioMode("playback");
+// (Forcing "playback" all the time could silence the iPhone's own voices, so the app stays on "auto")
 function audioCtx(){if(!actx){const C=window.AudioContext||window.webkitAudioContext;if(!C)return null;actx=new C();}if(actx.state==="suspended")actx.resume().catch(()=>{});return actx;}
 let audioUnlocked=false;
 document.addEventListener("touchend",()=>{if(audioUnlocked)return;const c=audioCtx();if(c){try{const b=c.createBuffer(1,1,22050),src=c.createBufferSource();src.buffer=b;src.connect(c.destination);src.start(0);audioUnlocked=true;}catch(e){}}},{passive:true});
@@ -868,7 +868,7 @@ async function questUrl(text){
       let r,j;
       try{r=await withTimeout(fetch(url),20000);}catch(e){questLastErr=e.message==="timeout"?"no answer (timeout)":"can't connect ("+e.message+")";throw new Error(questLastErr);}
       try{j=await r.json();}catch(e){questLastErr="HTTP "+r.status;throw new Error(questLastErr);}
-      if(j.mp3StreamingUrl)return j.mp3StreamingUrl;
+      if(j.mp3StreamingUrl||j.mp3DownloadUrl)return{stream:j.mp3StreamingUrl,mp3:j.mp3DownloadUrl,wav:j.wavDownloadUrl,status:j.audioStatusUrl};
       if(j.retryAfter!=null&&waited+ +j.retryAfter<=25){const w=(+j.retryAfter+1)*1000;waited+=w/1000;natLoading=true;await new Promise(res=>setTimeout(res,w));continue;}
       questLastErr=j.errorMessage||("HTTP "+r.status);throw new Error(questLastErr);
     }
@@ -887,8 +887,43 @@ function playUrl(url,my,rate){return new Promise((res,rej)=>{
   a.play().then(()=>{a.dataset.ok="1";}).catch(()=>fin(false));
 });}
 function stopQuest(){if(qa){try{qa.pause();}catch(e){}}}
+// iPhone Safari is unreliable with half-made streams, so wait until tts.quest says the file is ready and
+// play the finished MP3. If the status can't be read, try the stream, then the finished file a few times.
+let questStage="";
+async function playQuestAudio(o,my,rate){
+  if(typeof o==="string")return playUrl(o,my,rate);
+  let ready=false,statusOk=false;
+  if(o.status){
+    questStage="waiting for the audio";
+    for(let i=0;i<50&&my===natSeq;i++){
+      try{const r=await withTimeout(fetch(o.status+(o.status.includes("?")?"&":"?")+"t="+Date.now()),6000);const st=await r.json();statusOk=true;
+        if(st.isAudioError){questStage="tts.quest couldn't make the audio";throw new Error(questStage);}
+        if(st.isAudioReady){ready=true;break;}}
+      catch(e){if(statusOk&&/couldn't make/.test(e.message))throw e;if(!statusOk)break;}
+      await new Promise(r=>setTimeout(r,400));
+    }
+  }
+  if(my!==natSeq)return;
+  questStage="playing";
+  if(ready&&o.mp3){try{return await playUrl(o.mp3,my,rate);}catch(e){}}
+  if(o.stream){try{return await playUrl(o.stream,my,rate);}catch(e){}}
+  for(let i=0;i<8&&my===natSeq;i++){
+    await new Promise(r=>setTimeout(r,1500));
+    for(const u of [o.mp3,o.wav]){if(!u)continue;try{return await playUrl(u,my,rate);}catch(e){}}
+  }
+  questStage="the audio wouldn't play";throw new Error(questStage);
+}
 // VOICEVOX reads English best in lower case with short forms written out ("Hi" would be spelled "H-I")
 const EN_FIX=[[/\bi'm\b/g,"i am"],[/\byou're\b/g,"you are"],[/\bwe're\b/g,"we are"],[/\bthey're\b/g,"they are"],[/\b(it|that|what|there|here|she|he)'s\b/g,"$1 is"],[/\bdon't\b/g,"do not"],[/\bdoesn't\b/g,"does not"],[/\bdidn't\b/g,"did not"],[/\bcan't\b/g,"can not"],[/\bwon't\b/g,"will not"],[/\bisn't\b/g,"is not"],[/\baren't\b/g,"are not"],[/\b(i|you|we|they)'ll\b/g,"$1 will"],[/\b(i|you|we|they)'ve\b/g,"$1 have"],[/\b(i|you|we|they)'d\b/g,"$1 would"],[/\bok\b/g,"okay"]];
+function questFail(stepNo,msg){
+  const tips={1:/connect|load failed|network|fetch|timeout/i.test(msg)?"Your phone couldn't reach tts.quest. Check your internet and turn off any VPN or content blocker (e.g. in Safari settings), then try again.":"tts.quest is busy or refused the request. Try again in a minute, or add a free tts.quest key below.",
+    2:"tts.quest accepted the request but didn't finish the audio. The free service is probably overloaded. Try again in a minute, or add a free tts.quest key.",
+    3:"The audio was made but your phone wouldn't play it. Make sure the volume is up, then tap Try again (the first tap unlocks sound on iPhone)."};
+  sheet(`<div class="h2">❌ Step ${stepNo} failed</div><p class="sub" style="margin:8px 0">Reason: <b>${esc(msg)}</b></p><p class="sub" style="margin-bottom:12px">${tips[stepNo]}</p>
+   <p class="sub" style="margin-bottom:12px">Also check the iPhone voice (used as backup):</p>
+   <button class="btn sm ghost" data-act="iphoneVoiceTest" style="margin-bottom:8px">🔊 Test iPhone voice</button>
+   <button class="btn" data-act="questTest">Try again</button><button class="btn ghost" style="margin-top:8px" data-act="closeSheet">Close</button>`);
+}
 function englishForVV(t){t=t.toLowerCase().replace(/[’‘]/g,"'");EN_FIX.forEach(([a,b])=>{t=t.replace(a,b);});return t;}
 const enRyusei=()=>S.settings.enVoice==="ryusei";
 // Japanese parts: Ryusei's recording if we have one (instant), otherwise live from tts.quest;
@@ -912,7 +947,7 @@ async function speakQuest(segs,rate,text,opts){
       natLoading=true;let url=null;try{url=typeof jobs[i]==="string"?jobs[i]:await jobs[i];}catch(e){
         if(!questNote){questNote=true;toast("Ryusei's voice didn't answer ("+e.message+"). Tap Me → Voice → Test Ryusei for details.",4500);}}
       natLoading=false;if(my!==natSeq)return;
-      if(url){try{await playUrl(url,my,rate);continue;}catch(e){}}
+      if(url){try{await playQuestAudio(url,my,rate);continue;}catch(e){if(!questNote){questNote=true;toast("Ryusei's audio: "+e.message+" — using the iPhone voice",4000);}}}
       if(my!==natSeq)return;
       if(segs[i].orig!==undefined)await speakPlainDevice(segs[i].orig,rate);else await sayDevice(segs[i].t.trim(),"ja-JP",rate);
     }
@@ -1002,7 +1037,7 @@ function stopMic(cancel){if(!MIC.on)return;MIC.stopReq=true;if(cancel)MIC.cancel
 function micFinish(cancelled){
   if(!MIC.on)return;MIC.on=false;
   const text=micText(),done=MIC.onDone,cancel=cancelled||MIC.cancel;
-  UI.listening=false;setAudioMode("playback");refreshMic();
+  UI.listening=false;setAudioMode("auto");refreshMic();
   if(done)done(cancel?"":text);
 }
 function refreshMic(){
@@ -1863,7 +1898,7 @@ function voicePicker(lang,label,cur){
 /* ============ VOICE CALL ============ */
 function openVoice(){UI.voice=true;UI.vstate="idle";UI.vyou="";$("#voice").classList.remove("hidden");renderVoice();
   if(!S.chat.length||S.chat[S.chat.length-1].role!=="assistant"){/* nothing */}}
-function closeVoice(){setAudioMode("playback");UI.voice=false;stopMic(true);stopSpeak();$("#voice").classList.add("hidden");if(UI.tab==="chat")render();}
+function closeVoice(){setAudioMode("auto");UI.voice=false;stopMic(true);stopSpeak();$("#voice").classList.add("hidden");if(UI.tab==="chat")render();}
 function renderVoice(){
   if(!UI.voice)return;
   const last=[...S.chat].reverse().find(m=>m.role==="assistant");
@@ -1994,19 +2029,20 @@ const ACT={
   copyDock:()=>{const t=$("#vvDock");if(navigator.clipboard)navigator.clipboard.writeText(t.value).then(()=>toast("Copied ✓"),()=>{t.select();toast("Select all and copy");});else{t.select();toast("Select all and copy");}},
   saveQuestKey:()=>{const v=$("#questKeyIn");S.settings.questKey=v?v.value.trim():"";questCache.clear();save();toast(S.settings.questKey?"Key saved — tap Test Ryusei":"Key removed");},
   questTest:async()=>{
-    sheet(`<div class="h2">🔎 Testing Ryusei's live voice…</div><p class="sub" style="margin-top:8px">Asking tts.quest to say a test sentence. This can take up to 30 seconds if it's busy.</p>`);
-    const t0=Date.now();questCache.clear();
-    try{const url=await questUrl("こんにちは、りゅうせいです。テストです。");
-      const secs=((Date.now()-t0)/1000).toFixed(1);
-      sheet(`<div class="h2">✅ Ryusei's voice works</div><p class="sub" style="margin:8px 0 14px">tts.quest answered in ${secs} s. Playing the test now…</p><button class="btn" data-act="closeSheet">Great</button>`);
-      questNote=false;const my=++natSeq;playUrl(url,my).catch(e=>toast("Got the audio but it wouldn't play ("+e.message+"). Check the volume buttons / silent mode.",5000));}
-    catch(e){
-      const m=e.message||"";const busy=/busy|too many|retry|limit|timeout|429/i.test(m);const net=/connect|load failed|network|fetch/i.test(m);
-      sheet(`<div class="h2">❌ Couldn't get Ryusei's voice</div>
-       <p class="sub" style="margin:8px 0">Reason: <b>${esc(m)}</b></p>
-       <p class="sub" style="margin-bottom:12px">${busy?"The free service is busy right now. Try again in a minute, or add a free tts.quest key (Me → Voice) so you get priority.":net?"Your phone couldn't reach tts.quest. Check your internet (Wi-Fi or mobile data), turn off any VPN / content blocker for this site, then try again.":"tts.quest refused the request. Try again later, or add a free tts.quest key in Me → Voice."}</p>
-       <p class="sub" style="margin-bottom:14px">Meanwhile, words you've learned still play from Ryusei's recordings.</p>
-       <button class="btn" data-act="questTest">Try again</button><button class="btn ghost" style="margin-top:8px" data-act="closeSheet">Close</button>`);}},
+    const step=(a,b,c)=>sheet(`<div class="h2">🔎 Testing Ryusei's live voice</div><div class="card" style="margin-top:10px;padding:6px 14px">
+      <div class="urow"><i>${a}</i><span>1. Ask tts.quest for the audio</span></div><div class="urow"><i>${b}</i><span>2. Wait until it's ready</span></div><div class="urow"><i>${c}</i><span>3. Play it on this phone</span></div></div>
+      <p class="sub">This can take up to 30 seconds when the free service is busy.</p>`);
+    step("…","○","○");questCache.clear();questNote=false;
+    let o;try{o=await questUrl("こんにちは、りゅうせいです。テストです。");}
+    catch(e){return questFail(1,e.message);}
+    step("✓","…","○");
+    const my=++natSeq;natBusy=true;
+    try{await playQuestAudio(o,my);natBusy=false;
+      sheet(`<div class="h2">✅ Ryusei's voice works</div><p class="sub" style="margin:8px 0 14px">All three steps worked. If you didn't hear him, turn the volume up with the buttons on the side of your phone.</p><button class="btn" data-act="closeSheet">Great</button>`);}
+    catch(e){natBusy=false;questFail(questStage==="playing"||/play/.test(e.message)?3:2,e.message);}},
+  iphoneVoiceTest:()=>{if(!synth){toast("This browser has no built-in voice");return;}synth.cancel();const u=new SpeechSynthesisUtterance("Hello! This is the iPhone voice.");u.lang="en-US";const v=pickVoice("en-US");if(v)u.voice=v;
+    let started=false;u.onstart=()=>{started=true;};u.onend=()=>toast(started?"iPhone voice: worked ✓":"iPhone voice: no sound",2500);u.onerror=e=>toast("iPhone voice error: "+(e.error||"unknown"),3500);synth.speak(u);
+    setTimeout(()=>{if(!started)toast("iPhone voice didn't start — check Settings → Accessibility → Spoken Content",4000);},4000);},
   enVoiceSet:el=>{S.settings.enVoice=el.dataset.v;save();rerender();speak("Hi! This is how I sound in English.",{forceEnglish:true,say:"ハイ！ディス イズ ハウ アイ サウンド イン イングリッシュ。"});},
   ttsSet:el=>{S.settings.tts=el.dataset.v;natFailNote=false;vvNote=false;questNote=false;save();rerender();pingVV();},
   saveAz:()=>{const v=$("#azKeyIn");S.settings.azKey=v?v.value.trim():"";natCache.clear();natFailNote=false;save();toast(S.settings.azKey?"Key saved — tap Test voice 🔊":"Key removed");rerender();},
@@ -2100,7 +2136,7 @@ const ACT={
 document.addEventListener("click",e=>{
   const el=e.target.closest("[data-act]");if(!el)return;
   const fn=ACT[el.dataset.act];if(!fn)return;
-  if(el.closest("#sheet")&&!["closeSheet","copyBackup","doImport","addSuggest","addLesson","copyDock","questTest"].includes(el.dataset.act))closeSheet();
+  if(el.closest("#sheet")&&!["closeSheet","copyBackup","doImport","addSuggest","addLesson","copyDock","questTest","iphoneVoiceTest"].includes(el.dataset.act))closeSheet();
   fn(el,e);
 });
 document.addEventListener("change",e=>{
