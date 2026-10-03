@@ -82,7 +82,8 @@ Safari → Add to Home Screen.
   `<<FIX>>{"ja","en","ok","why"}` line before `<<MEM>>` (rule in `systemPrompt`). `takeFix()` strips it (before
   `takeSay`), it's stored as `msg.fix` on the user message and shown under it (`fixHTML`: correct Japanese
   with 🔊, punctuated English translation, 💡 reason) and on the call screen (`.vfix`). Skipped for app
-  commands (messages with `api` text, except voice).
+  commands (messages with `api` text, except voice). English sentences get one too ("✏️ Better English" =
+  their English fixed, plus "🇯🇵 In Japanese"), so spoken English is corrected as well.
   Yuki sometimes writes markers slightly wrong ("FIX>>"): `normMarkers()` restores `<<FIX>>`/`<<MEM>>`/
   `<<SAY>>` before parsing, and `stripHidden()` removes any leftover hidden line from what is shown
   (`md`), captioned (`captionText`) or spoken (`cleanSpeech`). `md()` also renders *italics*.
@@ -213,7 +214,12 @@ Safari → Add to Home Screen.
 - **Listening**: Japanese wrapped in [[double brackets]] in AI replies shows as a hidden,
   tap-to-play audio clip.
 - **Flashcards**: decks for hiragana, katakana, 80 core words, and 50 kanji, using
-  Leitner spaced repetition stored in `S.cards`. Works offline with no AI.
+  Leitner spaced repetition stored in `S.cards`. Works offline with no AI. A card speaks only when flipped
+  (audio before flipping gave the answer away; "🔊 Hear it (a hint)" plays it on purpose).
+- **Multiple-choice quiz** (`buildQz`/`startQz`/`vQuiz`, `UI.qz`): 10 questions from learned cards only (due
+  first), 4 options from the same kind (kana: sound↔character; words: meaning↔Japanese; kanji: meaning or
+  reading). No audio and no reading until you answer; then the answer, reading and audio show. Updates
+  spaced repetition and XP. Started from the Cards tab (all/words/kana/kanji) or Practice.
 - **Kana charts**: tap any character to hear it; ones missed get a red border.
 - **Quizzes**: mixed, weak spots, vocab, grammar, kanji, listening, translation, and
   roleplay, all run by Yuki in chat one question at a time.
