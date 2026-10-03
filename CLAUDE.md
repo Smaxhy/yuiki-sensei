@@ -27,6 +27,13 @@ Safari → Add to Home Screen.
   → node done and a "Lesson complete" card (`courseDoneCard`) with ✓ Finish lesson / Keep practising
   appears in chat and on the call (hands-free stops auto-listening until "keep practising"). Course words are flashcards `w:<jp>` ("My words" deck) and share spaced
   repetition in `S.cards` (`bumpWord`, `reviewWords`).
+- **Path tests & recaps** (free, offline; state v23): N5 units get ⚡ Mini test after lesson b (`cq:<u>:m`,
+  8 Qs, pass 60%), 📝 Unit test after the roleplay (`cq:<u>:t`, 12 Qs incl. the unit's kana, 70%), 🔁 Big
+  recap every 3 units (`cq:<u>:r`, 15 Qs over the last 3 units) and 🏅 N5 final test (`cq:final`, 25 Qs).
+  Other levels get a 🔁 Card recap after each unit review (`<lv>:<u>:c`, learned cards). Node type "CQ";
+  `testSpec(n)` → `startTest()` → `UI.qz.test` with a recap page first (`intro`, tap to hear), questions from
+  `makeQ(id,true)` (adds 👂 listening questions), full screen like a lesson, passing marks the node done,
+  failing offers Try again. v23 marks tests in already-finished units as done so the path doesn't jump back.
 - **Auto-update**: on open, on returning to the app, and every 15 min, `checkUpdate` fetches
   the live page and compares its `<script>`/`<style>` with the running ones. If different it
   reloads right away when idle (`canReloadNow`), otherwise when the app is next hidden. Loop
@@ -237,7 +244,7 @@ Safari → Add to Home Screen.
   `captionText()` (markdown removed, bullets kept); spoken answers with kanji still tick course words.
 
 ## Technical notes
-- State object `S` (currently `v:22`) saved to localStorage key `yuki-sensei-v3`. Keep it backward
+- State object `S` (currently `v:23`) saved to localStorage key `yuki-sensei-v3`. Keep it backward
   compatible. Saved data (and restored backups) go through `migrate()`; if the shape
   changes, bump `DEFAULT.v` and add a step there instead of wiping progress.
 - Clicks route through `data-act` attributes to the `ACT` object.
