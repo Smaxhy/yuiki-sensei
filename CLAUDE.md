@@ -75,6 +75,15 @@ Safari → Add to Home Screen.
 - **Reply style** (`S.settings.style`): length (tiny/short/normal/detailed, default short), English vs Japanese, reading help, simple
   English. Turned into prompt lines by `styleRules()`.
 - **Credit saver** (`S.settings.history`): 6/12/24 recent messages sent per request.
+- **Corrections**: when the student's message is their own sentence with Japanese, Yuki adds a hidden
+  `<<FIX>>{"ja","en","ok","why"}` line before `<<MEM>>` (rule in `systemPrompt`). `takeFix()` strips it (before
+  `takeSay`), it's stored as `msg.fix` on the user message and shown under it (`fixHTML`: correct Japanese
+  with 🔊, punctuated English translation, 💡 reason) and on the call screen (`.vfix`). Skipped for app
+  commands (messages with `api` text, except voice).
+- **Tidy voice typing**: `tidySpeech()` (free, on the phone) gives mic transcripts punctuation and capitals:
+  spaces between Japanese words removed (。 after です/ます…, 、 after greetings/yes/no via `JA_PAUSE`),
+  ending 。/？ or ./?, capital first letters and "I". Course-word detection still uses the untidied words
+  (`UI.spoken`).
 - **Memory**: every AI reply ends with a hidden line `<<MEM>>{json}` containing facts,
   weak, strong, learned, right, wrong, lessonDone, used, path. The app strips it (`parseMem`), saves it
   to the profile (`applyMem`), and feeds the profile back into `systemPrompt()`.
