@@ -282,6 +282,7 @@ input,textarea,select{font:inherit;font-size:16px;color:var(--text)}
 .typein{display:flex;gap:8px;align-items:center;margin-bottom:10px}.typein .field{margin:0;font-size:22px;text-align:center}.typein .btn{width:auto;padding:15px 20px}
 .trbar{margin-bottom:12px}.trbar .field{margin:0;border:none;background:transparent;flex:1;min-width:0}
 .trres{text-align:center;padding:20px 16px}.trja{font-size:30px;font-weight:800;line-height:1.35}.trro{color:var(--sky);font-weight:700;margin-top:6px}.tren{color:var(--dim);margin-top:4px}
+.trkj{font-size:17px;margin-top:6px;color:var(--dim)}.trbits{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-top:12px}.trbit{display:flex;flex-direction:column;align-items:center;background:var(--bg2,rgba(127,127,127,.12));border-radius:10px;padding:6px 9px;min-width:44px}.trbit b{font-size:16px}.trbit i{font-size:11px;color:var(--sky);font-style:normal}.trbit em{font-size:11px;color:var(--dim);font-style:normal}
 .trbig{font-size:40px;font-weight:800;line-height:1.35;word-break:break-word}.trrow .rt b{font-size:17px}
 .ptop{gap:6px}.ptop .pill{padding:0 12px}
 /* corrections under your messages */
@@ -375,7 +376,7 @@ input,textarea,select{font:inherit;font-size:16px;color:var(--text)}
 <script>
 "use strict";
 // Bump this on every change so phones can spot a new version and offer to update
-const APP_VERSION="2026.10.06-6";
+const APP_VERSION="2026.10.07-1";
 /* ============ DATA ============ */
 const LV = {
   n5:{label:"N5",name:"Beginner",color:"#9fd67c"},
@@ -2101,14 +2102,19 @@ const TR_PAT=[
 // Fixed phrases: [category, english ways to say it separated by |, kana, spoken form]
 const TR_FIX=[
  ["basics","hello|hi|good afternoon","こんにちは。","こんにちは。"],["basics","good morning","おはようございます。","おはようございます。"],["basics","good evening","こんばんは。","こんばんは。"],
- ["basics","thank you|thanks|thank you very much","ありがとうございます。","ありがとうございます。"],["basics","excuse me|sorry|pardon me","すみません。","すみません。"],
+ ["basics","thank you|thanks|thank you very much|thank you for your help|thanks for your help|thank you for everything|thanks a lot","ありがとうございます。","ありがとうございます。"],["basics","excuse me|sorry|pardon me","すみません。","すみません。"],
  ["basics","yes","はい。","はい。"],["basics","no","いいえ。","いいえ。"],["basics","i do not understand|i don't understand|i don't get it","わかりません。","分かりません。"],
  ["basics","i do not speak japanese|i don't speak japanese|i can't speak japanese","にほんごが はなせません。","日本語が話せません。"],
  ["basics","do you speak english|can you speak english|english please","えいごを はなせますか？","英語を話せますか？"],
  ["basics","please speak slowly|slowly please|slower please","ゆっくり はなしてください。","ゆっくり話してください。"],
  ["basics","one more time please|again please|can you repeat that|pardon","もういちど おねがいします。","もう一度お願いします。"],
  ["basics","please write it down|can you write it","かいてください。","書いてください。"],["basics","it is okay|no problem|i am fine|it's ok","だいじょうぶです。","大丈夫です。"],
- ["basics","goodbye|bye","さようなら。","さようなら。"],["basics","nice to meet you","はじめまして。","初めまして。"],["basics","please help me|can you help me","てつだって もらえますか？","手伝ってもらえますか？"],
+ ["basics","goodbye|bye","さようなら。","さようなら。"],["basics","good night","おやすみなさい。","おやすみなさい。"],["basics","see you tomorrow","また あした。","また明日。"],
+ ["basics","see you|see you later","また あとで。","また後で。"],["basics","you are welcome|you're welcome|no problem at all","どういたしまして。","どういたしまして。"],["basics","i am sorry|i'm sorry|sorry about that","ごめんなさい。","ごめんなさい。"],
+ ["basics","wait a moment|one moment please|just a moment|one moment|wait a minute","ちょっと まってください。","ちょっと待ってください。"],["basics","how are you","おげんきですか？","お元気ですか？"],
+ ["basics","where are you from","どちらから きましたか？","どちらから来ましたか？"],["basics","no thank you|no thanks|i am fine thanks","けっこうです。","結構です。"],["basics","cheers","かんぱい！","乾杯！"],
+ ["basics","how do you say this in japanese|what is this called in japanese|what's this called","これは にほんごで なんと いいますか？","これは日本語で何と言いますか？"],["basics","nice to meet you","はじめまして。","初めまして。"],["basics","please help me|can you help me","てつだって もらえますか？","手伝ってもらえますか？"],
+ ["food","this is not what i ordered|this is not my order|wrong order|i did not order this","ちゅうもんと ちがいます。","注文と違います。"],["food","can we share|we want to share|we will share","シェアしても いいですか？","シェアしてもいいですか？"],
  ["food","what do you recommend|recommendation|what is good here","おすすめは なんですか？","おすすめは何ですか？"],["food","this please|this one please|i will have this|i'll have this","これを ください。","これをください。"],
  ["food","the same please|same as that|the same thing","おなじものを ください。","同じものをください。"],["food","the bill please|check please|can i pay|bill please","おかいけい おねがいします。","お会計お願いします。"],
  ["food","can i pay by card|do you take card|credit card","カードで はらえますか？","カードで払えますか？"],["food","cash only","げんきんだけですか？","現金だけですか？"],
@@ -2139,9 +2145,11 @@ const TR_FIX=[
  ["help","i have a fever|fever","ねつが あります。","熱があります。"],["help","please be careful|watch out|careful","きをつけて！","気をつけて！"]];
 const TR_CATS={basics:"👋 Basics",food:"🍜 Food & drink",go:"🧭 Getting around",stay:"🏨 Hotel",shop:"🛍️ Shopping",help:"🆘 Emergency"};
 const TR_COUNT={one:"ひとつ",two:"ふたつ",three:"みっつ",four:"よっつ",five:"いつつ","1":"ひとつ","2":"ふたつ","3":"みっつ","4":"よっつ","5":"いつつ",a:"",an:""};
+// Common sentences the sentence builder makes, also recorded: [kana shown, spoken form]
+const TR_EXTRA=[["どこで シムカードを かえますか？", "どこでシムカードを買えますか？"],["どこで きょうとまでの きっぷを かえますか？", "どこで京都までの切符を買えますか？"],["ラーメンを ひとつと ビールを ひとつ ください。", "ラーメンを一つとビールを一つください。"],["コーヒーを ふたつと おみずを ひとつ ください。", "コーヒーを二つとお水を一つください。"],["しゃしんを とって もらえますか？", "写真を撮ってもらえますか？"],["しゃしんを とっても いいですか？", "写真を撮ってもいいですか？"],["この バスは しぶやに いきますか？", "このバスは渋谷に行きますか？"],["はくぶつかんは なんじに あきますか？", "博物館は何時に開きますか？"],["しゅうでんは なんじに でますか？", "終電は何時に出ますか？"],["みせは いつ しまりますか？", "店はいつ閉まりますか？"],["これは おおさかゆきの でんしゃですか？", "これは大阪行きの電車ですか？"],["おおさかまでの きっぷを にまい かいたいです。", "大阪までの切符を2枚買いたいです。"],["えきを さがしています。", "駅を探しています。"],["すみません、コンビニは どこですか？", "すみません、コンビニはどこですか？"],["このちかくに エーティーエムは ありますか？", "この近くにエーティーエムはありますか？"],["おなかが すきました。", "お腹が空きました。"],["とても つかれました。", "とても疲れました。"],["オランダから きました。", "オランダから来ました。"],["オランダじんです。", "オランダ人です。"],["かんこうきゃくです。", "観光客です。"],["これは おいしいです。", "これは美味しいです。"],["これは たかすぎます。", "これは高すぎます。"],["あつすぎます。", "暑すぎます。"],["へやは きたないです。", "部屋は汚いです。"],["えきは とおいですか？", "駅は遠いですか？"],["きょうとまで でんしゃで どのくらい かかりますか？", "京都まで電車でどのくらいかかりますか？"],["メニューを みせてください。", "メニューを見せてください。"],["おみずを もってきてください。", "お水を持って来てください。"],["タクシーを よんでください。", "タクシーを呼んでください。"],["ともだちに でんわしてください。", "友達に電話してください。"],["ゆっくり はなして もらえますか？", "ゆっくり話してもらえますか？"],["かいて もらえますか？", "書いてもらえますか？"],["げんきんは つかえますか？", "現金は使えますか？"],["チェックインしたいです。", "チェックインしたいです。"],["こんばん テーブルを よやくしたいです。", "今晩テーブルを予約したいです。"],["にはく とまりたいです。", "2泊泊まりたいです。"],["こおりを いれないでください。", "氷を入れないでください。"],["じゅうでんきを おねがいします。", "充電器をお願いします。"],["すしが すきです。", "寿司が好きです。"],["さかなが すきじゃないです。", "魚が好きじゃないです。"],["にほんが だいすきです。", "日本が大好きです。"],["ここに すわっても いいですか？", "ここに座ってもいいですか？"],["ここで たばこを すっても いいですか？", "ここでたばこを吸ってもいいですか？"],["どこで のりかえますか？", "どこで乗り換えますか？"],["あした ラーメンを たべたいです。", "明日ラーメンを食べたいです。"],["あしたの あさ きょうとに いきたいです。", "明日の朝京都に行きたいです。"],["ごご しちじに おおさかに いきます。", "午後7時に大阪に行きます。"],["きのう きょうとに いきました。", "昨日京都に行きました。"],["すしを たべました。", "寿司を食べました。"],["つぎの おおさかゆきの でんしゃは なんじですか？", "次の大阪行きの電車は何時ですか？"],["おおきい ビールを ください。", "大きいビールをください。"],["おおきい ビールを ふたつと ちいさい おみずを ひとつ ください。", "大きいビールを二つと小さいお水を一つください。"],["こんにちは、ビールを ふたつ ください。 ありがとうございます。", "こんにちは、ビールを二つください。ありがとうございます。"],["どこで りょうがえできますか？", "どこで両替できますか？"],["さいふと スマホを なくしました。", "財布とスマホを無くしました。"],["スマホが こわれています。", "スマホが壊れています。"],["この せきは あいていますか？", "この席は空いていますか？"],["むりょうですか？", "無料ですか？"],["とうきょうまでの きっぷは いくらですか？", "東京までの切符はいくらですか？"],["おなまえは なんですか？", "お名前は何ですか？"],["かえりたいです。", "帰りたいです。"],["ひだりに まがってください。", "左に曲がってください。"],["まっすぐ いってください。", "まっすぐ行ってください。"],["おなかが いたいです。", "お腹が痛いです。"],["これを しちゃくしても いいですか？", "これを試着してもいいですか？"],["ベジタリアンの たべものは ありますか？", "ベジタリアンの食べ物はありますか？"],["これに にくは はいっていますか？", "これに肉は入っていますか？"],["ピーナッツとえびアレルギーです。", "ピーナッツと海老アレルギーです。"],["ラーメンを たまごなしで おねがいします。", "ラーメンを卵なしでお願いします。"],["さんばんせんは どこですか？", "3番線はどこですか？"],["きょうとゆきの でんしゃは なんばんせんですか？", "京都行きの電車は何番線ですか？"],["ホットコーヒーを ください。", "ホットコーヒーをください。"],["アイスコーヒーを ひとつと ケーキを ふたつ ください。", "アイスコーヒーを一つとケーキを二つください。"],["おかいけいを ください。", "お会計をください。"],["ごご しちじに ふたりで よやくして います。", "午後7時に二人で予約しています。"],["あたまが いたいです。", "頭が痛いです。"],["かぜを ひきました。", "風邪を引きました。"],["くすりを おねがいします。", "薬をお願いします。"],["どこで くすりを かえますか？", "どこで薬を買えますか？"],["スマホを じゅうでんしても いいですか？", "スマホを充電してもいいですか？"],["タクシーを よんで もらえますか？", "タクシーを呼んでもらえますか？"],["くうこうまで いくらですか？", "空港までいくらですか？"],["くうこうまで どのくらい かかりますか？", "空港までどのくらいかかりますか？"],["あした きょうとに いきます。", "明日京都に行きます。"],["すしを たべます。", "寿司を食べます。"],["ともだちを まっています。", "友達を待っています。"],["いい レストランを すすめて もらえますか？", "いいレストランを勧めてもらえますか？"],["これは ベジタリアンですか？", "これはベジタリアンですか？"],["これに ぶたにくは はいっていますか？", "これに豚肉は入っていますか？"],["これに ナッツは はいっていますか？", "これにナッツは入っていますか？"],["にくと さかなが たべられません。", "肉と魚が食べられません。"],["おさけを のみません。", "お酒を飲みません。"],["ビールを ちゅうもんしました。", "ビールを注文しました。"],["すみません、おみずを ください。", "すみません、お水をください。"],["すみません、にほんごが はなせません。", "すみません、日本語が話せません。"],["おいしかったです。 ありがとうございます。", "美味しかったです。ありがとうございます。"],["じゅうしょを かいてください。", "住所を書いてください。"],["おみやげを かいたいです。", "お土産を買いたいです。"],["カードは つかえますか？", "カードは使えますか？"],["これを つかっても いいですか？", "これを使ってもいいですか？"],["ここから とおいですか？", "ここから遠いですか？"],["えきまで どのくらい かかりますか？", "駅までどのくらいかかりますか？"],["そこまで あるけますか？", "そこまで歩けますか？"],["じてんしゃを かりたいです。", "自転車を借りたいです。"],["しゅうでんは いつですか？", "終電はいつですか？"],["チェックアウトは なんじですか？", "チェックアウトは何時ですか？"],["ここで にもつを あずけても いいですか？", "ここで荷物を預けてもいいですか？"],["はやめに チェックインできますか？", "早めにチェックインできますか？"],["へやは さむすぎます。", "部屋は寒すぎます。"],["トイレが こわれています。", "トイレが壊れています。"],["タオルが ありません。", "タオルがありません。"],["でんしゃに かさを わすれました。", "電車に傘を忘れました。"],["たすけて！ みちに まよいました。", "助けて！道に迷いました。"],["すこし からめで おねがいします。", "少し辛めでお願いします。"],["もっと おみずを ください。", "もっとお水をください。"],["ビールを もう ひとつ ください。", "ビールをもう一つください。"],["ビールを もう ふたつ ください。", "ビールをもう二つください。"],["やすいですか？", "安いですか？"],["きれいです。", "綺麗です。"],["にほんは きれいです。", "日本は綺麗です。"],["たべものは おいしいです。", "食べ物は美味しいです。"],["すしと ラーメンが だいすきです。", "寿司とラーメンが大好きです。"],["さんじゅっさいです。", "30歳です。"],["イギリスから きました。", "イギリスから来ました。"],["オーストラリアから きました。", "オーストラリアから来ました。"],["りょこうちゅうです。", "旅行中です。"],["にしゅうかん います。", "にしゅうかんいます。"],["このちかくに コンビニは ありますか？", "この近くにコンビニはありますか？"],["このちかくに やっきょくは ありますか？", "この近くに薬局はありますか？"],["このちかくに レストランは ありますか？", "この近くにレストランはありますか？"],["このちかくに トイレは ありますか？", "この近くにトイレはありますか？"],["この でんしゃは しんじゅくに とまりますか？", "この電車は新宿に止まりますか？"],["この バスは くうこうに いきますか？", "このバスは空港に行きますか？"],["とうきょうゆきは なんばんせんですか？", "東京行きは何番線ですか？"],["おおさかまでの きっぷは いくらですか？", "大阪までの切符はいくらですか？"],["きょうとまでの きっぷは いくらですか？", "京都までの切符はいくらですか？"],["とうきょうまでの きっぷを にまい ください。", "東京までの切符を2枚ください。"],["きょうとまでの きっぷを いちまい ください。", "京都までの切符を1枚ください。"],["この ホテルまで おねがいします。", "このホテルまでお願いします。"],["この じゅうしょまで おねがいします。", "この住所までお願いします。"],["あるいて どのくらい かかりますか？", "歩いてどのくらいかかりますか？"],["えきまで あるけますか？", "駅まで歩けますか？"],["えきから とおいですか？", "駅から遠いですか？"],["チェックアウトしたいです。", "チェックアウトしたいです。"],["ワイファイの パスワードを ください。", "ワイファイのパスワードをください。"],["タオルを もう ひとつ ください。", "タオルをもう一つください。"],["エアコンが こわれています。", "エアコンが壊れています。"],["へやは あつすぎます。", "部屋は暑すぎます。"],["へやを かえたいです。", "部屋を変えたいです。"],["あまり からく しないでください。", "あまり辛くしないでください。"],["これは あまいですか？", "これは甘いですか？"],["この りょうりは なんですか？", "この料理は何ですか？"],["これは とても おいしいです。", "これはとても美味しいです。"],["ぜんぶ おいしかったです。", "全部美味しかったです。"],["これに さかなは はいっていますか？", "これに魚は入っていますか？"],["これに たまごは はいっていますか？", "これに卵は入っていますか？"],["これに ピーナッツは はいっていますか？", "これにピーナッツは入っていますか？"],["いくらですか？", "いくらですか？"],["つつんで もらえますか？", "包んでもらえますか？"],["レシートを おねがいします。", "レシートをお願いします。"],["かばんを なくしました。", "鞄を無くしました。"],["ちずで おしえて もらえますか？", "地図で教えてもらえますか？"],["もう いちど いってください。", "もう一度言ってください。"],["にほんごが わかりません。", "日本語が分かりません。"],["アメリカから きました。", "アメリカから来ました。"]];
 // Every sentence the translator can say with a recording: [kana shown, spoken form]
 function trRecList(){
-  const out=TR_FIX.map(f=>[f[2],f[3]]);
+  const out=[...TR_FIX.map(f=>[f[2],f[3]]),...TR_EXTRA];
   TR_WORDS.forEach(([,k,sp,t])=>{TR_PAT.forEach(([,pk,ps,,types])=>{if(types.includes(t))out.push([pk.replace("{w}",k),ps.replace("{w}",sp)]);});
     if(t==="f")["ひとつ","ふたつ","みっつ"].forEach(c=>out.push([k+"を "+c+" ください。",sp+"を"+c+"ください。"]));});
   return out;
@@ -2155,9 +2163,10 @@ const KRO={きゃ:"kya",きゅ:"kyu",きょ:"kyo",しゃ:"sha",しゅ:"shu",し�
  が:"ga",ぎ:"gi",ぐ:"gu",げ:"ge",ご:"go",ざ:"za",じ:"ji",ず:"zu",ぜ:"ze",ぞ:"zo",だ:"da",ぢ:"ji",づ:"zu",で:"de",ど:"do",ば:"ba",び:"bi",ぶ:"bu",べ:"be",ぼ:"bo",ぱ:"pa",ぴ:"pi",ぷ:"pu",ぺ:"pe",ぽ:"po",ゔ:"vu",ぁ:"a",ぃ:"i",ぅ:"u",ぇ:"e",ぉ:"o"};
 function kanaRomaji(t){
   // particles at the end of a word are their own word in romaji (おみずを → omizu o, えきへは → eki e wa)
-  const P=[["へは"," e wa"],["まで"," made"],["なしで"," nashi de"],["を"," o"],["は"," wa"],["が"," ga"],["に"," ni"],["へ"," e"],["で"," de"]];
+  const P=[["ですか"," desu ka"],["でした"," deshita"],["です"," desu"],["までの"," made no"],["ゆきの"," yuki no"],["へは"," e wa"],["まで"," made"],["なしで"," nashi de"],["から"," kara"],["を"," o"],["は"," wa"],["が"," ga"],["に"," ni"],["へ"," e"],["で"," de"],["と"," to"],["の"," no"],["も"," mo"]];
+  const NOT=/^(ひと|おと|あと|もっと|ちょっと|きっと|ずっと|やっと|いもうと|おとうと|この|その|あの|どの|ここも|いつも|とても|もも|くも)$|もの$|(なに|なん)$/;
   return String(t).split(/(\s+)/).map(tok=>{if(/^\s+$/.test(tok))return" ";const end=tok.match(/[、。？！]+$/),core=end?tok.slice(0,-end[0].length):tok;
-    const p=core.length>1&&P.find(([k])=>core.endsWith(k)&&core.length>k.length);return p?kanaRomaji1(core.slice(0,-p[0].length))+p[1]+kanaRomaji1(end?end[0]:""):kanaRomaji1(tok);}).join("").replace(/\s+([,.?!])/g,"$1").replace(/\s+/g," ").trim();
+    const p=core.length>1&&P.find(([k])=>core.endsWith(k)&&core.length>k.length&&!(/^[との]$|^も$/.test(k)&&(core.length<3||NOT.test(core))));return p?kanaRomaji1(core.slice(0,-p[0].length))+p[1]+kanaRomaji1(end?end[0]:""):kanaRomaji1(tok);}).join("").replace(/\s+([,.?!])/g,"$1").replace(/\s+/g," ").trim();
 }
 function kanaRomaji1(t){
   t=kataHira(String(t));let o="",i=0;
@@ -2191,8 +2200,463 @@ function trPattern(n,type){
   return"please";
 }
 function trCount(n,w){const m=n.match(new RegExp(" (one|two|three|four|five|1|2|3|4|5) (\\w+ )?"+w.name.split(" ")[0]));return m?TR_COUNT[m[1]]:"";}
-// Best answers for what was said: [{ja, en, rec, say, why}]
-function translateEn(text){
+// ---- Sentence builder: puts words together with real Japanese grammar (still offline, no AI) ----
+// Extra nouns: [english names, kana, kanji, type] (types as above, plus h=person t=transport x=other)
+const TRX_NOUNS=[
+ ["friend|friends","ともだち","友達","h"],["wife","つま","妻","h"],["husband","おっと","夫","h"],["child|children|kid|kids|son|daughter","こども","子供","h"],
+ ["family","かぞく","家族","h"],["girlfriend","かのじょ","彼女","h"],["boyfriend","かれし","彼氏","h"],["staff|waiter|waitress|clerk","てんいん","店員","h"],
+ ["doctor","いしゃ","医者","h"],["police|police officer|policeman","けいさつ","警察","h"],["ambulance","きゅうきゅうしゃ","救急車","t"],["teacher","せんせい","先生","h"],
+ ["student","がくせい","学生","h"],["tourist","かんこうきゃく","観光客","h"],["everyone|everybody","みんな","皆","h"],["person|someone|somebody","ひと","人","h"],
+ ["train|trains","でんしゃ","電車","t"],["bus|buses","バス","バス","t"],["taxi|cab|taxis","タクシー","タクシー","t"],["car","くるま","車","t"],["bike|bicycle","じてんしゃ","自転車","t"],
+ ["plane|flight|airplane","ひこうき","飛行機","t"],["bullet train|shinkansen","しんかんせん","新幹線","t"],["boat|ferry|ship","ふね","船","t"],["last train","しゅうでん","終電","t"],["first train","しはつ","始発","t"],
+ ["room|hotel room","へや","部屋","i"],["table","テーブル","テーブル","i"],["seat|seats","せき","席","i"],["reservation|booking","よやく","予約","x"],["money","おかね","お金","i"],
+ ["cash","げんきん","現金","i"],["card|credit card|debit card","カード","カード","i"],["photo|picture|photos|pictures","しゃしん","写真","i"],["size","サイズ","サイズ","x"],["color|colour","いろ","色","x"],
+ ["souvenir|souvenirs|gift|present","おみやげ","お土産","i"],["clothes","ふく","服","i"],["shoes","くつ","靴","i"],["shirt|t shirt","シャツ","シャツ","i"],["luggage|bags|suitcase|baggage","にもつ","荷物","i"],
+ ["bill|check","おかいけい","お会計","x"],["price","ねだん","値段","x"],["change","おつり","お釣り","x"],["coin locker|locker","コインロッカー","コインロッカー","p"],["password","パスワード","パスワード","x"],
+ ["name|your name","おなまえ","お名前","x"],["check in|check-in","チェックイン","チェックイン","x"],["air conditioner|air conditioning|aircon|ac|heater|heating","エアコン","エアコン","i"],["beef bowl|gyudon","ぎゅうどん","牛丼","f"],["dish|dishes","りょうり","料理","f"],["this one","これ","これ","x"],["that one","それ","それ","x"],["handbag|backpack|suitcase bag|my bag","かばん","鞄","i"],["tv|television","テレビ","テレビ","i"],["light|lights","でんき","電気","i"],["shower","シャワー","シャワー","i"],["hot water","おゆ","お湯","f"],["check out|checkout|check-out","チェックアウト","チェックアウト","x"],["same|the same thing|same thing|same one","おなじもの","同じもの","i"],["ic card|suica|pasmo|transport card","アイシーカード","ICカード","i"],["address","じゅうしょ","住所","x"],["phone number|number","でんわばんごう","電話番号","x"],["way|route|the way","みち","道","x"],["time","じかん","時間","x"],
+ ["breakfast","ちょうしょく","朝食","f"],["lunch","ひるごはん","昼ご飯","f"],["dinner|supper","ばんごはん","晩ご飯","f"],["food","たべもの","食べ物","f"],["drink|drinks","のみもの","飲み物","f"],
+ ["alcohol|booze","おさけ","お酒","f"],["snack|snacks","おかし","お菓子","f"],["chocolate","チョコレート","チョコレート","f"],["cheese","チーズ","チーズ","f"],["salt","しお","塩","f"],["soy sauce","しょうゆ","醤油","f"],
+ ["wasabi","わさび","わさび","f"],["sashimi","さしみ","刺身","f"],["lemon","レモン","レモン","f"],["apple|apples","りんご","りんご","f"],["strawberry|strawberries","いちご","苺","f"],["banana|bananas","バナナ","バナナ","f"],
+ ["mushrooms|mushroom","きのこ","きのこ","f"],["pasta|spaghetti","パスタ","パスタ","f"],["fries|chips|french fries","ポテト","ポテト","f"],["oil","あぶら","油","f"],["meal","しょくじ","食事","f"],
+ ["house|home","いえ","家","p"],["shop|store","みせ","店","p"],["cafe|coffee shop","カフェ","カフェ","p"],["bar|pub|izakaya","いざかや","居酒屋","p"],["onsen|hot spring|hot springs","おんせん","温泉","p"],
+ ["platform","ホーム","ホーム","p"],["ticket gate|gate","かいさつ","改札","p"],["street|road","みち","道","p"],["bridge","はし","橋","p"],["mall|shopping mall|department store","デパート","デパート","p"],
+ ["tower","タワー","タワー","p"],["bookstore|book shop","ほんや","本屋","p"],["post office","ゆうびんきょく","郵便局","p"],["information|tourist information|information desk","あんないじょ","案内所","p"],
+ ["lobby","ロビー","ロビー","p"],["front desk|reception","フロント","フロント","p"],["floor","かい","階","x"],["city|town","まち","町","p"],["japan","にほん","日本","p"],
+ ["england|uk|britain","イギリス","イギリス","p"],["america|usa|united states","アメリカ","アメリカ","p"],["australia","オーストラリア","オーストラリア","p"],["canada","カナダ","カナダ","p"],
+ ["germany","ドイツ","ドイツ","p"],["france","フランス","フランス","p"],["netherlands|holland","オランダ","オランダ","p"],["spain","スペイン","スペイン","p"],["italy","イタリア","イタリア","p"],
+ ["china","ちゅうごく","中国","p"],["korea","かんこく","韓国","p"],["ireland","アイルランド","アイルランド","p"],["belgium","ベルギー","ベルギー","p"],["new zealand","ニュージーランド","ニュージーランド","p"],
+ ["english","えいご","英語","x"],["japanese","にほんご","日本語","x"],["book","ほん","本","i"],["glasses","めがね","眼鏡","i"],["bottle","ボトル","ボトル","i"],["cup|glass","コップ","コップ","i"],
+ ["bowl","おわん","お椀","i"],["plate","おさら","お皿","i"],["straw","ストロー","ストロー","i"],["blanket","もうふ","毛布","i"],["pillow","まくら","枕","i"],["toilet paper","トイレットペーパー","トイレットペーパー","i"],
+ ["battery","バッテリー","バッテリー","i"],["cigarette|cigarettes","たばこ","たばこ","i"],["lighter","ライター","ライター","i"],["mask","マスク","マスク","i"],["camera","カメラ","カメラ","i"],
+ ["head","あたま","頭","x"],["stomach|tummy","おなか","お腹","x"],["tooth|teeth","は","歯","x"],["leg|foot|feet","あし","足","x"],["arm","うで","腕","x"],["back","せなか","背中","x"],["throat","のど","喉","x"],
+ ["this","これ","これ","x"],["that","それ","それ","x"],["these","これ","これ","x"],["those","それ","それ","x"],["it","それ","それ","x"],["here","ここ","ここ","p"],["there","そこ","そこ","p"],
+ ["one","ひとつ","一つ","x"],["something","なにか","何か","x"],["anything","なにか","何か","x"],["everything|all","ぜんぶ","全部","x"],["me|us","わたし","私","h"],["you","あなた","あなた","h"]];
+// Verbs: [english base|other ways, english past, kana dictionary form, kanji form, group 5/1/s(uru)/k(uru), object particle]
+const TRX_VERBS=[
+ ["go|go to|head","went","いく","行く","5","に"],["come","came","くる","来る","k","に"],["go back|come back|get back|return|go home","went back|came back|got back|returned|went home","かえる","帰る","5","に"],
+ ["eat|have","ate|had","たべる","食べる","1","を"],["drink","drank","のむ","飲む","5","を"],["buy|get|purchase","bought|got|purchased","かう","買う","5","を"],["pay","paid","はらう","払う","5","を"],
+ ["see|watch|look at","saw|watched|looked at","みる","見る","1","を"],["look for|search for","looked for|searched for","さがす","探す","5","を"],["find","found","みつける","見つける","1","を"],
+ ["use","used","つかう","使う","5","を"],["take a photo|take a picture|take photos|take pictures|take a photo of|take a picture of","took a photo|took a picture|took photos|took pictures","しゃしんを とる","写真を撮る","5","を"],
+ ["take|ride|get on|catch","took|rode|got on|caught","のる","乗る","5","に"],["get off","got off","おりる","降りる","1","を"],["change trains|transfer","changed trains|transferred","のりかえる","乗り換える","1","を"],["change|swap","changed|swapped","かえる","変える","1","を"],
+ ["wait|wait for","waited|waited for","まつ","待つ","5","を"],["help","helped","てつだう","手伝う","5","を"],["speak|talk","spoke|talked","はなす","話す","5","を"],["say","said","いう","言う","5","を"],["wrap|gift wrap","wrapped","つつむ","包む","5","を"],
+ ["understand|know","understood|knew","わかる","分かる","5","が"],["read","read","よむ","読む","5","を"],["write|write down","wrote|wrote down","かく","書く","5","を"],
+ ["open","opened","あける","開ける","1","を"],["close|shut","closed|shut","しめる","閉める","1","を"],["start|begin","started|began","はじまる","始まる","5","が"],["finish|end","finished|ended","おわる","終わる","5","が"],
+ ["leave|depart","left|departed","でる","出る","1","を"],["arrive|get there|get here","arrived|got there|got here","つく","着く","5","に"],["stay","stayed","とまる","泊まる","5","に"],["sleep","slept","ねる","寝る","1","を"],
+ ["book|reserve|make a reservation","booked|reserved|made a reservation","よやくする","予約する","s","を"],["order","ordered","ちゅうもんする","注文する","s","を"],
+ ["call|phone","called|phoned","よぶ","呼ぶ","5","を"],["try on","tried on","しちゃくする","試着する","s","を"],["try","tried","ためす","試す","5","を"],["smoke","smoked","たばこを すう","たばこを吸う","5","を"],
+ ["sit|sit down","sat|sat down","すわる","座る","5","に"],["enter|go in|come in","entered|went in|came in","はいる","入る","5","に"],["walk","walked","あるく","歩く","5","を"],["turn","turned","まがる","曲がる","5","に"],
+ ["stop","stopped","とめる","止める","1","を"],["show|show me","showed|showed me","みせる","見せる","1","を"],["tell|teach|tell me|teach me","told|taught","おしえる","教える","1","を"],
+ ["bring|bring me","brought","もってくる","持って来る","k","を"],["send","sent","おくる","送る","5","を"],["exchange money|change money|exchange","exchanged money|changed money|exchanged","りょうがえする","両替する","s","を"],
+ ["lose","lost","なくす","無くす","5","を"],["forget","forgot|forgotten","わすれる","忘れる","1","を"],["leave my luggage|leave my bags|store my luggage|keep my bags","left my luggage|left my bags","にもつを あずける","荷物を預ける","1","を"],
+ ["live","lived","すむ","住む","5","に"],["work","worked","はたらく","働く","5","を"],["study|learn","studied|learned|learnt","べんきょうする","勉強する","s","を"],["play","played","あそぶ","遊ぶ","5","を"],
+ ["swim","swam","およぐ","泳ぐ","5","を"],["run","ran","はしる","走る","5","を"],["sing","sang","うたう","歌う","5","を"],["cook","cooked","りょうりする","料理する","s","を"],["meet","met","あう","会う","5","に"],
+ ["borrow|rent","borrowed|rented","かりる","借りる","1","を"],["lend","lent","かす","貸す","5","を"],["cut","cut","きる","切る","5","を"],["carry","carried","はこぶ","運ぶ","5","を"],
+ ["check in","checked in","チェックインする","チェックインする","s","を"],["check out","checked out","チェックアウトする","チェックアウトする","s","を"],["charge","charged","じゅうでんする","充電する","s","を"],
+ ["wash","washed","あらう","洗う","5","を"],["fix|repair","fixed|repaired","なおす","直す","5","を"],["hurry|hurry up","hurried","いそぐ","急ぐ","5","を"],["travel","travelled|traveled","りょこうする","旅行する","s","を"],
+ ["visit","visited","いく","行く","5","に"],["give me|give us","gave me","くれる","くれる","1","を"],["recommend","recommended","すすめる","勧める","1","を"],["put","put","いれる","入れる","1","を"],
+ ["feel","felt","かんじる","感じる","1","を"],["like","liked","すき","好き","L","が"],["love","loved","だいすき","大好き","L","が"],["want","wanted","ほしい","欲しい","W","が"],["need","needed","ひつよう","必要","N","が"]];
+// Adjectives: [english, kana, kanji, i or na]
+const TRX_ADJ=[
+ ["big|large","おおきい","大きい","i"],["small|little","ちいさい","小さい","i"],["hot","あつい","暑い","i"],["cold|chilly","さむい","寒い","i"],["expensive|pricey","たかい","高い","i"],["cheap","やすい","安い","i"],
+ ["delicious|tasty|yummy","おいしい","美味しい","i"],["spicy|hot and spicy","からい","辛い","i"],["sweet","あまい","甘い","i"],["salty","しょっぱい","しょっぱい","i"],["sour","すっぱい","酸っぱい","i"],["bitter","にがい","苦い","i"],
+ ["good|nice|fine|ok|okay|alright","いい","いい","i"],["bad","わるい","悪い","i"],["new","あたらしい","新しい","i"],["old","ふるい","古い","i"],["far","とおい","遠い","i"],["near|close","ちかい","近い","i"],
+ ["fun","たのしい","楽しい","i"],["interesting|funny","おもしろい","面白い","i"],["cute","かわいい","可愛い","i"],["beautiful|pretty|clean","きれい","綺麗","na"],["quiet","しずか","静か","na"],
+ ["busy","いそがしい","忙しい","i"],["famous","ゆうめい","有名","na"],["free","むりょう","無料","na"],["safe","あんぜん","安全","na"],["dangerous","あぶない","危ない","i"],["early|fast|quick","はやい","早い","i"],
+ ["late|slow","おそい","遅い","i"],["difficult|hard","むずかしい","難しい","i"],["easy|simple","かんたん","簡単","na"],["long","ながい","長い","i"],["short","みじかい","短い","i"],["heavy","おもい","重い","i"],
+ ["light","かるい","軽い","i"],["warm","あたたかい","暖かい","i"],["cool","すずしい","涼しい","i"],["dirty","きたない","汚い","i"],["kind","やさしい","優しい","i"],["great|amazing|awesome|incredible","すごい","すごい","i"],
+ ["lively|crowded|busy place","にぎやか","賑やか","na"],["okay for me|all right","だいじょうぶ","大丈夫","na"],["empty|available|free seat","あいている","空いている","v"],["full","いっぱい","いっぱい","na"],
+ ["vegetarian","ベジタリアン","ベジタリアン","no"],["vegan","ヴィーガン","ヴィーガン","no"],["halal","ハラール","ハラール","no"],["gluten free|gluten-free","グルテンフリー","グルテンフリー","no"],
+ ["local","じもと","地元","no"],["english","えいご","英語","no"],["japanese","にほん","日本","no"],["kids|children's|child","こども","子供","no"],["non smoking|non-smoking|nonsmoking","きんえん","禁煙","no"],["smoking","きつえん","喫煙","no"],
+ ["broken","こわれている","壊れている","v"],["open","あいている","開いている","v"],["closed","しまっている","閉まっている","v"]];
+// "I'm hungry" and friends: [english, kana, kanji]
+const TRX_STATE=[["hungry|starving","おなかが すきました","お腹が空きました"],["thirsty","のどが かわきました","喉が渇きました"],["tired|exhausted","つかれました","疲れました"],["sleepy","ねむいです","眠いです"],
+ ["sick|ill|unwell","きぶんが わるいです","気分が悪いです"],["lost","みちに まよいました","道に迷いました"],["full","おなかが いっぱいです","お腹がいっぱいです"],["cold","さむいです","寒いです"],["hot","あついです","暑いです"],
+ ["happy|glad","うれしいです","嬉しいです"],["fine|ok|okay|alright|good","だいじょうぶです","大丈夫です"],["busy","いそがしいです","忙しいです"],["ready","じゅんびが できました","準備ができました"],["drunk","よっぱらいました","酔っ払いました"],
+ ["sorry","すみません","すみません"],["injured|hurt","けがを しました","怪我をしました"],["late","おくれて すみません","遅れてすみません"],["excited","わくわく しています","わくわくしています"],["bored","たいくつです","退屈です"],
+ ["scared|afraid","こわいです","怖いです"],["vegetarian","ベジタリアンです","ベジタリアンです"],["vegan","ヴィーガンです","ヴィーガンです"],["here","ここに います","ここにいます"],["single","どくしんです","独身です"],["on vacation|on holiday|travelling|traveling|on a trip","りょこうちゅうです","旅行中です"],["here on business|on business","しごとで きました","仕事で来ました"],["married","けっこん しています","結婚しています"]];
+const TRX_NAT=[["american","アメリカじん","アメリカ人"],["british|english","イギリスじん","イギリス人"],["australian","オーストラリアじん","オーストラリア人"],["canadian","カナダじん","カナダ人"],["german","ドイツじん","ドイツ人"],
+ ["french","フランスじん","フランス人"],["dutch","オランダじん","オランダ人"],["spanish","スペインじん","スペイン人"],["italian","イタリアじん","イタリア人"],["irish","アイルランドじん","アイルランド人"],["belgian","ベルギーじん","ベルギー人"],
+ ["chinese","ちゅうごくじん","中国人"],["korean","かんこくじん","韓国人"],["japanese","にほんじん","日本人"]];
+// Time words and little extras that need no particle: [english, kana, kanji]
+const TRX_ADV=[["right now","いますぐ","今すぐ"],["now","いま","今"],["today","きょう","今日"],["tomorrow morning","あしたの あさ","明日の朝"],["tomorrow","あした","明日"],["tonight|this evening","こんばん","今晩"],
+ ["this morning","けさ","今朝"],["yesterday","きのう","昨日"],["later","あとで","後で"],["soon","もうすぐ","もうすぐ"],["every day","まいにち","毎日"],["this afternoon","きょうの ごご","今日の午後"],["next week","らいしゅう","来週"],
+ ["again|one more time","もう いちど","もう一度"],["slowly","ゆっくり","ゆっくり"],["quickly|fast","はやく","早く"],["a little|a bit|a little bit","すこし","少し"],["together","いっしょに","一緒に"],["straight|straight ahead","まっすぐ","まっすぐ"],
+ ["first","まず","まず"],["also|too","も","も"],["in english","えいごで","英語で"],["in japanese","にほんごで","日本語で"],["on foot","あるいて","歩いて"],["near here|nearby|around here|close by|close to here","このちかくに","この近くに"],
+ ["left","ひだりに","左に"],["right","みぎに","右に"],["here","ここで","ここで"],["there","そこで","そこで"],["upstairs","うえに","上に"],["downstairs","したに","下に"],["alone|by myself","ひとりで","一人で"],["early","はやめに","早めに"],["late|later than planned","おそく","遅く"]];
+const TRX_NUM={a:1,an:1,one:1,two:2,three:3,four:4,five:5,six:6,seven:7,eight:8,nine:9,ten:10,eleven:11,twelve:12};
+const TRX_TSU=["","ひとつ","ふたつ","みっつ","よっつ","いつつ","むっつ","ななつ","やっつ","ここのつ","とお"];
+const trCnt=(n,c)=>c==="nin"?(n===1?"ひとり":n===2?"ふたり":n===4?"よにん":jaNum(n)+"にん"):c==="mai"?jaNum(n)+"まい":c==="haku"?["","いっぱく","にはく","さんぱく","よんぱく","ごはく","ろっぱく","ななはく","はっぱく","きゅうはく","じゅっぱく"][n]||jaNum(n)+"はく"
+  :c==="hon"?(["","いっぽん","にほん","さんぼん","よんほん","ごほん","ろっぽん","ななほん","はっぽん","きゅうほん","じゅっぽん"][n]||jaNum(n)+"ほん"):(TRX_TSU[n]||jaNum(n)+"こ");
+const trCntJ=(n,c)=>c==="nin"?(n===1?"一人":n===2?"二人":n+"人"):c==="mai"?n+"枚":c==="haku"?n+"泊":c==="hon"?n+"本":(n<=10?["","一つ","二つ","三つ","四つ","五つ","六つ","七つ","八つ","九つ","十"][n]:n+"個");
+const trHour=h=>["れいじ","いちじ","にじ","さんじ","よじ","ごじ","ろくじ","しちじ","はちじ","くじ","じゅうじ","じゅういちじ","じゅうにじ"][h]||"";
+const trFun=m=>{const o=m%10,t=m-o,T=["","いっぷん","にふん","さんぷん","よんぷん","ごふん","ろっぷん","ななふん","はっぷん","きゅうふん"];return o?(t?jaNum(t):"")+T[o]:jaNum(m).replace(/う$/,"っぷん");};
+// lookup tables built once: english phrase → entry (longest phrases are tried first)
+const trxIdx=(list,f)=>{const m=new Map();list.forEach(e=>f(e).forEach(([k,v])=>{if(!m.has(k))m.set(k,v);}));return m;};
+const TRX_N=trxIdx([...TRX_NOUNS,...TR_WORDS],e=>e[0].split("|").flatMap(k=>[[k,e],[k+"s",e],[k+"es",e],[k.replace(/y$/,"ies"),e]]));
+const trIng=b=>[b+"ing",b.replace(/e$/,"")+"ing",b+b.slice(-1)+"ing",b.replace(/ie$/,"y")+"ing"];
+const TRX_V=trxIdx(TRX_VERBS,e=>{const out=[];e[0].split("|").forEach(b=>{const w=b.split(" "),h=w[0],r=w.slice(1).join(" "),j=x=>r?x+" "+r:x;
+  out.push([b,[e,"base"]],[j(h.endsWith("s")||h.endsWith("sh")||h.endsWith("ch")?h+"es":h.replace(/([^aeiou])y$/,"$1ie")+"s"),[e,"base"]]);trIng(h).forEach(g=>out.push([j(g),[e,"ing"]]));});
+  e[1].split("|").forEach(p=>out.push([p,[e,"past"]]));return out;});
+const TRX_A=trxIdx(TRX_ADJ,e=>e[0].split("|").map(k=>[k,e]));
+const trxMax=m=>Math.max(...[...m.keys()].map(k=>k.split(" ").length));
+const TRX_NMAX=trxMax(TRX_N),TRX_VMAX=trxMax(TRX_V);
+// longest english phrase from the start of the words list
+function trxLook(m,ws,i,max){for(let n=Math.min(max,ws.length-i);n>0;n--){const k=ws.slice(i,i+n).join(" ");if(m.has(k))return[m.get(k),n];}return null;}
+// ---- verbs: kana and kanji conjugated together ----
+const G5={う:"いわえ",く:"きかけ",ぐ:"ぎがげ",す:"しさせ",つ:"ちたて",ぬ:"になね",ぶ:"びばべ",む:"みまめ",る:"りられ"};
+const G5TE={う:"って",つ:"って",る:"って",く:"いて",ぐ:"いで",す:"して",ぬ:"んで",ぶ:"んで",む:"んで"};
+function vForm(v,form){
+  const [,,kn,kj,g]=v,last=kn.slice(-1);
+  if(kn==="すむ"&&form==="masu")form="teiru";
+  const both=f=>[f(kn),f(kj)];
+  let stem,te,nai,pot;
+  if(g==="s"){const s=x=>x.slice(0,-2);stem=both(x=>s(x)+"し");te=both(x=>s(x)+"して");nai=both(x=>s(x)+"しな");pot=both(x=>s(x)+"でき");}
+  else if(g==="k"){const s=x=>x.replace(/(くる|来る)$/,"");stem=[s(kn)+"き",s(kj)+"来"];te=[s(kn)+"きて",s(kj)+"来て"];nai=[s(kn)+"こな",s(kj)+"来な"];pot=[s(kn)+"こられ",s(kj)+"来られ"];}
+  else if(g==="1"){stem=both(x=>x.slice(0,-1));te=both(x=>x.slice(0,-1)+"て");nai=both(x=>x.slice(0,-1)+"な");pot=both(x=>x.slice(0,-1)+"られ");}
+  else{const r=G5[last];stem=both(x=>x.slice(0,-1)+r[0]);te=both(x=>x.slice(0,-1)+(kn.endsWith("いく")?"って":G5TE[last]));nai=both(x=>x.slice(0,-1)+(r[1])+"な");pot=both(x=>x.slice(0,-1)+r[2]);
+    if(kn==="わかる")pot=both(x=>x.slice(0,-1)+"り");}
+  const add=(p,s)=>[p[0]+s,p[1]+s];
+  return({masu:add(stem,"ます"),masuka:add(stem,"ますか？"),masen:add(stem,"ません"),mashita:add(stem,"ました"),mashitaka:add(stem,"ましたか？"),masendeshita:add(stem,"ませんでした"),
+    tai:add(stem,"たいです"),takunai:add(stem,"たくないです"),mashou:add(stem,"ましょう"),te:te,kudasai:add(te,"ください"),naide:add(nai,"いでください"),
+    teiru:add(te,"います"),teiruka:add(te,"いますか？"),potmasu:kn==="わかる"?add(stem,"ます"):add(pot,"ます"),potmasuka:kn==="わかる"?add(stem,"ますか？"):add(pot,"ますか？"),potmasen:kn==="わかる"?add(stem,"ません"):add(pot,"ません")})[form];
+}
+// chunk = {k: kana, j: kanji, e: english hint}
+const C=(k,j,e)=>({k,j:j==null||j===""?k:j,e:e||""});
+const PEN={"を":"","は":"(topic)","が":"","に":"to","で":"at / by","から":"from","まで":"to","と":"and / with","の":"'s","へは":"to","も":"too"};
+function trCap(s){return s.replace(/^\w/,c=>c.toUpperCase()).replace(/\bi\b/g,"I");}
+// ---- noun phrases: "two big beers and a water", "this train", "the next bus to Kyoto" ----
+function trxNP(s,o){
+  o=o||{};const ws=s.trim().split(" ").filter(Boolean);if(!ws.length)return null;
+  const items=[];let cur={pre:[],adj:[]},i=0,guess=[];
+  const flush=()=>{if(!cur.n)return false;items.push(cur);cur={pre:[],adj:[]};return true;};
+  while(i<ws.length){const w=ws[i];
+    if(cur.n&&w!=="and"&&w!==","&&w!=="or"){const nx=trxLook(TRX_N,ws,i,TRX_NMAX);if(!nx||cur.num||/^(これ|それ|わたし|あなた)$/.test(cur.n.k))return null;cur.adj.push(C(cur.n.k+"の",cur.n.j+"の",cur.n.e+"'s"));cur.n=null;}
+    if(w==="and"||w===","||w==="or"){if(!flush())return null;i++;continue;}
+    if(w==="another"&&TRX_N.has(ws[i+1]||"")){cur.num=1;cur.more=true;i++;continue;}
+    if(w==="more"&&cur.num){cur.more=true;i++;continue;}
+    if(w==="more"&&!cur.num&&i+1<ws.length){cur.pre.push(C("もっと","","more"));i++;continue;}
+    if(w==="exit"&&/^[a-z]?\d{1,2}[a-z]?$/.test(ws[i+1]||"")){if(cur.n)return null;cur.n=C(ws[i+1].toUpperCase()+" でぐち",ws[i+1].toUpperCase()+"出口","exit "+ws[i+1].toUpperCase());cur.t="p";i+=2;continue;}
+    if(["the","some","any","my","our","your","a","an","of"].includes(w)&&!(w==="a"||w==="an")){i++;continue;}
+    if((w==="a"||w==="an")&&i+1<ws.length){cur.num=cur.num||1;cur.weak=true;i++;continue;}
+    if(["this","that","these","those"].includes(w)&&i+1<ws.length&&!["is","are","one"].includes(ws[i+1])&&(trxLook(TRX_N,ws,i+1,TRX_NMAX)||trxLook(TRX_A,ws,i+1,3))){cur.pre.push(C(w.startsWith("th")&&(w==="this"||w==="these")?"この":"その","",w));i++;continue;}
+    if(w==="next"&&i+1<ws.length){cur.pre.push(C("つぎの","次の","next"));i++;continue;}
+    if((w==="other"||w==="another")&&i+1<ws.length){cur.pre.push(C("ほかの","他の","other"));i++;continue;}
+    if(w==="same"&&TRX_N.has(ws[i+1]||"")){cur.pre.push(C("おなじ","同じ","same"));i++;continue;}
+    if(w==="very"||w==="really"){i++;continue;}
+    if(/^(platform|track)$/.test(w)&&/^\d{1,2}$/.test(ws[i+1]||"")){if(cur.n)return null;cur.n=C(jaNum(+ws[i+1])+"ばんせん",ws[i+1]+"番線","platform "+ws[i+1]);cur.t="p";i+=2;continue;}
+    const num=TRX_NUM[w]||(/^\d{1,5}$/.test(w)?+w:0);
+    if(num&&i+1<ws.length){
+      if(/^(people|persons|adults|of)$/.test(ws[i+1])){items.push({n:C(trCnt(num,"nin"),trCntJ(num,"nin"),num+" people"),t:"h",count:true,bare:true,pre:[],adj:[]});i+=ws[i+1]==="of"?3:2;continue;}
+      if(/^nights?$/.test(ws[i+1])){items.push({n:C(trCnt(num,"haku"),trCntJ(num,"haku"),num+" night"+(num>1?"s":"")),t:"x",bare:true,adv:true,pre:[],adj:[]});i+=2;continue;}
+      if(/^yen$/.test(ws[i+1])){items.push({n:C(jaNum(num)+"えん",kanjiNum(num)+"円",num+" yen"),t:"x",pre:[],adj:[]});i+=2;continue;}
+      if(/^(minutes?|mins?)$/.test(ws[i+1])){items.push({n:C(trFun(num),null,num+" min"),t:"x",pre:[],adj:[]});i+=2;continue;}
+      if(/^(hours?)$/.test(ws[i+1])){items.push({n:C(jaNum(num)+"じかん",null,num+" hours"),t:"x",pre:[],adj:[]});i+=2;continue;}
+      if(/^(bottles?)$/.test(ws[i+1])){cur.num=num;cur.ctr="hon";i+=ws[i+2]==="of"?3:2;continue;}
+      if(/^(glass|glasses|cups?|portions?|pieces?|plates?|bowls?)$/.test(ws[i+1])&&ws[i+2]==="of"){cur.num=num;i+=3;continue;}
+      cur.num=num;cur.weak=false;i++;continue;}
+    // a name the app doesn't know (the Park Hyatt, a street): kept as it is, in English letters
+    if(o.guess){let j=i;const caps=o.caps||new Set();
+      if(caps.has(w)){while(j<ws.length&&caps.has(ws[j])&&j-i<4)j++;if(!ws.slice(i,j).some(x=>!TRX_N.has(x)))j=i;}
+      if(j===i&&!TRX_N.has(w)&&/^[a-z][a-z'\-]*$/.test(w)&&!TRX_STOP.has(w)&&!TRX_A.has(w)){while(j<ws.length&&/^[a-z][a-z'\-]*$/.test(ws[j])&&!TRX_STOP.has(ws[j])&&!TRX_N.has(ws[j])&&j-i<3)j++;}
+      if(j>i){const raw=(o.raw||"").split(/\s+/).map(x=>x.replace(/[^A-Za-z'\-]/g,""));
+        const name=ws.slice(i,j).map(x=>raw.find(r=>r.toLowerCase()===x)||x).join(" ").replace(/^\w/,c=>c.toUpperCase());i=j;
+        const nx=trxLook(TRX_N,ws,i,TRX_NMAX);
+        if(nx&&!["this","that","it","me","you","one"].includes(ws[i])){cur.n=C(name+" "+nx[0][1],name+nx[0][2],name+" "+nx[0][0].split("|")[0]);cur.t=nx[0][3];i+=nx[1];}else{cur.n=C(name,null,name);cur.t="g";}
+        guess.push(name);if(o.gl)o.gl.push(name);continue;}}
+    const a=trxLook(TRX_A,ws,i,3);
+    if(a&&i+a[1]<ws.length&&a[0][3]!=="v"){const e=a[0],noun=trxLook(TRX_N,ws,i+a[1],TRX_NMAX);
+      if(noun){const food=noun[0][3]==="f",k=food&&e[1]==="あつい"?["あつい","熱い"]:food&&e[1]==="さむい"?["つめたい","冷たい"]:[e[1],e[2]];
+        if(noun[0][1]==="コーヒー"&&/^(hot|warm|iced|cold)$/.test(ws[i])){cur.hot=/^(hot|warm)$/.test(ws[i])?["ホット","ホット"]:["アイス","アイス"];i+=a[1];continue;}
+        const tail=e[3]==="na"?"な":e[3]==="no"?"の":"";cur.adj.push(C(k[0]+tail,k[1]+tail,a[0][0].split("|")[0]));i+=a[1];continue;}}
+    const n=trxLook(TRX_N,ws,i,TRX_NMAX);
+    if(n){if(cur.n)flush();const e=n[0];cur.n=C((cur.hot?cur.hot[0]:"")+e[1],(cur.hot?cur.hot[1]:"")+e[2],e[0].split("|")[0]);cur.hot=null;cur.t=e[3];if(/^(ticket|tickets)$/.test(ws[i]))cur.ctr="mai";if(e[3]==="h"&&e[1]!=="わたし")cur.ctr="nin";i+=n[1];
+      // "the train to Kyoto" → 京都行きの電車
+      if((cur.t==="t"||cur.ctr==="mai")&&(ws[i]==="to"||ws[i]==="for")){const p=trxLook(TRX_N,ws,i+1,TRX_NMAX);if(p&&p[0][3]==="p"){const tk=cur.ctr==="mai";cur.pre.push(C(p[0][1]+(tk?"までの":"ゆきの"),p[0][2]+(tk?"までの":"行きの"),"to "+p[0][0].split("|")[0]));i+=1+p[1];}}
+      continue;}
+
+    return null;}
+  if(cur.n)flush();else if(cur.pre.length||cur.adj.length||cur.num)return null;
+  if(!items.length)return null;
+  items.forEach(x=>{if(x.pre.length&&x.n.k==="これ"&&!x.adj.length)x.pre=[];});
+  return{items,t:items[0].t,guess,en:s};
+}
+// noun phrase + particle → chunks. Counts go after the particle: ビールを ふたつと おみずを ひとつ
+function npChunks(np,p){
+  const out=[];const cnt=np.items.some(x=>(x.num&&!x.weak)||x.more);
+  np.items.forEach((x,i)=>{const last=i===np.items.length-1;out.push(...x.pre,...x.adj);
+    if(x.bare||x.adv){out.push(C(x.n.k+(last&&!x.adv?p:""),x.n.j+(last&&!x.adv?p:""),x.n.e));return;}
+    if(cnt&&p==="を"){out.push(C(x.n.k+"を",x.n.j+"を",x.n.e),C((x.more?"もう ":"")+trCnt(x.num||1,x.ctr)+(last?"":"と"),(x.more?"もう":"")+trCntJ(x.num||1,x.ctr)+(last?"":"と"),(x.more?"more ":"")+"× "+(x.num||1)));return;}
+    const pe=last&&PEN[p]?(/^(に|まで|から|で|へは)$/.test(p)?[PEN[p]+" ",""]:[""," "+PEN[p]]):["",""];out.push(C(x.n.k+(last?p:"と"),x.n.j+(last?p:"と"),pe[0]+x.n.e+pe[1]+(last?"":" and")));});
+  return out;
+}
+const TRX_STOP=new Set("without after before then than more less much many every each other another bigger smaller cheaper better i you we he she it they is are am was were be been do does did not no can could would will shall should may might must have has had to of in on at by for with from and or but if so the a an this that these those what where when why how which who please me my your our their its there here very really too just also want need like go get take give make let some any all".split(" "));
+// pieces after the verb: "to Kyoto", "at the station", "by train", "with my friend", "tomorrow", "at 7 pm"
+function trxMods(rest,v,o){
+  const mods={adv:[],pre:[],obj:null,guess:[]};let s=" "+rest+" ";
+  s=s.replace(/ at (\d{1,2})(?::(\d\d))? ?(am|pm|a m|p m|o'clock|oclock)? /,(m,h,mi,ap)=>{h=+h;const pm=ap&&ap[0]==="p";if(h>12)return m;
+    mods.adv.push(C((ap?pm?"ごご ":"ごぜん ":"")+trHour(h)+(mi?(+mi===30?"はん":trFun(+mi)):"")+"に",(ap?pm?"午後":"午前":"")+h+"時"+(mi?(+mi===30?"半":+mi+"分"):"")+"に","at "+h+(mi?":"+mi:"")+(ap?" "+ap:"")));return" ";});
+  s=s.replace(/ for (\w+) (nights?|people|persons) /,(m,n,u)=>{const k=TRX_NUM[n]||+n;if(!k)return m;mods.adv.push(u[0]==="n"?C(trCnt(k,"haku"),trCntJ(k,"haku"),k+" nights"):C(trCnt(k,"nin")+"で",trCntJ(k,"nin")+"で","for "+k+" people"));return" ";});
+  s=s.replace(/ (\w+) nights? /,(m,n)=>{const k=TRX_NUM[n]||+n;if(!k)return m;mods.adv.push(C(trCnt(k,"haku"),trCntJ(k,"haku"),k+" nights"));return" ";});
+  const advs=[...TRX_ADV].sort((a,b)=>b[0].length-a[0].length);
+  advs.forEach(([en,k,j])=>en.split("|").sort((a,b)=>b.length-a.length).forEach(e=>{if(s.includes(" "+e+" ")){
+    if((e==="here"||e==="there")&&v&&/^(あるく|いく|くる|はしる)$/.test(v[2])){s=s.replace(" "+e+" "," ");mods.adv.push(C(e==="here"?"ここまで":"そこまで",null,e));return;}
+    if((e==="here"||e==="there")&&v&&/^(に|へ)$/.test(v[5])&&v[2]!=="のる"){s=s.replace(" "+e+" "," ");mods.adv.push(C(e==="here"?"ここに":"そこに",null,e));return;}
+    if((e==="right"||e==="left")&&!(v&&/まがる|いく/.test(v[2])))return;
+    if(e==="first"&&!(v&&o&&o.cmd))return;
+    s=s.replace(" "+e+" "," ");mods.adv.push(C(k,j,e));}}));
+  // split what's left at the little linking words
+  const ws=s.trim().split(" ").filter(Boolean),segs=[{p:"",w:[]}];
+  const PREP=["to","into","from","at","in","by","with","for","until","till","near","on","about"];
+  const goes=x=>{const e=TRX_N.get(x);return e&&(e[3]==="t"||/^ticket/.test(x));};
+  ws.forEach((w,i)=>{if(PREP.includes(w)&&!((w==="to"||w==="for")&&i>0&&goes(ws[i-1])&&(TRX_N.get(ws[i+1])||[])[3]==="p"))segs.push({p:w,w:[]});else segs[segs.length-1].w.push(w);});
+  for(const sg of segs){if(!sg.w.length)continue;
+    const np=trxNP(sg.w.join(" "),o);if(!np)return null;mods.guess.push(...np.guess);
+    const t=np.t,isT=t==="t"||(np.items[0].n.k==="カード"||np.items[0].n.k==="げんきん"),k=v&&v[2];
+    if(!sg.p){mods.obj=np;continue;}
+    if((sg.p==="for"||sg.p==="with")&&np.items.length===1&&np.items[0].n.k==="わたし")continue;
+    let p;
+    if(sg.p==="from")p="から";else if(sg.p==="until"||sg.p==="till")p="まで";
+    else if(sg.p==="by"||(sg.p==="with"&&isT)||(sg.p==="in"&&np.items[0].n.k.endsWith("ご")&&t==="x"))p="で";
+    else if(sg.p==="with")p="と";else if(sg.p==="near"){mods.pre.push(...npChunks(np,"の"),C("ちかくに","近くに","near"));continue;}
+    else if(sg.p==="about"){mods.pre.push(...npChunks(np,"に"),C("ついて","","about"));continue;}
+    else if((sg.p==="to"||sg.p==="into")&&/^(あるく|はしる)$/.test(k))p="まで";
+    else if(sg.p==="on"&&/^(ちず|スマホ|でんわ)$/.test(np.items[0].n.k))p="で";
+    else if(sg.p==="to"||sg.p==="into")p=k==="おくる"||k==="でんわする"||k==="はなす"||k==="おしえる"?"に":t==="h"?"に":"に";
+    else if(sg.p==="for")p=t==="h"?"に":"に";
+    else if(sg.p==="on"){p=t==="t"?"に":"に";}
+    else p=(k&&/^(とまる|すむ|すわる|つく|はいる|いる|わすれる|おく)$/.test(k))||!v?"に":"で";
+    if(sg.p==="on"&&t==="t"&&!/^(のる|わすれる)$/.test(k))p="で";
+    mods.pre.push(...npChunks(np,p));}
+  return mods;
+}
+// verb phrase: "buy two tickets to Osaka tomorrow" → {v, tense, chunks before the verb}
+function trxVP(s,o){
+  const ws=s.trim().split(" ").filter(Boolean);if(!ws.length)return null;
+  const hit=trxLook(TRX_V,ws,0,TRX_VMAX);if(!hit)return null;
+  let [[v,tense],n]=hit;const rest=ws.slice(n).join(" "),key=ws.slice(0,n).join(" ");
+  // "take" a train/bus = ride it; "take" anything else = get it
+  if(v[2]==="のる"&&/^take|^took|^taking/.test(ws[0])){const np=trxNP(rest.split(/ (to|from|at|for) /)[0],{});if(rest&&!(np&&np.t==="t"))v=np&&np.items[0].n.k==="くすり"?TRX_VERBS.find(x=>x[2]==="のむ"):["take","took","もらう","貰う","5","を"];}
+  if(v[2]==="でる"&&/^(leave|left|leaving)$/.test(ws[0])){const np=trxNP(rest.split(/ (on|in|at) /)[0],{});if(np&&np.t!=="p"&&np.t!=="t")v=TRX_VERBS.find(x=>x[2]==="わすれる");}
+  if(v[2]==="よぶ"){const np=trxNP(rest.split(/ (to|from|at|for|in|later|tomorrow|tonight|now|again) /)[0].replace(/ (later|tomorrow|tonight|now|again)$/,""),{});if(!(np&&(np.t==="t"||/けいさつ|きゅうきゅうしゃ|いしゃ|てんいん/.test(np.items[0].n.k))))v=["call","called","でんわする","電話する","s","に"];}
+  if(v[2]==="たべる"&&/^(have|had|having)$/.test(ws[0])){const np=trxNP(rest,{});if(!np||np.t!=="f")return null;}
+  if(v[2]==="かう"&&/^(get|got|getting)$/.test(ws[0])&&o&&o.cmd)v=TRX_VERBS.find(x=>x[2]==="もってくる");
+  if(v[2]==="くれる")v=["give","gave","ください","ください","X","を"];
+  const mods=trxMods(rest,v,o);if(!mods)return null;
+  if(v[2]==="おしえる"&&mods.obj&&mods.obj.items[0].n.k==="わたし")mods.obj=null;
+  if(mods.obj&&/^(it|them)$/.test(mods.obj.en.trim()))mods.obj=null;
+  if(/^(なくす|わすれる)$/.test(v[2])&&mods.obj)mods.obj.items.forEach(x=>{if(x.n.k==="ふくろ")x.n=C("かばん","鞄","bag");});
+  if(v[2]==="みせる"&&!mods.obj)v=TRX_VERBS.find(x=>x[2]==="おしえる");
+  if(mods.obj&&mods.obj.items[0].n.k==="わたし"&&mods.obj.items.length===1)mods.obj=null;
+  if(v[2]==="いく"&&mods.obj&&mods.obj.t==="p"){mods.pre.push(...npChunks(mods.obj,"に"));mods.obj=null;}
+  return{v,tense,mods,guess:mods.guess,key,base:v[0].split("|").includes(key)};
+}
+// assemble: time words, places, object, then the verb in the form asked for
+function trxBuild(vp,form,o){
+  o=o||{};const {v,mods}=vp,out=[];
+  if(o.topic)out.push(...o.topic);
+  const tw=mods.adv.filter(c=>/^(いますぐ|いま|きょう|あした|こんばん|けさ|きのう|あとで|もうすぐ|まいにち|らいしゅう|あしたの あさ|きょうの ごご|まず)$/.test(c.k)||/じに$|じはんに$|ぷんに$|ふんに$/.test(c.k));
+  const other=mods.adv.filter(c=>!tw.includes(c));
+  out.push(...tw);if(o.where)out.push(o.where);out.push(...mods.pre);
+  let p=v[5];if(o.pot&&p==="を")p="が";
+  if(v[4]==="X"){if(mods.obj)out.push(...npChunks(mods.obj,"を"));out.push(...other,C("ください。",null,"please"));return out;}
+  if(mods.obj)out.push(...npChunks(mods.obj,p));
+  out.push(...other.filter(c=>c.k!=="も"));
+  const f=vForm(v,form);if(!f)return null;
+  const end=/[？。]$/.test(f[0])?"":(o.q?"か？":"。");
+  const pre=f[0].includes(" ")?f[0].split(" "):null;
+  if(pre){out.push(C(pre[0],f[1].split(/(?<=を)/)[0],""));out.push(C(pre[1]+end,f[1].split(/(?<=を)/)[1]+end,o.ve||vp.v[0].split("|")[0]));}
+  else out.push(C(f[0]+end,f[1]+end,o.ve||vp.v[0].split("|")[0]));
+  return out;
+}
+// add です/ですか to the last word instead of a separate piece
+const cop=(ch,tail,e)=>{const l=ch[ch.length-1];return[...ch.slice(0,-1),C(l.k+tail,l.j+tail,(l.e?l.e+" ":"")+e)];};
+// English word lists → small helpers
+const trxAdj=s=>{const ws=s.trim().split(" ");const a=trxLook(TRX_A,ws,0,3);return a&&a[1]===ws.length?a[0]:null;};
+function adjPred(a,{neg,past,too,very,q,food}){
+  let k=a[1],j=a[2];if(food&&k==="あつい")j="熱い";if(food&&k==="さむい"){k="つめたい";j="冷たい";}
+  const na=a[3]==="na",vb=a[3]==="v",out=[];if(very)out.push(C("とても","","very"));
+  let e;
+  if(vb){const s=x=>x.replace(/いる$/,"");e=neg?["いません","いません"]:past?["いました","いました"]:["います","います"];if(!neg&&!past){k=s(k)+"います";j=s(j)+"います";}else{k=s(k)+e[0];j=s(j)+e[1];}
+    out.push(C(k+(q?"か？":"。"),j+(q?"か？":"。"),a[0].split("|")[0]));return out;}
+  if(too){const st=na?[k,j]:[k.slice(0,-1),j.slice(0,-1)];const st2=k==="いい"?["よ","よ"]:st;out.push(C(st2[0]+"すぎます"+(q?"か？":"。"),st2[1]+"すぎます"+(q?"か？":"。"),"too "+a[0].split("|")[0]));return out;}
+  if(na)e=neg?"じゃないです":past?"でした":"です";
+  else{const b=k==="いい"?"よ":k.slice(0,-1),bj=k==="いい"?"よ":j.slice(0,-1);if(neg){k=b+"くない";j=bj+"くない";}else if(past){k=b+"かった";j=bj+"かった";}e="です";}
+  out.push(C(k+e+(q?"か？":"。"),j+e+(q?"か？":"。"),(neg?"not ":"")+a[0].split("|")[0]));return out;
+}
+function trxSubj(s,o,p){
+  s=s.trim();p=p||"は";if(/^(it|they)$/.test(s))return[];
+  if(/^(this|these)$/.test(s))return[C("これ"+p,"","this")];if(/^(that|those)$/.test(s))return[C("それ"+p,"","that")];
+  if(/^(here)$/.test(s))return[C("ここ"+p,"","here")];
+  const np=trxNP(s,o);if(np&&np.items.length===1&&/^(ぜんぶ|みんな)$/.test(np.items[0].n.k))return[C(np.items[0].n.k,np.items[0].n.j,np.items[0].n.e)];return np?npChunks(np,p):null;
+}
+// One sentence of English → chunks, or null if the words don't fit any pattern
+function trxSentence(t,o){
+  let m,r;const vp=x=>trxVP(x,o),np=x=>trxNP(x,o),nearRe=/ (near here|nearby|around here|close by)$/;
+  // where is X / where can I buy Y
+  if(m=t.match(/^where (is|are) (.+)$/)){let x=m[2],near=nearRe.test(x);x=x.replace(nearRe,"").replace(/ (the )?(nearest|closest)/,"");const n=np(x);if(!n)return null;
+    if(near||/^(a|an|any|some) /.test(m[2]))return[C("このちかくに","この近くに","near here"),...npChunks(n,"は"),C("ありますか？","","is there?")];
+    return[...npChunks(n,"は"),C("どこですか？","どこですか？","where is?")];}
+  if(m=t.match(/^where (can|do|should|could) (i|we) (.+)$/)){const p=vp(m[3]);if(!p)return null;return trxBuild(p,m[1]==="do"?"masuka":"potmasuka",{where:C("どこで","","where"),pot:false,ve:m[1]==="do"?"":"can"});}
+  if(m=t.match(/^where (does|do) (.+?) (go|stop|leave|leave from|depart)$/))return null;
+  // money and time
+  if(m=t.match(/^how much (is it |does it cost |is a taxi |by taxi )?(to|until) (.+)$/)){const n=np(m[3]);if(!n)return null;return[...npChunks(n,"まで"),C("いくらですか？","","how much?")];}
+  if(m=t.match(/^how much (is|are|was|does|do) (it|this|that|this one|that one|these|those|they)( cost)?$/)){const s=trxSubj(m[2].replace(/ one$/,""),o);return[...s,C("いくらですか？","","how much?")];}
+  if(m=t.match(/^how much (is|are|does|for|do|will|would) (.+?)( cost| be)?$/)||t.match(/^how much (.+)$/)){const n=np(m[2]||m[1]);if(!n)return null;return[...npChunks(n,"は"),C("いくらですか？","","how much?")];}
+  if(/^what time is it( now)?$/.test(t))return[C("いま","今","now"),C("なんじですか？","何時ですか？","what time?")];
+  const VI={open:["あきます","開きます"],close:["しまります","閉まります"],start:["はじまります","始まります"],begin:["はじまります","始まります"],finish:["おわります","終わります"],end:["おわります","終わります"],leave:["でます","出ます"],depart:["でます","出ます"],arrive:["つきます","着きます"],come:["きます","来ます"]};
+  if(m=t.match(/^(what time|when) (does|do|will|is) (.+?) (open|close|start|begin|finish|end|leave|depart|arrive|come)$/)){const s=trxSubj(m[3],o);if(!s)return null;const w=m[1]==="when"?C("いつ","","when"):C("なんじに","何時に","what time");
+    return[...s,w,C(VI[m[4]][0]+"か？",VI[m[4]][1]+"か？",m[4])];}
+  if(m=t.match(/^(what time|when) is (.+)$/)){const n=np(m[2]);if(!n)return null;return[...npChunks(n,"は"),m[1]==="when"?C("いつですか？","","when?"):C("なんじですか？","何時ですか？","what time?")];}
+  if(m=t.match(/^what is (.+)$/)||t.match(/^what are (.+)$/)){if(/^(this|that|these|those|it)$/.test(m[1]))return[...trxSubj(m[1],o),C("なんですか？","何ですか？","what?")];const n=np(m[1]);if(!n)return null;return[...npChunks(n,"は"),C("なんですか？","何ですか？","what?")];}
+  if(m=t.match(/^how long (does it take|will it take|is it|does it take to get|to get)( to (.+?))?( on foot| walking| by foot)$/)){const out=[];if(m[3]){const n=np(m[3]);if(!n)return null;out.push(...npChunks(n,"まで"));}return[...out,C("あるいて","歩いて","on foot"),C("どのくらい","","how long"),C("かかりますか？","","does it take?")];}
+  if(m=t.match(/^how long (does it take|will it take|is it|does it take to get|to get)( to (.+?))?( by (.+))?$/)){const out=[];if(m[3]){const n=np(m[3]);if(!n)return null;out.push(...npChunks(n,"まで"));}if(m[5]){const b=np(m[5]);if(!b)return null;out.push(...npChunks(b,"で"));}
+    return[...out,C("どのくらい","","how long"),C("かかりますか？","","does it take?")];}
+  if(m=t.match(/^how far is (it )?(to )?(.+)$/)){const n=np(m[3]);if(!n)return null;return[...npChunks(n,"まで"),C("どのくらい","","how far"),C("かかりますか？","","does it take?")];}
+  if(m=t.match(/^how (do|can|should) (i|we) (get|go) to (.+)$/)){const n=np(m[4]);if(!n)return null;return[...npChunks(n,"へは"),C("どうやって","","how"),C("いきますか？","行きますか？","do I go?")];}
+  if(m=t.match(/^how (do|can|should) (i|we|you) (.+)$/)){const p=vp(m[3]);if(!p)return null;const o2=p.mods.obj;p.mods.obj=null;return trxBuild(p,"masuka",{topic:o2?[...npChunks(o2,"は"),C("どうやって","","how")]:[C("どうやって","","how")]});}
+  // without onions / ramen without egg
+  if(m=t.match(/^(without|no|hold the|with no) (.+)$/)){const n=np(m[2]);if(!n||n.t!=="f")return null;return[C(n.items.map(x=>x.n.k).join("と")+"なしで",n.items.map(x=>x.n.j).join("と")+"なしで","without "+m[2]),C("おねがいします。","お願いします。","please")];}
+  if(m=t.match(/^(i want |i would like |can i have |can i get |i will have )?(.+?) (without|with no|but no|no) (.+)$/)){const a=np(m[2]),b=np(m[4]);if(a&&b&&b.t==="f")return[...npChunks(a,"を"),C(b.items.map(x=>x.n.k).join("と")+"なしで",b.items.map(x=>x.n.j).join("と")+"なしで","without "+m[4]),C("おねがいします。","お願いします。","please")];}
+  // platform, cards, a reservation, there's no towel, my name, my age, how long I'm here
+  if(m=t.match(/^(which|what) (platform|track)( is it| is| for| does)?( the)? (.+?)( leave from| go from| leave| use)?$/)){const n=np(m[5]);if(!n)return null;if(n.t==="p"&&n.items.length===1){const x=n.items[0];return[...x.pre,C(x.n.k+"ゆきは",x.n.j+"行きは","to "+x.n.e),C("なんばんせんですか？","何番線ですか？","which platform?")];}return[...npChunks(n,"は"),C("なんばんせんですか？","何番線ですか？","which platform?")];}
+  if(m=t.match(/^is (it|the .+?|this|that) (far|near|close) (from|to) (.+)$/)){const n=np(m[4]);if(!n)return null;const s=trxSubj(m[1],o);if(!s)return null;return[...s,...npChunks(n,"から"),C(m[2]==="far"?"とおいですか？":"ちかいですか？",m[2]==="far"?"遠いですか？":"近いですか？",m[2]+"?")];}
+  if(m=t.match(/^(do you take|do you accept|can i use|can i pay with|can i pay by|can i pay in|do you have) (credit cards?|cards?|debit cards?|cash|ic cards?|suica|pasmo|apple pay|paypay)$/)){const k=/cash/.test(m[2])?["げんきん","現金"]:/ic|suica|pasmo/.test(m[2])?["アイシーカード","ICカード"]:/apple/.test(m[2])?["アップルペイ","アップルペイ"]:/paypay/.test(m[2])?["ペイペイ","ペイペイ"]:["カード","カード"];
+    return[C(k[0]+"は",k[1]+"は",m[2]),C("つかえますか？","使えますか？","can I use?")];}
+  if(m=t.match(/^(i|we) have a (reservation|booking)( .+)?$/)){const md=trxMods(m[3]||"",TRX_VERBS.find(x=>x[2]==="よやくする"),o);if(!md||md.obj)return null;return[...md.adv,...md.pre,C("よやくして","予約して","booked"),C("います。","","(have)")];}
+  if(m=t.match(/^there (is|are) no (.+?)( in (.+))?$/)){const n=np(m[2]);if(!n)return null;const w=m[4]?np(m[4]):null;if(m[4]&&!w)return null;return[...(w?npChunks(w,"に"):[]),...npChunks(n,"が"),C("ありません。","","there isn't")];}
+  if(m=t.match(/^my name is (.+)$/)){const raw=(o.raw||"").replace(/^.*?\bis\s+/i,"").replace(/[.!?,]+$/,"").trim();if(!raw||raw.split(" ").length>3)return null;if(o.gl)o.gl.push(raw);else return null;return[C("わたしの","私の","my"),C("なまえは","名前は","name"),C(raw+"です。",null,"is "+raw)];}
+  if(m=t.match(/^(i am|we are) (\d{1,3})( years old| years)?$/)){const n=+m[2];const k=n===20?"はたち":n%10===1&&n<100?(n>10?jaNum(n-1):"")+"いっさい":n%10===8?(n>10?jaNum(n-8):"")+"はっさい":n%10===0?jaNum(n).replace(/う$/,"っさい"):jaNum(n)+"さい";return[C(k+"です。",n+"歳です。",n+" years old")];}
+  if(m=t.match(/^(i am|we are|i will be|we will be|i will stay|we will stay|i am staying|we are staying)( here| in japan)? for (\w+) (days?|weeks?|nights?)$/)){const k=TRX_NUM[m[3]]||+m[3];if(!k||k>10)return null;
+    const d=m[4][0]==="d"?["","いちにち","ふつか","みっか","よっか","いつか","むいか","なのか","ようか","ここのか","とおか"][k]:m[4][0]==="w"?["","いっしゅうかん","にしゅうかん","さんしゅうかん","よんしゅうかん","ごしゅうかん","ろくしゅうかん","ななしゅうかん","はっしゅうかん","きゅうしゅうかん","じゅっしゅうかん"][k]:trCnt(k,"haku");
+    return[...(m[2]===" in japan"?[C("にほんに","日本に","in Japan")]:[]),C(d,null,k+" "+m[4]),C(m[4][0]==="n"?"とまります。":"います。",m[4][0]==="n"?"泊まります。":"います。","(stay)")];}
+  if(m=t.match(/^(a little|a bit|slightly|extra|very) (spicy|sweet|salty)$/)){const k={spicy:["からめ","辛め"],sweet:["あまめ","甘め"],salty:["こいめ","濃いめ"]}[m[2]];return[...(/little|bit|slightly/.test(m[1])?[C("すこし","少し","a little")]:[]),C(k[0]+"で",k[1]+"で",m[2]),C("おねがいします。","お願いします。","please")];}
+  if(m=t.match(/^not (too |very |so )?(spicy|sweet|salty)$/)){const k={spicy:["からく","辛く"],sweet:["あまく","甘く"],salty:["しょっぱく","しょっぱく"]}[m[2]];return[...(m[1]?[C("あまり","","not too")]:[]),C(k[0],k[1],m[2]),C("しないでください。","","please don't make it")];}
+  // aches and pains
+  if(m=t.match(/^(my |our )?(.+?) (hurts|hurt|aches|ache|is sore|are sore|is hurting|are hurting|is in pain)$/)){const n=np(m[2]);if(!n)return null;return[...npChunks(n,"が"),C("いたいです。","痛いです。","hurts")];}
+  if(m=t.match(/^(i|we) (have|got|have got|caught) (a |an )?(headache|stomach ache|stomachache|toothache|sore throat|cold|backache|tummy ache|diarrhea|diarrhoea|rash)$/)){
+    const IL={headache:["あたまが","頭が","head"],"stomach ache":["おなかが","お腹が","stomach"],stomachache:["おなかが","お腹が","stomach"],"tummy ache":["おなかが","お腹が","stomach"],toothache:["はが","歯が","tooth"],"sore throat":["のどが","喉が","throat"],backache:["せなかが","背中が","back"]}[m[4]];
+    if(IL)return[C(IL[0],IL[1],IL[2]),C("いたいです。","痛いです。","hurts")];
+    return m[4]==="cold"?[C("かぜを","風邪を","a cold"),C("ひきました。","引きました。","caught")]:m[4]==="rash"?[C("ほっしんが","発疹が","rash"),C("でました。","出ました。","came out")]:[C("げりを","下痢を","diarrhea"),C("しています。","","have")];}
+  // is there meat in this? does it have nuts?
+  if(m=t.match(/^(is there|are there)( any| a| an| some)? (.+) in (this|it|that|there)$/)||t.match(/^(does|do) (this|it|that|they) (have|contain|include|use|come with) (any |a |an |some )?(.+)$/)){
+    const x=m[1].startsWith("d")?m[5]:m[3];const n=np(x);if(!n)return null;return[C("これに","","in this"),...npChunks(n,"は"),C("はいっていますか？","入っていますか？","is it in?")];}
+  // do you have / is there
+  if(m=t.match(/^(do you have|have you got|do you sell|do you serve|is there|are there|got|have you any|you have)( any| a| an| some)? (.+)$/)){let x=m[3],near=nearRe.test(x);x=x.replace(nearRe,"").replace(/ here$/,"");const n=np(x);if(!n)return null;
+    const h=n.t==="h";return[...(near?[C("このちかくに","この近くに","near here")]:[]),...npChunks(n,"は"),C(h?"いますか？":"ありますか？",null,"is there?")];}
+  // can I have X = X please
+  if(m=t.match(/^(can|could) (i|we) (have|get) (.+)$/)){const n=np(m[4]);if(n&&n.t!=="h"){return[...npChunks(n,"を"),C("ください。",null,"please")];}}
+  if(m=t.match(/^(can|could|is it ok if|is it okay if) (i|we) (.+)$/)){const p=vp(m[3]);if(!p)return null;if(p.v[4]==="L"||p.v[4]==="W"||p.v[4]==="N")return null;
+    if(/^(いく|くる|あるく|のる|はらう|かう|よやくする|りょうがえする|かえる|チェックインする|チェックアウトする|みる|もらう)$/.test(p.v[2]))return trxBuild(p,"potmasuka",{ve:"can I "+p.v[0].split("|")[0]});
+    const f=p.v[4]==="X"?null:vForm(p.v,"te");if(!f)return null;const out=trxBuild(p,"te",{});const last=out.pop();
+    return[...out,C(last.k.replace(/[。？]$/,"")+"も",last.j.replace(/[。？]$/,"")+"も",(last.e||"")+" (may I?)"),C("いいですか？","","is it ok?")];}
+  if(m=t.match(/^(can|could|would|will) you (please )?(.+)$/)){const p=vp(m[3]);if(!p)return null;if(/[LWNX]/.test(p.v[4]))return null;const out=trxBuild(p,"te",{});const last=out.pop();
+    return[...out,C(last.k.replace(/[。？]$/,""),last.j.replace(/[。？]$/,""),last.e),C("もらえますか？","","could you?")];}
+  // is this seat free / taken?
+  if(m=t.match(/^(is|are) (this|that|the|these) (seat|seats|table|room|toilet) (free|available|empty|taken|occupied)$/)){const s=trxSubj(m[2]+" "+m[3],o);if(s)return[...s,C("あいていますか？","空いていますか？","free?")];}
+  // is it spicy? is this too expensive?
+  if(m=t.match(/^(is|are|was|were) (it|this|that|these|those|they|here|.+?) (not )?(too |very |really |so )?(\w+)$/)){const a=trxAdj(m[5]);if(a){const s=trxSubj(m[2],o,a[3]==="v"?"が":"は");if(s){const food=/^(this|that|it)$/.test(m[2])?false:!!(np(m[2])||{}).t&&np(m[2]).t==="f";
+    return[...s,...adjPred(a,{neg:!!m[3],past:/^w/.test(m[1]),too:m[4]==="too ",very:!!m[4]&&m[4]!=="too ",q:true,food})];}}}
+  if(m=t.match(/^(is|are) (this|that|it) (the |a |an )?(.+)$/)){const n=np(m[4]);if(!n)return null;const s=trxSubj(m[2],o)||[];return cop([...(s.length?s:[C("これは","","this")]),...npChunks(n,"")],"ですか？","?");}
+  // does this train go to Kyoto? do you speak English? did you see it?
+  if(!/^(do|does|did|will) not /.test(t)&&(m=t.match(/^(do|does|did|will) (.+)$/))){const ws=m[2].split(" ");for(let i=1;i<ws.length;i++){const subj=ws.slice(0,i).join(" "),p=vp(ws.slice(i).join(" "));if(!p)continue;
+    if(/[LWN]/.test(p.v[4])){const s=subj==="you"?[]:trxSubj(subj,o);if(!s||!p.mods.obj)continue;return[...s,...npChunks(p.mods.obj,"が"),C(p.v[4]==="L"?(p.v[2]+"ですか？"):p.v[4]==="W"?"ほしいですか？":"ひつようですか？",null,p.v[0].split("|")[0]+"?")];}
+    const s=subj==="you"?[]:trxSubj(subj,o);if(!s)continue;
+    if(p.v[2]==="とめる"&&s.some(c=>/でんしゃ|バス|しんかんせん|ちかてつ/.test(c.k))){p.v=["stop","stopped","とまる","止まる","5","に"];p.mods.pre.forEach(c=>{c.k=c.k.replace(/で$/,"に");c.j=c.j.replace(/で$/,"に");});}
+    return trxBuild(p,m[1]==="did"?"mashitaka":"masuka",{topic:s});}return null;}
+  if(m=t.match(/^(are|is) (you|he|she|it|they|this|that|the .+?) (\w+ing)( .+)?$/)){const p=vp(m[3]+(m[4]||""));if(!p||p.tense!=="ing")return null;const s=m[2]==="you"?[]:trxSubj(m[2],o);if(!s)return null;return trxBuild(p,"teiruka",{topic:s});}
+  // don't …  /  please …  /  let's …
+  if(m=t.match(/^(please )?(do not|don't|never) (.+)$/)){const p=vp(m[3]);if(!p||/[LWNX]/.test(p.v[4]))return null;return trxBuild(p,"naide",{});}
+  if(m=t.match(/^let's (.+)$/)||t.match(/^let us (.+)$/)){const p=vp(m[1]);if(!p||/[LWNX]/.test(p.v[4]))return null;return trxBuild(p,"mashou",{});}
+  // I'm hungry / I'm from Holland / I'm Dutch / I'm a tourist
+  if(m=t.match(/^(i am|we are|i'm) (very |really |so |a bit |a little )?(.+)$/)){
+    const st=TRX_STATE.find(x=>x[0].split("|").includes(m[3]));if(st){const ks=st[1].split(" "),js=st[2].split(/(?<=が|に|を)/);
+      const out=(m[2]&&/very|really|so/.test(m[2]))?[C("とても","","very")]:[];return[...out,...ks.map((k,i)=>C(k+(i===ks.length-1?"。":""),(js[i]||k)+(i===ks.length-1?"。":""),i===ks.length-1?m[3]:""))];}
+    if(m=t.match(/^(i am|we are) (from|coming from) (.+)$/)){const n=np(m[3]);if(!n)return null;return[...npChunks(n,"から"),C("きました。","来ました。","I came")];}
+    const nt=TRX_NAT.find(x=>x[0].split("|").includes(t.replace(/^(i am|we are) (an? )?/,"")));if(nt)return[C(nt[1]+"です。",nt[2]+"です。","I'm "+t.replace(/^(i am|we are) (an? )?/,""))];
+    if(m=t.match(/^(i am|we are) (going|gonna) to (.+)$/)){const p=vp(m[3]);if(p)return trxBuild(p,"masu",{});const p2=vp("go to "+m[3]);if(p2)return trxBuild(p2,"masu",{});return null;}
+    if(m=t.match(/^(i am|we are) (\w+ing)( .+)?$/)){const p=vp(m[2]+(m[3]||""));if(p&&p.tense==="ing")return trxBuild(p,/^(i am|we are) (going|coming|leaving|arriving)/.test(t)?"masu":"teiru",{});}
+    if(m=t.match(/^(i am|we are) (allergic to) (.+)$/)){const n=np(m[3]);if(!n)return null;return[C(n.items.map(x=>x.n.k).join("と")+"アレルギーです。",n.items.map(x=>x.n.j).join("と")+"アレルギーです。","allergic to "+m[3])];}
+    if(m=t.match(/^(i am|we are) (not )?(too |very |really |so )?(\w+)$/)){const a=trxAdj(m[4]);if(a)return adjPred(a,{neg:!!m[2],too:m[3]==="too ",very:!!m[3]&&m[3]!=="too "});}
+    if(m=t.match(/^(i am|we are) (an? |the )?(.+)$/)){const n=np(m[3]);if(!n)return null;return cop(npChunks(n,""),"です。","(I am)");}
+    return null;}
+  // I want / I'd like / I need …
+  if(m=t.match(/^(i|we) (do not|don't) (want|need) (to )?(.+)$/)){if(m[4]){const p=vp(m[5]);if(!p)return null;return trxBuild(p,"takunai",{});}const n=np(m[5]);if(!n)return null;return[...npChunks(n,"は"),C("いりません。","要りません。","don't need")];}
+  if(m=t.match(/^(i|we) (want|would like|need|wanna|would love|hope) to (.+)$/)){const p=vp(m[3]);if(!p||/[LWNX]/.test(p.v[4]))return null;return trxBuild(p,"tai",{ve:"want to "+p.v[0].split("|")[0]});}
+  if(m=t.match(/^(i|we) (want|would like|need|will have|will take|would have|will get|take|have|get)( to have)? (.+)$/)){
+    if(/^(have|get)$/.test(m[2])&&/^(a fever|fever)$/.test(m[4]))return null;
+    const n=np(m[4]);if(!n)return null;const need=m[2]==="need";
+    if(m[2]==="have"&&!/^(a|an|two|three|the) /.test(m[4])&&n.t!=="f")return[...npChunks(n,"が"),C("あります。","","I have")];
+    if(need&&n.t!=="f"&&n.t!=="i")return[...npChunks(n,"が"),C("ひつようです。","必要です。","I need")];
+    if(n.t==="f"||n.items.some(x=>x.num&&!x.weak)||n.t==="i"||n.t==="x"||n.t==="g")return[...npChunks(n,"を"),C(need?"おねがいします。":"ください。",need?"お願いします。":null,"please")];
+    if(n.t==="p")return[...npChunks(n,"に"),C("いきたいです。","行きたいです。","want to go")];
+    return[...npChunks(n,"が"),C("ほしいです。","欲しいです。","I want")];}
+  if(m=t.match(/^(i|we) (really )?(like|love|hate|do not like|don't like|dislike) (.+)$/)){const n=np(m[4]);if(!n)return null;const w={like:["すきです。","好きです。"],love:["だいすきです。","大好きです。"],hate:["きらいです。","嫌いです。"]}[m[3]]||["すきじゃないです。","好きじゃないです。"];
+    return[...npChunks(n,"が"),C(w[0],w[1],m[3])];}
+  if(m=t.match(/^(i|we) (am not|are not|cannot|can not|could not|can't|am unable to|are unable to|do not|don't|did not|didn't) (.+)$/)){const neg=m[2];
+    if(/^(am not|are not)$/.test(neg))return null;
+    const p=vp(m[3]);if(!p||/[LWNX]/.test(p.v[4]))return null;
+    if(/cannot|can not|could not|unable/.test(neg)||(/^(do not|don't)$/.test(neg)&&p.v[2]==="たべる"&&p.mods.obj))return trxBuild(p,"potmasen",{pot:true,ve:"can't "+p.v[0].split("|")[0]});
+    return trxBuild(p,/did/.test(neg)?"masendeshita":"masen",{});}
+  if(m=t.match(/^(i|we) (can|could) (.+)$/)){const p=vp(m[3]);if(!p||/[LWNX]/.test(p.v[4]))return null;return trxBuild(p,"potmasu",{ve:"can "+p.v[0].split("|")[0]});}
+  if(m=t.match(/^(i|we) (have|has) (.+)$/)){const p=vp(m[3]);if(p&&p.tense==="past"&&!/[LWNX]/.test(p.v[4]))return trxBuild(p,"mashita",{});}
+  if(m=t.match(/^(i|we) (will |shall |am going to |'ll )?(.+)$/)){const p=vp(m[3]);if(!p||/[WNX]/.test(p.v[4]))return null;if(p.v[4]==="L")return null;
+    return trxBuild(p,p.tense==="past"&&!m[2]?"mashita":"masu",{});}
+  // it is delicious / this is too expensive / the room is dirty
+  if(m=t.match(/^(it|this|that|these|those|they|here|.+?) (is|are|was|were) (not )?(too |very |really |so )?(\w+)$/)){const a=trxAdj(m[5]);if(a){const s=trxSubj(m[1],o,a[3]==="v"?"が":"は");if(s)return[...s,...adjPred(a,{neg:!!m[3],past:/^w/.test(m[2]),too:m[4]==="too ",very:!!m[4]&&m[4]!=="too "})];}}
+  if(m=t.match(/^(this|that|it) is (not )?(a |an |the |my )?(.+)$/)){const n=np(m[4]);if(!n)return null;return cop([...trxSubj(m[1],o),...npChunks(n,"")],m[2]?"じゃないです。":"です。",m[2]?"(is not)":"(is)");}
+  if(m=t.match(/^(there is|there are) (.+?)$/)){const n=np(m[2]);if(!n)return null;return[...npChunks(n,"が"),C(n.t==="h"?"います。":"あります。",null,"there is")];}
+  // a bare command: show me the menu, give me two beers, bring water, take me to Shibuya
+  if(m=t.match(/^take (me|us) (to )?(.+)$/)){const n=np(m[3].replace(/^to /,""));if(!n)return null;return[...npChunks(n,"まで"),C("おねがいします。","お願いします。","please (taxi)")];}
+  {const p=np(t)?null:trxVP(t,{...o,cmd:true});if(p&&p.base&&!/[LWN]/.test(p.v[4])){if(p.v[4]==="X")return trxBuild(p,"masu",{});return trxBuild(p,"kudasai",{});}}
+  // just things: "two beers and a water", "the next train to Osaka", "a table for two"
+  if(m=t.match(/^(a )?table for (\w+)$/)){const k=TRX_NUM[m[2]]||+m[2];if(k)return[C(trCnt(k,"nin")+"です。",trCntJ(k,"nin")+"です。",k+" people")];}
+  const n=np(t);if(n){if(n.items.length===1&&n.items[0].bare)return[C(n.items[0].n.k+"です。",n.items[0].n.j+"です。",n.items[0].n.e)];
+    if(n.t==="t"&&n.items.length===1&&(n.items[0].pre.some(c=>/つぎの|ゆきの/.test(c.k))||/しゅうでん|しはつ/.test(n.items[0].n.k)))return[...npChunks(n,"は"),C("なんじですか？","何時ですか？","what time?")];
+    if((n.t==="p"||n.t==="t"||n.t==="g")&&n.items.length===1)return[...npChunks(n,"は"),C("どこですか？","","where is?")];return[...npChunks(n,"を"),C("ください。",null,"please")];}
+  return null;
+}
+// "please help me I'm lost" → two sentences, when both halves make sense on their own
+function trxSplit(t,raw){
+  const ws=t.split(" "),ST=/^(i|we|my|it|this|can|could|where|what|how|is|are|do|does|please|the)$/;
+  for(let k=2;k<=ws.length-2;k++){if(!ST.test(ws[k]))continue;const a=ws.slice(0,k).join(" "),b=ws.slice(k).join(" ");
+    const fa=TR_FIX.find(f=>f[1].split("|").includes(a)),ca=fa?[C(fa[2],fa[3],a)]:trxSentence(a,{raw});if(!ca)continue;
+    const fb=TR_FIX.find(f=>f[1].split("|").includes(b)),cb=fb?[C(fb[2],fb[3],b)]:trxSentence(b,{raw});if(cb)return[...ca,...cb];}
+  return null;
+}
+// English cleaned up for the sentence builder
+function trxClean(t){
+  return trNorm(t).replace(/\bi'll\b/g,"i will").replace(/\bwe'll\b/g,"we will").replace(/\bwe're\b/g,"we are").replace(/\bi've\b/g,"i have").replace(/\b(does|is|are|was|were|did|have|has|would|could|should)n't\b/g,"$1 not")
+    .replace(/\bwon't\b/g,"will not").replace(/\bwanna\b/g,"want to").replace(/\bgonna\b/g,"going to").replace(/\bgotta\b/g,"have to").replace(/\bthat's\b/g,"that is").replace(/\bthere's\b/g,"there is").replace(/\bhow's\b/g,"how is")
+    .replace(/\bwhen's\b/g,"when is").replace(/\bwho's\b/g,"who is").replace(/\b(may|might) i\b/g,"can i").replace(/\bis it possible to\b/g,"can i").replace(/\bi would like to\b/g,"i want to").replace(/\bi'd love to\b/g,"i want to")
+    .replace(/\b(try|put|take|turn|write|pick) (it|this|that|them|these|those) (on|off|down|up)\b/g,"$1 $3 $2").replace(/\btake (a|our|my|the|a group|some|a few|us a) (photo|picture|photos|pictures)( of us| of me| for us| for me)?\b/g,"take a photo").replace(/\bkindly\b/g,"").replace(/\b(um|uh|erm|hmm|so|well|okay so|oh)\b /g,"").replace(/\bthe toilets\b/g,"the toilet").replace(/\s+/g," ").trim();
+}
+// Whole input (may be several sentences) → [{ja, say, en, chunks, guess}]
+function composeEn(text){
+  const parts=String(text).split(/[.?!;。？！]+|\s(?:and then|then)\s/i).map(x=>x.trim()).filter(Boolean);if(!parts.length)return null;
+  const all=[],guess=[];
+  for(const raw of parts){
+    let t=trxClean(raw);if(!t)continue;
+    const pre=[],post=[];
+    t=t.replace(/^(excuse me|sorry|pardon me|hello|hi|hey|good morning|good evening)( sir| madam)? /,(m,w)=>{const f=TR_FIX.find(x=>x[1].split("|").includes(w));if(f)pre.push(C(f[2].replace(/。$/,"、"),f[3].replace(/。$/,"、"),w));return"";});
+    t=t.replace(/ (thank you|thanks)( very much)?$/,()=>{post.push(C("ありがとうございます。","","thank you"));return"";});
+    let please=false;t=t.replace(/^please /,()=>{please=true;return"";}).replace(/ please$/,()=>{please=true;return"";}).trim();
+    if(!t){all.push(...pre.map(c=>({...c,k:c.k.replace(/、$/,"。"),j:c.j.replace(/、$/,"。")})),...post);continue;}
+    const fx=TR_FIX.find(f=>f[1].split("|").includes(t)||(please&&f[1].split("|").includes(t+" please")));
+    let ch=fx?[C(fx[2],fx[3],t)]:trxSentence(t,{raw});
+    if(!ch)ch=trxSplit(t,raw);
+    if(!ch){const gl=[],caps=new Set(raw.split(/\s+/).slice(1).filter(x=>/^[A-Z]/.test(x)&&x!=="I").map(x=>x.toLowerCase().replace(/[^a-z'\-]/g,"")));
+      ch=trxSentence(t,{raw,guess:true,gl,caps});if(!ch)return null;guess.push(...gl);}
+    all.push(...pre,...ch,...post);
+  }
+  if(!all.length)return null;
+  const ja=all.map(c=>c.k).join(" ").replace(/ +/g," ").replace(/、 /g,"、").trim();
+  const say=all.map(c=>c.j).join(" ").replace(/\s+/g," ").replace(/ (?![A-Za-z])|(?<![A-Za-z]) /g,"");
+  const en=String(text).trim().replace(/\s+/g," ").replace(/^\w/,c=>c.toUpperCase()).replace(/\bi\b/g,"I").replace(/([^.?!])$/,(m,c)=>c+(/^(where|what|when|how|who|which|why|is|are|do|does|did|can|could|would|will|may)\b/i.test(String(text).trim())?"?":"."));
+  return{ja,say,en,chunks:all.filter(c=>c.k),guess};
+}
+
+// Word-pattern answers (the first version): [{ja, en, say}]
+function translateOld(text){
   const n=trNorm(text);if(n.trim().length<1)return[];
   const res=[],seen=new Set(),push=r=>{if(r&&!seen.has(r.ja)){seen.add(r.ja);res.push(r);}};
   const fw=trFindWord(n);
@@ -2207,23 +2671,37 @@ function translateEn(text){
   const scored=TR_FIX.map(f=>{let best=0;f[1].split("|").forEach(v=>{const vw=v.split(" ").map(trStem),hit=vw.filter(x=>words.includes(x)||n.includes(" "+x+" ")).length;
     const sc=n.includes(" "+v+" ")?1+v.length/100:hit/Math.max(vw.length,words.length||1);if(sc>best)best=sc;});return[best,f];}).filter(x=>x[0]>=0.5).sort((a,b)=>b[0]-a[0]);
   scored.slice(0,fw?2:3).forEach(([sc,f])=>{const r={ja:f[2],en:f[1].split("|")[0].replace(/^i /,"I ").replace(/^\w/,c=>c.toUpperCase())+(/[?]$/.test(f[2])||/？$/.test(f[2])?"?":"."),say:f[3]};if(sc>=1&&(!fw||f[1].split("|").some(v=>v.split(" ").length>=3&&n.includes(" "+v+" "))))res.unshift(r);else if(sc>=0.6)push(r);});
-  return res.slice(0,4).map(r=>({...r,rec:TR_REC.has(r.ja),ro:kanaRomaji(r.ja)}));
+  return res;
+}
+// Best answers for what was said: the sentence builder first, then the word patterns and phrasebook
+function translateEn(text){
+  if(!trNorm(text).trim())return[];
+  let c=null;try{c=composeEn(text);}catch(e){console.warn(e);}
+  const res=[],seen=new Set(),push=r=>{if(r&&r.ja&&!seen.has(r.ja)){seen.add(r.ja);res.push(r);}};
+  const old=translateOld(text),named=c&&c.guess.length&&c.guess.every(g=>new RegExp("\\s"+g.split(" ")[0]+"\\b").test(" "+String(text).trim().split(/\s+/).slice(1).join(" ")));
+  if(c&&(!c.guess.length||named||!old.length))push(c);old.forEach(push);if(c)push(c);
+  return res.slice(0,4).map(r=>({...r,say:r.say||r.ja,rec:TR_REC.has(r.ja),ro:kanaRomaji(r.ja)}));
 }
 // Play a translator sentence: Ryusei's loud recording when there is one (works offline once saved), else the iPhone voice
-function trSay(ja){
-  stopSpeak();resetAudio();
-  if(TR_REC.has(ja)){const my=++natSeq;natBusy=true;playUrl("audio/ryusei/"+recId(ja)+".mp3",my,1).catch(()=>sayDevice(ja,"ja-JP",0.9)).finally(()=>{if(my===natSeq)natBusy=false;});}
-  else sayDevice(ja,"ja-JP",0.9);
+// A new sentence the builder made: Ryusei live when online, the iPhone's Japanese voice offline (or for English names)
+function trSay(ja,say){
+  stopSpeak();resetAudio();say=say||ja;
+  if(TR_REC.has(ja)){const my=++natSeq;natBusy=true;playUrl("audio/ryusei/"+recId(ja)+".mp3",my,1).catch(()=>sayDevice(say,"ja-JP",0.9)).finally(()=>{if(my===natSeq)natBusy=false;});}
+  else if(navigator.onLine!==false&&S.settings.tts!=="device"&&!/[A-Za-z]/.test(say))speakQuest([{k:"ja",t:say}],0.9,say,{noSplit:true}).catch(()=>sayDevice(say,"ja-JP",0.9));
+  else sayDevice(say,"ja-JP",0.9);
 }
 function vTranslate(){
   const T=UI.tr||(UI.tr={q:"",res:[],cat:null});
   const r=T.res[0];
   return`<div class="pad"><div style="display:flex;align-items:center;justify-content:space-between"><div class="h1">🗣️ Translator</div><span class="sub">✈️ works offline</span></div>
-   <p class="sub" style="margin:4px 0 10px">Say or type it in English, for example "two coffees please", "where is the toilet", "I'm allergic to shrimp", "take me to Shinjuku".</p>
+   <p class="sub" style="margin:4px 0 10px">Say or type it in English, in whole sentences: "two coffees and a water please", "where can I buy tickets to Kyoto", "I can't eat pork", "does this bus go to Shibuya", "can you take a photo of us".</p>
    <div class="inputbar trbar"><button class="iconbtn micen${UI.listening?" live":""}" data-act="trMic" aria-label="Speak English">🎤</button>
     <input id="trIn" class="field" value="${esc(T.q)}" placeholder="Type in English…" enterkeyhint="go" autocomplete="off" autocapitalize="off"><button class="send" data-act="trGo" aria-label="Translate">→</button></div>
-   ${r?`<div class="card trres"><div class="trja">${esc(r.ja)}</div><div class="trro">${esc(r.ro)}</div><div class="tren">🇬🇧 ${esc(r.en)}</div>
-     <div class="grid2" style="margin-top:12px"><button class="btn" data-act="trPlay" data-ja="${esc(r.ja)}">🔊 Play${r.rec?" (Ryusei)":""}</button><button class="btn ghost" data-act="trShow" data-i="0">📱 Show staff</button></div></div>
+   ${r?`<div class="card trres"><div class="trja">${esc(r.ja)}</div><div class="trro">${esc(r.ro)}</div>${r.say&&r.say!==r.ja.replace(/\s+/g,"")?`<div class="trkj">${esc(r.say)}</div>`:""}<div class="tren">🇬🇧 ${esc(r.en)}</div>
+     ${r.chunks&&r.chunks.length>1?`<div class="trbits">${r.chunks.map(c=>`<span class="trbit"><b>${esc(c.k.replace(/[。？！、]$/,""))}</b><i>${esc(kanaRomaji(c.k.replace(/[。？！、]$/,"")))}</i>${c.e?`<em>${esc(c.e)}</em>`:""}</span>`).join("")}</div>`:""}
+     ${r.guess&&r.guess.length?`<p class="sub" style="margin-top:8px">✏️ I don't know “${esc(r.guess.join("”, “"))}” yet, so it stays in English letters. Staff can usually read names.</p>`:""}
+     <div class="grid2" style="margin-top:12px"><button class="btn" data-act="trPlay" data-i="0">🔊 Play${r.rec?" (Ryusei)":""}</button><button class="btn ghost" data-act="trShow" data-i="0">📱 Show staff</button></div>
+     <p class="sub" style="margin-top:8px;font-size:12px">${r.rec?"🎙️ Recorded: plays offline once saved.":"🧩 Built from words: Ryusei says it when you're online, the iPhone voice when you're offline."}</p></div>
      ${T.res.length>1?`<div class="sec">Or did you mean</div>${T.res.slice(1).map((x,i)=>`<button class="row" data-act="trPick" data-i="${i+1}"><span class="rt"><b>${esc(x.ja)}</b><span>${esc(x.en)}</span></span><span class="chev">›</span></button>`).join("")}`:""}`
     :T.q?`<div class="card"><b>No match yet</b><p class="sub" style="margin-top:6px">Try simpler words ("water please", "where station", "how much"), or pick a phrase below.</p></div>`:""}
    <div class="sec">📖 Phrasebook</div>
@@ -2235,11 +2713,11 @@ function vTranslate(){
 }
 function trRun(q){
   const T=UI.tr||(UI.tr={q:"",res:[],cat:null});T.q=q;T.res=translateEn(q);rerender();
-  if(T.res[0])trSay(T.res[0].ja);
+  if(T.res[0])trSay(T.res[0].ja,T.res[0].say);
 }
 function trShowSheet(r){
-  sheet(`<div style="text-align:center;padding:10px 0 4px"><p class="sub" style="margin-bottom:10px">Please read this · こちらをどうぞ</p><div class="trbig">${esc(r.ja)}</div><p class="sub" style="margin-top:12px">${esc(r.en)}</p>
-   <div class="grid2" style="margin-top:16px"><button class="btn" data-act="trPlay" data-ja="${esc(r.ja)}">🔊 Play</button><button class="btn ghost" data-act="closeSheet">Close</button></div></div>`);
+  sheet(`<div style="text-align:center;padding:10px 0 4px"><p class="sub" style="margin-bottom:10px">Please read this · こちらをどうぞ</p><div class="trbig">${esc(r.say||r.ja)}</div>${r.say&&r.say!==r.ja.replace(/\s+/g,"")?`<p style="font-size:20px;margin-top:8px">${esc(r.ja)}</p>`:""}<p class="sub" style="margin-top:12px">${esc(r.en)}</p>
+   <div class="grid2" style="margin-top:16px"><button class="btn" data-act="trPlay" data-i="${UI.tr.res.indexOf(r)}">🔊 Play</button><button class="btn ghost" data-act="closeSheet">Close</button></div></div>`);
 }
 async function trSaveOffline(){
   if(!("caches" in window)){toast("Offline saving isn't available here");return;}
@@ -2930,11 +3408,11 @@ const ACT={
   trGo:()=>{const i=$("#trIn");if(i&&i.value.trim())trRun(i.value.trim());else toast("Type or say something in English");},
   trMic:()=>{if(UI.listening){stopMic();return;}const i=$("#trIn");
     startMic(t=>{if(i)i.value=t;},final=>{if(final)trRun(final);else rerender();},"en-US");},
-  trPlay:el=>trSay(el.dataset.ja),
+  trPlay:el=>{const r=UI.tr&&UI.tr.res[+el.dataset.i];if(r)trSay(r.ja,r.say);},
   trShow:el=>{const r=UI.tr&&UI.tr.res[+el.dataset.i];if(r)trShowSheet(r);},
-  trPick:el=>{const T=UI.tr,r=T&&T.res[+el.dataset.i];if(!r)return;T.res=[r,...T.res.filter(x=>x!==r)];rerender();trSay(r.ja);},
+  trPick:el=>{const T=UI.tr,r=T&&T.res[+el.dataset.i];if(!r)return;T.res=[r,...T.res.filter(x=>x!==r)];rerender();trSay(r.ja,r.say);},
   trCat:el=>{const T=UI.tr||(UI.tr={q:"",res:[],cat:null});T.cat=T.cat===el.dataset.v?null:el.dataset.v;rerender();},
-  trFix:el=>{const ja=el.dataset.ja,f=TR_FIX.find(x=>x[2]===ja),T=UI.tr;T.q=f?f[1].split("|")[0]:"";T.res=[{ja,en:T.q.replace(/^\w/,c=>c.toUpperCase()),rec:TR_REC.has(ja),ro:kanaRomaji(ja)}];rerender();$("#main").scrollTop=0;trSay(ja);},
+  trFix:el=>{const ja=el.dataset.ja,f=TR_FIX.find(x=>x[2]===ja),T=UI.tr;T.q=f?f[1].split("|")[0]:"";T.res=[{ja,say:f?f[3]:ja,en:T.q.replace(/^\w/,c=>c.toUpperCase()).replace(/\bi\b/g,"I"),rec:TR_REC.has(ja),ro:kanaRomaji(ja)}];rerender();$("#main").scrollTop=0;trSay(ja,f?f[3]:ja);},
   trSave:()=>trSaveOffline(),
   learnNew:el=>learnNew(el.dataset.d),
   qzStart:el=>startQz(el.dataset.k),

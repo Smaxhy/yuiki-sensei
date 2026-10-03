@@ -249,15 +249,30 @@ Safari → Add to Home Screen.
   `numMax()` (grows with the number cards learned); typed answers via `qzType`. `NUM_REC` (0–100, hundreds,
   thousands, 10000) are recorded in Ryusei/Himari like the cards; `jaDigits` uses `jaNum`.
 - **Travel translator** (`UI.tab="translate"`, from the 🗣️ pill on Path and Practice; free, offline): English
-  (typed, or the 🎤 in English) → Japanese without AI. `translateEn()` finds a named thing in `TR_WORDS` (food,
-  places, things with English synonyms) and slots it into a sentence pattern from `TR_PAT` chosen by the
-  wording (`trPattern`: please / have / allergy / can't eat / without / lost / where / taxi / want to go /
-  how to get / does this train go), plus counts ("two coffees" → ふたつ); otherwise the best match from the
-  `TR_FIX` phrasebook (basics, food, getting around, hotel, shopping, emergency). Shows kana, romaji
-  (`kanaRomaji`), English, "Show staff" big-text sheet and alternatives. Every sentence from `trRecList()`
-  (~760) is recorded in Ryusei, louder (volumeScale 1.6, `tools/gen_translator.py`, file = `recId(kana)`), played
-  by `trSay` (iPhone Japanese voice when not recorded). "Save the voice for offline" (`trSaveOffline`) puts all
-  clips and the page in the cache.
+  (typed, or the 🎤 in English) → Japanese without AI. `translateEn()` = `composeEn()` (sentence builder) first,
+  then `translateOld()` (word patterns `TR_PAT` + `TR_FIX` phrasebook) as alternatives.
+  Sentence builder: `trxClean` (contractions, "try it on"), splits sentences, strips "excuse me/hello" (→ すみません、)
+  and "thank you"; an exact `TR_FIX` phrase wins; else `trxSentence` matches ~40 English frames (where is / where
+  can I V / how much / what time does X open / when / what is / how long / how do I get to / do you have / is
+  there X near here / is there X in this / can I have / can I V (potential for go/buy/pay/walk…, else てもいいですか)
+  / can you V (てもらえますか) / is it ADJ (too → すぎます) / does this train go to / don't V (ないでください) / let's /
+  I'm hungry… (`TRX_STATE`) / I'm from / nationality (`TRX_NAT`) / age / I'm here for N days / I want (to) / I
+  don't need (いりません) / I like / I can't V (が + potential) / I V / I V-ed / I'm V-ing (ています) / X hurts /
+  I have a headache / I have a reservation… / there is no X / my name is / which platform / do you take cards /
+  a little spicy / commands (てください) / bare things (を ください, places → どこですか)); `trxSplit` tries
+  run-on sentences as two. Pieces: `trxNP` (nouns `TRX_NOUNS`+`TR_WORDS`, adjectives `TRX_ADJ` i/na/の/v,
+  this/that, next/other/same, counts with counters つ/人/枚/泊/本 (`trCnt`, kanji `trCntJ`), "another"/"more",
+  "and/or", noun+noun → の, "train/ticket to X" → 行きの/までの, exit A3, platform 3), `trxVP` (verbs
+  `TRX_VERBS` with groups 5/1/s/k, conjugated in kana and kanji by `vForm`), `trxMods` (time words `TRX_ADV`,
+  "at 7 pm", "for 2 nights/people", to/from/at/in/by/with/near → particles), `trxBuild`. Result chunks
+  `{k,j,e}` → `ja` (kana with spaces, matches recordings), `say` (kanji, for voices and the staff sheet),
+  word-by-word breakdown chips. Unknown names (capitalised, e.g. "the Park Hyatt") stay in English letters
+  (`guess`, note shown); guesses rank below the old patterns unless they're capitalised names.
+  Recorded: every sentence from `trRecList()` (TR_FIX + patterns + `TR_EXTRA` = common built sentences, ~940)
+  in Ryusei, louder (volumeScale 1.6, `tools/gen_translator.py`, file = `recId(kana)`). `trSay(ja,say)`: recording
+  → else Ryusei live via `speakQuest` when online (not in ⚡ Fast mode, no English letters) → else the iPhone
+  Japanese voice. "Save the voice for offline" (`trSaveOffline`) puts all clips and the page in the cache.
+  New common sentences: add them to `TR_EXTRA` and re-run the generator.
 - **Offline helper** `sw.js` (service worker, registered on https): navigations are network-first with the
   page cached for offline (auto-update unaffected); `/audio/` is served from the cache when saved (Range
   requests answered with 206 for Safari), otherwise fetched and cached.
