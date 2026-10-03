@@ -94,6 +94,10 @@ input,textarea,select{font:inherit;font-size:16px;color:var(--text)}
 .mtag.sp{background:#f4a3c022;color:var(--sakura)}
 .vchips{width:100%;overflow-x:auto;display:flex;justify-content:center}
 .vchips .tchips{flex-wrap:wrap;justify-content:center}
+.donecard{margin:8px 12px;padding:14px;border-radius:18px;background:linear-gradient(140deg,#24361d,#1d2030);border:1px solid var(--matcha);display:flex;flex-direction:column;gap:4px}
+.donecard b{font-size:16px;color:var(--matcha)}.donecard span{font-size:13px;color:var(--dim)}
+.donecard.incall{margin:10px 0 0;width:100%;max-width:420px;text-align:center}
+.donebtns{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
 .urow{display:flex;gap:10px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line);font-size:14.5px}
 .urow:last-child{border-bottom:none}
 .urow i{font-style:normal;width:24px;text-align:center;color:var(--matcha);font-weight:900}
@@ -212,7 +216,10 @@ input,textarea,select{font:inherit;font-size:16px;color:var(--text)}
 .seg{display:flex;background:#ffffff10;border-radius:14px;padding:3px}
 .seg button{min-width:44px;min-height:38px;border-radius:11px;font-size:14px;font-weight:800;color:var(--dim);padding:0 8px}
 .seg button.on{background:var(--text);color:var(--ink)}
-.orbwrap{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px;min-height:0}
+.orbwrap{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.orbwrap>*{flex-shrink:0}
+.orbwrap.compact{justify-content:flex-start;gap:12px;padding-top:6px}
+.orbwrap.compact .orb{width:110px;height:110px;font-size:42px}
 .orb{width:170px;height:170px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#ffe3ee,var(--sakura) 45%,var(--sakura2));box-shadow:0 0 0 14px #f4a3c014,0 0 90px #f4a3c050;display:flex;align-items:center;justify-content:center;font-size:60px;font-weight:800;color:#3a1828;transition:.3s}
 .orb.listening{animation:breathe 1.1s infinite;box-shadow:0 0 0 16px #f27c7c1c,0 0 100px #f27c7c80;background:radial-gradient(circle at 35% 30%,#ffe6e6,#f27c7c 50%,#c24f5f)}
 .orb.thinking{animation:spin 2.4s linear infinite;opacity:.8}
@@ -289,7 +296,7 @@ input,textarea,select{font:inherit;font-size:16px;color:var(--text)}
 <script>
 "use strict";
 // Bump this on every change so phones can spot a new version and offer to update
-const APP_VERSION="2026.10.04-14";
+const APP_VERSION="2026.10.04-15";
 /* ============ DATA ============ */
 const LV = {
   n5:{label:"N5",name:"Beginner",color:"#9fd67c"},
@@ -951,7 +958,7 @@ function micRun(){
   try{rec=new SR();}catch(e){micHelp("blocked");micFinish(true);return;}
   rec.lang=MIC.lang;rec.interimResults=true;rec.continuous=true;rec.maxAlternatives=1;
   MIC.sess="";
-  rec.onresult=e=>{let t="";for(let i=0;i<e.results.length;i++)t+=e.results[i][0].transcript;MIC.sess=t;MIC.heardAt=Date.now();if(MIC.onText)MIC.onText(micText());};
+  rec.onresult=e=>{let t="";for(let i=0;i<e.results.length;i++)t+=e.results[i][0].transcript;MIC.sess=MIC.lang==="ja-JP"?jaDigits(t):t;MIC.heardAt=Date.now();if(MIC.onText)MIC.onText(micText());};
   rec.onerror=e=>{
     if(e.error==="not-allowed"||e.error==="service-not-allowed"||e.error==="audio-capture"){MIC.stopReq=true;MIC.cancel=true;micHelp("blocked");}
     else if(e.error!=="no-speech"&&e.error!=="aborted"&&e.error!=="network")toast("Mic problem: "+e.error);};
@@ -1047,6 +1054,7 @@ ${styleRules()}
 - Follow their requests directly: if they ask for a quiz, give a quiz; a roleplay, play the role; flashcard-style drilling, do it.
 - QUIZZES: one question at a time, wait for the answer, say right or wrong with a short reason, keep a running score (e.g. 3/4), finish after 10 or when they say stop, then summarize what to review.
 - BOTH LANGUAGES: the student may mix English and Japanese. When they use the Japanese mic, English they say often arrives as katakana (アイ ドント ノウ = "I don't know", オーケー = "okay"); read it as the English they meant and answer naturally.
+- The phone may also write Japanese they SAID as digits or kanji (1 = いち, 元気 = げんき, 今日は = こんにちは). That means they said it correctly: accept it, never ask them to "say the Japanese word" because of digits or kanji.
 - VOICE TYPING: the student often speaks and the phone types it. Japanese they say can arrive as English look-alikes ("Ohio" = おはよう, "arigato" = ありがとう, "cone itchy wa" = こんにちは). Treat these as the Japanese they meant (count them as used), and gently show the proper Japanese spelling.
 - Make every question easy to understand: write the instruction in English, and put an English translation in brackets after any Japanese question sentence (never give away the answer itself). After they answer, translate the full correct sentence too.
 - LISTENING: when you want them to listen without reading, wrap the Japanese in double square brackets like [[きょうは いい てんき ですね]]. The app hides it behind a play button.
@@ -1357,14 +1365,34 @@ function soundsLike(text,romaji){
     if(editDist(cand,target)<=(target.length>=8?2:1))return true;}
   return false;
 }
+// iPhone's Japanese voice typing writes numbers as digits ("1" for いち) and many words in kanji
+// (元気 for げんき). Turn digits back into Japanese and accept the kanji spellings of course words.
+const JNUM=["ゼロ","いち","に","さん","よん","ご","ろく","なな","はち","きゅう"];
+function numToKana(n){if(n<10)return JNUM[n];if(n<100){const t=Math.floor(n/10),o=n%10;return(t>1?JNUM[t]:"")+"じゅう"+(o?JNUM[o]:"");}
+  if(n<1000){const h=Math.floor(n/100),r=n%100;return({1:"ひゃく",3:"さんびゃく",6:"ろっぴゃく",8:"はっぴゃく"}[h]||JNUM[h]+"ひゃく")+(r?numToKana(r):"");}return String(n);}
+const jaDigits=t=>String(t).replace(/[0-9０-９]+/g,d=>{const n=parseInt(d.replace(/[０-９]/g,c=>String.fromCharCode(c.charCodeAt(0)-0xFEE0)),10);return n<1000?numToKana(n):d;});
+const KANJI_ALT={"こんにちは":["今日は"],"こんばんは":["今晩は"],"ありがとう":["有難う","有り難う"],"げんき":["元気"],"げんきですか":["元気ですか"],"げんきです":["元気です"],
+ "わたし":["私"],"なまえ":["名前"],"どこ":["何処"],"からきました":["から来ました"],"くに":["国"],"にほん":["日本"],"しごと":["仕事"],"がくせい":["学生"],"かいしゃいん":["会社員"],"なに":["何"],
+ "いち":["一"],"に":["二"],"さん":["三"],"よん":["四"],"ご":["五"],"ろく":["六"],"なな":["七"],"はち":["八"],"きゅう":["九"],"じゅう":["十"],"なんさい":["何歳","何才"],"さい":["歳","才"],"でんわばんごう":["電話番号"],"なんばん":["何番"],"ゼロ":["零"],
+ "みず":["水"],"おちゃ":["お茶"],"ごはん":["ご飯","御飯"],"たべます":["食べます"],"のみます":["飲みます"],"すき":["好き"],"きらい":["嫌い"],"おいしい":["美味しい"],"えん":["円"],
+ "いま":["今"],"なんじ":["何時"],"じ":["時"],"はん":["半"],"ごご":["午後"],"きょう":["今日"],"あした":["明日"],"きのう":["昨日"],"まいにち":["毎日"],"しゅうまつ":["週末"],"おきます":["起きます"],"ねます":["寝ます"],"いきます":["行きます"],"かえります":["帰ります"],"なんじに":["何時に"],
+ "しゅみ":["趣味"],"えいが":["映画"],"おんがく":["音楽"],"どくしょ":["読書"],"みます":["見ます"],"ききます":["聞きます"],"がすきです":["が好きです"],"りょうり":["料理"],"いっしょに":["一緒に"],
+ "かぞく":["家族"],"ちち":["父"],"はは":["母"],"あに":["兄"],"あね":["姉"],"おとうさん":["お父さん"],"おかあさん":["お母さん"],"きょうだい":["兄弟"],"ともだち":["友達"],"なんにん":["何人"],"やさしい":["優しい"],"おもしろい":["面白い"],"せがたかい":["背が高い"],"わかい":["若い"],
+ "みせ":["店"],"かいます":["買います"],"たかい":["高い"],"やすい":["安い"],"あか":["赤"],"あお":["青"],"しろ":["白"],"くろ":["黒"],"ふく":["服"],"ひゃく":["百"],"せん":["千"],"げんきん":["現金"],"ふくろ":["袋"],
+ "えき":["駅"],"どこですか":["何処ですか"],"みぎ":["右"],"ひだり":["左"],"まっすぐ":["真っ直ぐ"],"ちかい":["近い"],"とおい":["遠い"],"でんしゃ":["電車"],"きっぷ":["切符"],"なんばんせん":["何番線"],
+ "てんき":["天気"],"はれ":["晴れ"],"あめ":["雨"],"あつい":["暑い"],"さむい":["寒い"],"うれしい":["嬉しい"],"かなしい":["悲しい"],"つかれました":["疲れました"],"ねむい":["眠い"],"たのしい":["楽しい"],"ほんとう":["本当"],"だいじょうぶ":["大丈夫"],
+ "りょこう":["旅行"],"よやく":["予約"],"へや":["部屋"],"なんぱく":["何泊"],"いきたい":["行きたい"],"みたい":["見たい"],"たべたい":["食べたい"],"しゃしん":["写真"],"だめ":["駄目"],"わかりません":["分かりません","解りません"],"たすけて":["助けて"],
+ "もういちど":["もう一度"],"ちょっとまって":["ちょっと待って"],"えいごで":["英語で"],"にほんご":["日本語"],"すこし":["少し"],"またあいましょう":["また会いましょう"],"れんらく":["連絡"],"たのしかった":["楽しかった"],"がんばって":["頑張って"],"きをつけて":["気をつけて","気を付けて"]};
 function detectUsed(text){
+  text=jaDigits(text);
   const c=activeCourse();if(!c)return[];
   const nj=normJ(text),nr=normR(text),toks=String(text).split(/[\s、。,.!?！？]+/).map(normJ).filter(Boolean);
   return c.targets.filter(jp=>{
     if(c.used.includes(jp))return false;
     const w=wordInfo(jp),j=normJ(jp),r=w?normR(w[1]):"";
-    if(j.length<=2)return toks.includes(j)||(r.length>=2&&!EN_COMMON.has(w[1].toLowerCase().trim())&&String(text).toLowerCase().split(/[^a-zāēīōū]+/).map(normR).includes(r));
-    return nj.includes(j)||(r.length>=4&&nr.includes(r))||(w&&soundsLike(text,w[1]));
+    const alts=(KANJI_ALT[j]||[]).map(normJ);
+    if(j.length<=2)return toks.includes(j)||alts.some(a=>a.length>1?nj.includes(a):toks.includes(a))||(r.length>=2&&!EN_COMMON.has(w[1].toLowerCase().trim())&&String(text).toLowerCase().split(/[^a-zāēīōū]+/).map(normR).includes(r));
+    return nj.includes(j)||alts.some(a=>nj.includes(a))||(r.length>=4&&nr.includes(r))||(w&&soundsLike(text,w[1]));
   });
 }
 function markUsed(list){
@@ -1373,9 +1401,16 @@ function markUsed(list){
   list.forEach(jp=>{if(c.targets.includes(jp)&&!c.used.includes(jp)){c.used.push(jp);bumpWord("w:"+jp,true);added++;}});
   if(!added)return;
   save();
-  if(c.used.length>=c.targets.length&&!(S.plan&&S.plan.done[c.key])){markNode(c.key,true);toast("🎉 All 5 words used! Lesson complete",3000);}
+  if(c.used.length>=c.targets.length&&!(S.plan&&S.plan.done[c.key])){markNode(c.key,true);toast("🎉 All 5 words used! Tap Finish lesson when you're ready",3000);
+    if(UI.voice)setTimeout(renderVoice,50);else if(UI.tab==="chat")setTimeout(rerenderChatHead,50);}
   else toast("✓ "+list.filter(x=>c.targets.includes(x)).join(", ")+" ("+c.used.length+"/"+c.targets.length+")",1600);
   if(UI.tab==="chat"&&!UI.voice){const h=$("#tchips");if(h)h.outerHTML=talkChips();}
+}
+// When every word has been used: a clear "lesson complete" card with Finish / Keep practising
+function courseDoneCard(inCall){
+  const c=activeCourse();if(!c||c.used.length<c.targets.length||c.keep)return"";
+  return`<div class="donecard${inCall?" incall":""}"><b>🎉 Lesson complete!</b><span>All ${c.targets.length} words used. Finish whenever you're ready.</span>
+   <div class="donebtns"><button class="btn sm" data-act="courseDone">✓ Finish lesson</button><button class="btn sm ghost" data-act="keepPractising">Keep practising</button></div></div>`;
 }
 function talkChips(){
   const c=activeCourse();if(!c)return"";
@@ -1566,7 +1601,7 @@ function vChat(){
   <div class="chathead"><div class="av">ゆ</div><button class="ct ctbtn" data-act="chatsSheet"><b>${esc(th.title)} <span class="caret">▾</span></b><small>${C?(C.speaking?"🎙️ Speaking lesson":"💬 Chat lesson"):les?"📖 Lesson":"Yuki · "+LV[S.level].label}</small></button>
    ${C?`<button class="mini ok" data-act="courseDone">${S.plan&&S.plan.done[C.key]?"Finish":"✓ Done"}</button><button class="iconbtn" data-act="courseExit" aria-label="Leave practice">✕</button>`:les?`${S.done.includes(les.id)?"":`<button class="mini ok" data-act="lessonDone">✓ Done</button>`}<button class="iconbtn" data-act="lessonExit" aria-label="Leave lesson">✕</button>`:UI.planCtx?`<button class="mini ok" data-act="ctxDone">✓ Done</button>`:""}
    <button class="iconbtn call" data-act="voice" aria-label="Voice call">📞</button></div>
-  ${C?`<div class="tbar"><span class="sub">Use these words:</span>${talkChips()}</div>`:""}
+  ${C?`<div class="tbar"><span class="sub">Use these words:</span>${talkChips()}</div>${courseDoneCard(false)}`:""}
   <div id="msgs" class="msgs">${S.chat.length?S.chat.map(msgHTML).join(""):emptyChat()}</div>
   <div class="chatfoot"><div class="chips">${chips.map(c=>`<button class="chip" data-act="chip" data-t="${esc(c)}">${esc(c)}</button>`).join("")}</div>
   <div class="inputbar"><button id="micBtn" class="iconbtn micja${UI.listening&&UI.micLang==="ja-JP"?" live":""}" data-act="mic" data-v="ja-JP" aria-label="Speak Japanese">🎤<small>あ</small></button><button class="iconbtn micen${UI.listening&&UI.micLang==="en-US"?" live":""}" data-act="mic" data-v="en-US" aria-label="Speak English">🎤<small>EN</small></button>
@@ -1818,8 +1853,8 @@ function renderVoice(){
    <button class="iconbtn" data-act="vCaptions" aria-label="Captions" style="font-size:15px;font-weight:800">${cc?"CC":"🙈"}</button></div>
    <div class="vopts"><button class="vopt${S.settings.handsFree?" on":""}" data-act="vHands">${S.settings.handsFree?"🙌 Hands-free":"✋ Tap to talk"}</button>
     <span class="vlen">${[["tiny","Very short"],["short","Short"],["normal","Normal"]].map(([v,t])=>`<button class="vopt${len===v?" on":""}" data-act="vLen" data-v="${v}">${t}</button>`).join("")}</span></div>
-   <div class="orbwrap"><div class="orb ${st}">ゆ</div><div class="vstat">${label}</div>
-    ${activeCourse()?`<div class="vchips">${talkChips()}</div>`:""}
+   <div class="orbwrap${activeCourse()?" compact":""}"><div class="orb ${st}">ゆ</div><div class="vstat">${label}</div>
+    ${activeCourse()?`<div class="vchips">${talkChips()}</div>${courseDoneCard(true)}${activeCourse().keep?`<button class="vopt on" data-act="courseDone" style="margin-top:6px">✓ Finish lesson</button>`:""}`:""}
     <div class="vcap">${UI.listening?`<div class="vtext vlive">${UI.vyou?esc(UI.vyou):"…"}</div>`:`<div class="vtext${cc?"":" off"}">${cap}</div><div class="vyou">${UI.vyou?"You: "+esc(UI.vyou):""}</div>`}</div></div>
    ${UI.listening?`<div class="vctrl">
     <button class="vbtn" data-act="vCancel"><i>✕</i>Cancel</button>
@@ -1844,7 +1879,7 @@ function voiceMic(lang){
     final=>{if(final){UI.vyou=final;send(final,null,"voice");}else{UI.vstate="idle";renderVoice();}},lang);
 }
 // Hands-free: when Yuki finishes talking, start listening for your answer (you still tap Send)
-function afterYukiSpoke(){if(UI.voice&&S.settings.handsFree&&!UI.listening&&!UI.busy)setTimeout(()=>{if(UI.voice&&!UI.listening&&!UI.busy&&!isSpeaking())voiceMic(S.settings.micLang);},500);}
+function afterYukiSpoke(){const c=activeCourse();if(c&&c.used.length>=c.targets.length&&!c.keep)return;if(UI.voice&&S.settings.handsFree&&!UI.listening&&!UI.busy)setTimeout(()=>{if(UI.voice&&!UI.listening&&!UI.busy&&!isSpeaking())voiceMic(S.settings.micLang);},500);}
 
 /* ============ SHEET ============ */
 function sheet(html){const s=$("#sheet");s.innerHTML=`<div class="sh">${html}</div>`;s.classList.remove("hidden");}
@@ -1998,6 +2033,7 @@ const ACT={
   lpTalk:()=>{const n=UI.lp.node;startTalk(n);},
   lpClose:()=>{UI.lp=null;UI.tab="home";render();},
   courseDone:()=>{const c=S.course;if(c)markNode(c.key,!!(S.plan&&S.plan.done[c.key]));S.course=null;if(UI.voice)closeVoice();S.chatId="main";linkChat();save();UI.tab="home";render();},
+  keepPractising:()=>{const c=activeCourse();if(c){c.keep=true;save();}if(UI.voice)renderVoice();else rerenderChatHead();toast("Keep going! Tap ✓ Finish whenever you want to move on",2200);},
   courseExit:()=>{S.course=null;if(UI.voice)closeVoice();S.chatId="main";linkChat();save();UI.tab="home";render();},
   chatsSheet:()=>chatsSheet(),
   openChat:el=>{S.chatId=el.dataset.id;linkChat();S.threads[S.chatId].at=Date.now();save();UI.tab="chat";render();},
