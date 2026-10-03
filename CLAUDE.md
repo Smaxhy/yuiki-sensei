@@ -94,7 +94,7 @@ Safari → Add to Home Screen.
   ~25 s, like tts.quest's own browser example) and records `questLastErr`; with Ryusei for English
   the whole reply is ONE request. Optional free tts.quest key `S.settings.questKey` (never in
   backups); Me → Voice → "Test Ryusei's live voice" shows the exact error. With
-  `enVoice="ryusei"` (default again at the owner's request; "iphone" optional) English is sent to VOICEVOX too, lower-cased with contractions
+  `enVoice="ryusei"` (optional; default is now "iphone" — owner: "doesn't have to be Ryusei, just a better voice") English is sent to VOICEVOX too, lower-cased with contractions
   expanded (`englishForVV`), neighbouring live segments merged into one request.
   tts.quest goes silent on English letters, so with Ryusei for English Yuki adds a hidden
   `<<SAY>>` line before `<<MEM>>` (the whole reply with English in katakana; requested only when
@@ -111,6 +111,9 @@ Safari → Add to Home Screen.
   status URL until `isAudioReady`, then play the finished MP3 (iOS is unreliable with streams);
   if status can't be read, try the stream, then retry the finished files. The "Test Ryusei"
   sheet shows which of the 3 steps fails (`questFail`) and has an iPhone-voice test.
+  iPhone speech (`sayDevice`/`sayChunk`): short sentence chunks (≤180 chars), resume if paused,
+  120 ms gap after an audio clip, safety timer if "end" never fires, voice assignment guarded.
+  Me → Voice shows the English voice in use (★ = Premium/Enhanced) with a 🔊 Test button.
   Voice log (`VLOG`, `vlog()`, Me → Voice → "🧾 Voice log", or tap the title on the call screen):
   every speak attempt, tts.quest request/answer, audio play/refusal/error and iPhone voice that
   didn't start, for diagnosing problems on the owner's phone. Recordings inside a mixed reply are
@@ -145,7 +148,7 @@ Safari → Add to Home Screen.
   settings, what Yuki remembers, and backup/restore as JSON (key excluded).
 
 ## Technical notes
-- State object `S` (currently `v:18`) saved to localStorage key `yuki-sensei-v3`. Keep it backward
+- State object `S` (currently `v:19`) saved to localStorage key `yuki-sensei-v3`. Keep it backward
   compatible. Saved data (and restored backups) go through `migrate()`; if the shape
   changes, bump `DEFAULT.v` and add a step there instead of wiping progress.
 - Clicks route through `data-act` attributes to the `ACT` object.
