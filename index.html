@@ -296,7 +296,7 @@ input,textarea,select{font:inherit;font-size:16px;color:var(--text)}
 <script>
 "use strict";
 // Bump this on every change so phones can spot a new version and offer to update
-const APP_VERSION="2026.10.04-18";
+const APP_VERSION="2026.10.04-19";
 /* ============ DATA ============ */
 const LV = {
   n5:{label:"N5",name:"Beginner",color:"#9fd67c"},
@@ -489,7 +489,7 @@ const KANJI_LV={none:"none yet",few:"under 50",some:"50–300",many:"300+"};
 /* ============ STATE ============ */
 const KEY="yuki-sensei-v3";
 const DEFAULT={
-  v:16,onboarded:false,name:"",level:"n5",goal:"",
+  v:17,onboarded:false,name:"",level:"n5",goal:"",
   about:{done:false,focus:[],hira:"",kata:"",kanji:"",location:"",native:"English",minutes:15,notes:""},
   placement:null,plan:null,course:null,
   profile:{facts:[],weak:[],strong:[],learned:[]},
@@ -572,6 +572,8 @@ function migrate(st){
   // v14 → v15: owner wants Ryusei for English too (no robot voice)
   if((st.v||0)<15)S2.enVoice="ryusei";
   // v15 → v16: shorter replies by default, hands-free calls
+  // v16 → v17: owner wants Ryusei for everything (undo any accidental switch)
+  if((st.v||0)<17){S2.tts="quest";S2.enVoice="ryusei";if(S2.jaRec==="off")S2.jaRec="ryusei";}
   if((st.v||0)<16){if(S2.style&&S2.style.length==="normal")S2.style.length="short";S2.handsFree=true;}
   S2.handsFree=S2.handsFree!==false;
   if(typeof S2.questKey!=="string")S2.questKey="";
@@ -748,8 +750,13 @@ function playRecorded(t,rate){
   const my=++natSeq;natBusy=true;
   return playUrl(recUrlFor(t),my,rate).finally(()=>{if(my===natSeq)natBusy=false;});
 }
+// Voice log: what happened each time Yuki tried to speak (Me → Voice → Voice log), to find problems
+const VLOG=[];
+function vlog(msg){const d=new Date();VLOG.push(String(d.getHours()).padStart(2,"0")+":"+String(d.getMinutes()).padStart(2,"0")+":"+String(d.getSeconds()).padStart(2,"0")+"  "+msg);if(VLOG.length>40)VLOG.shift();}
+const engineName=()=>({quest:"Ryusei everywhere",device:"Recordings + iPhone",azure:"Azure",voicevox:"Own server"}[S.settings.tts]||S.settings.tts)+" · English: "+(S.settings.enVoice==="ryusei"?"Ryusei":"iPhone");
 function speak(text,opts){
   opts=opts||{};
+  vlog("▶ speak ["+engineName()+"]: "+String(opts.say||text).replace(/\s+/g," ").slice(0,50));
   stopNatural();
   const plain=String(text).trim();
   if(S.settings.jaRec!=="off"&&RECORDED.has(plain)&&location.protocol!=="file:"){
@@ -793,7 +800,8 @@ async function fetchVV(text,rate){
 }
 function playBuffer(audio,my){return new Promise(res=>{if(my!==natSeq)return res();const ctx=audioCtx(),src=ctx.createBufferSource();src.buffer=audio;src.connect(ctx.destination);
   src.onended=()=>{if(natSrc===src){natSrc=null;natPlaying=false;}res();};natSrc=src;natPlaying=true;src.start(0);});}
-function sayDevice(t,lang,rate){return new Promise(res=>{if(!synth)return res();const u=new SpeechSynthesisUtterance(t);u.lang=lang;const v=pickVoice(lang);if(v)u.voice=v;
+function sayDevice(t,lang,rate){return new Promise(res=>{if(!synth){vlog("✗ iPhone voice: not available");return res();}const u=new SpeechSynthesisUtterance(t);let st=false;u.onstart=()=>{st=true;};
+  setTimeout(()=>{if(!st)vlog("✗ iPhone voice ("+lang+") didn't start: "+t.slice(0,30));},3000);u.lang=lang;const v=pickVoice(lang);if(v)u.voice=v;
   u.rate=lang==="ja-JP"?rate:Math.max(0.85,Math.min(1.05,rate+0.1));u.pitch=1;u.onend=u.onerror=()=>res();synth.speak(u);});}
 // Japanese parts in Himari/Ryusei from the server, English parts in the best iPhone voice, played in order
 async function speakVV(segs,rate,text,opts){
@@ -866,10 +874,13 @@ async function questUrl(text){
     let waited=0;
     for(let attempt=0;attempt<6;attempt++){
       let r,j;
-      try{r=await withTimeout(fetch(url),20000);}catch(e){questLastErr=e.message==="timeout"?"no answer (timeout)":"can't connect ("+e.message+")";throw new Error(questLastErr);}
+      vlog("… tts.quest request ("+text.length+" chars)");
+      try{r=await withTimeout(fetch(url),20000);}catch(e){vlog("✗ tts.quest unreachable: "+e.message);questLastErr=e.message==="timeout"?"no answer (timeout)":"can't connect ("+e.message+")";throw new Error(questLastErr);}
       try{j=await r.json();}catch(e){questLastErr="HTTP "+r.status;throw new Error(questLastErr);}
+      if(j.mp3StreamingUrl||j.mp3DownloadUrl){vlog("✓ tts.quest gave audio"+(waited?" after waiting "+waited+"s":""));}
       if(j.mp3StreamingUrl||j.mp3DownloadUrl)return{stream:j.mp3StreamingUrl,mp3:j.mp3DownloadUrl,wav:j.wavDownloadUrl,status:j.audioStatusUrl};
       if(j.retryAfter!=null&&waited+ +j.retryAfter<=25){const w=(+j.retryAfter+1)*1000;waited+=w/1000;natLoading=true;await new Promise(res=>setTimeout(res,w));continue;}
+      vlog("✗ tts.quest: "+(j.errorMessage||("HTTP "+r.status))+(j.retryAfter!=null?" (retryAfter "+j.retryAfter+")":""));
       questLastErr=j.errorMessage||("HTTP "+r.status);throw new Error(questLastErr);
     }
     questLastErr="busy for too long";throw new Error(questLastErr);
@@ -882,9 +893,9 @@ function playUrl(url,my,rate){return new Promise((res,rej)=>{
   if(my!==natSeq)return res();
   const a=questPlayer();let done=false;const fin=(ok)=>{if(done)return;done=true;clearTimeout(t);a.onended=a.onerror=null;natPlaying=false;ok?res():rej(new Error("play"));};
   const t=setTimeout(()=>fin(false),45000);
-  a.onended=()=>fin(true);a.onerror=()=>fin(false);
+  a.onended=()=>fin(true);a.onerror=()=>{vlog("✗ audio error "+(a.error?a.error.code:"?")+": "+url.split("/").slice(-2).join("/"));fin(false);};
   a.src=url;a.playbackRate=rate&&rate<0.75?0.8:1;natPlaying=true;
-  a.play().then(()=>{a.dataset.ok="1";}).catch(()=>fin(false));
+  a.play().then(()=>{a.dataset.ok="1";vlog("✓ playing "+url.split("/").slice(-2).join("/"));}).catch(e=>{vlog("✗ play() refused: "+(e&&e.name||"")+" "+(e&&e.message||"").slice(0,40));fin(false);});
 });}
 function stopQuest(){if(qa){try{qa.pause();}catch(e){}}}
 // iPhone Safari is unreliable with half-made streams, so wait until tts.quest says the file is ready and
@@ -964,7 +975,7 @@ async function speakWithRecordings(segs,rate,text,opts){
     for(let i=0;i<segs.length;i++){
       if(my!==natSeq)return;
       const k=recKey(segs[i].t);
-      if(segs[i].k==="ja"&&RECORDED.has(k)){try{await playUrl(recUrlFor(k),my,rate);continue;}catch(e){}}
+      if(segs[i].k==="ja"&&RECORDED.has(k)&&segs.length===1){try{await playUrl(recUrlFor(k),my,rate);continue;}catch(e){}}
       if(my!==natSeq)return;
       await sayDevice(segs[i].t.trim(),segs[i].k==="ja"?"ja-JP":"en-US",rate);
     }
@@ -1851,7 +1862,8 @@ function vMe(){
     <p class="sub" style="margin:10px 0 6px">Voice</p>${chipRow("recSet","jaRec",st.jaRec==="off"?"ryusei":st.jaRec,Object.entries(REC_VOICES).map(([k,v])=>[k,v.name.split(" ")[0]]))}
     <p class="sub" style="margin:12px 0 6px">English parts</p>${chipRow("enVoiceSet","enVoice",st.enVoice,[["ryusei",(REC_VOICES[st.jaRec]||REC_VOICES.ryusei).name.split(" ")[0]+" (Japanese accent)"],["iphone","iPhone voice"]])}
     ${st.enVoice==="iphone"?voicePicker("en","English voice",st.voiceEn):""}
-    <button class="btn sm" style="margin-top:12px" data-act="questTest">🔎 Test Ryusei's live voice</button>
+    <button class="btn sm ghost" style="margin-top:12px" data-act="voiceLog">🧾 Voice log (send me a screenshot if voice is wrong)</button>
+    <button class="btn sm" style="margin-top:8px" data-act="questTest">🔎 Test Ryusei's live voice</button>
     <details style="margin-top:10px"><summary class="sub" style="min-height:44px;display:flex;align-items:center">Optional: free tts.quest key (faster, fewer "busy")</summary>
      <p class="sub" style="margin:6px 0">Get a free key at <b>su-shiki.com/api</b>, paste it here. It's only used to ask tts.quest for Ryusei's audio and stays on this phone.</p>
      <input class="field" id="questKeyIn" type="password" placeholder="tts.quest key (optional)" value="${esc(st.questKey)}" autocomplete="off" autocapitalize="off" spellcheck="false">
@@ -1934,7 +1946,7 @@ function renderVoice(){
   const cap=last&&!last.err?esc(cleanSpeech(last.text).replace(/\s+\n/g,"\n").trim()).replace(/\n+/g,"<br>"):last&&last.err?"Connection problem — check the chat.":"Say hi! Try 「こんにちは」 or ask me anything in English.";
   const cc=S.settings.captions,len=S.settings.style.length;
   $("#voice").innerHTML=`<div class="vtop"><button class="iconbtn" data-act="closeVoice" aria-label="Close">✕</button>
-   <div class="vtitle"><b>Yuki</b><small>${useQuest()?"🎌 "+(REC_VOICES[S.settings.jaRec]||REC_VOICES.ryusei).name.split(" ")[0]+"'s voice":useVV()?"🎌 "+(REC_VOICES[S.settings.jaRec]||REC_VOICES.himari).name.split(" ")[0]+"'s voice":useNatural()?"✨ natural voice":"voice call"}</small></div>
+   <div class="vtitle" data-act="voiceLog" role="button" title="Voice log"><b>Yuki</b><small>${useQuest()?"🎌 "+(REC_VOICES[S.settings.jaRec]||REC_VOICES.ryusei).name.split(" ")[0]+"'s voice":useVV()?"🎌 "+(REC_VOICES[S.settings.jaRec]||REC_VOICES.himari).name.split(" ")[0]+"'s voice":useNatural()?"✨ natural voice":"voice call"}</small></div>
    <button class="iconbtn" data-act="vCaptions" aria-label="Captions" style="font-size:15px;font-weight:800">${cc?"CC":"🙈"}</button></div>
    <div class="vopts"><button class="vopt${S.settings.handsFree?" on":""}" data-act="vHands">${S.settings.handsFree?"🙌 Hands-free":"✋ Tap to talk"}</button>
     <span class="vlen">${[["tiny","Very short"],["short","Short"],["normal","Normal"]].map(([v,t])=>`<button class="vopt${len===v?" on":""}" data-act="vLen" data-v="${v}">${t}</button>`).join("")}</span></div>
@@ -2066,6 +2078,9 @@ const ACT={
     try{await playQuestAudio(o,my);natBusy=false;
       sheet(`<div class="h2">✅ Ryusei's voice works</div><p class="sub" style="margin:8px 0 14px">All three steps worked. If you didn't hear him, turn the volume up with the buttons on the side of your phone.</p><button class="btn" data-act="closeSheet">Great</button>`);}
     catch(e){natBusy=false;questFail(questStage==="playing"||/play/.test(e.message)?3:2,e.message);}},
+  voiceLog:()=>sheet(`<div class="h2">🧾 Voice log</div><p class="sub" style="margin:6px 0 10px">Voice: <b>${esc(engineName())}</b> · app ${APP_VERSION}<br>Newest at the bottom. Take a screenshot right after the voice goes wrong.</p>
+    <div class="card" style="font-family:ui-monospace,Menlo,monospace;font-size:12px;line-height:1.5;max-height:50vh;overflow:auto;white-space:pre-wrap">${VLOG.length?esc(VLOG.join("\n")):"Nothing yet — let Yuki speak first."}</div>
+    <button class="btn" data-act="closeSheet">Close</button>`),
   iphoneVoiceTest:()=>{if(!synth){toast("This browser has no built-in voice");return;}synth.cancel();const u=new SpeechSynthesisUtterance("Hello! This is the iPhone voice.");u.lang="en-US";const v=pickVoice("en-US");if(v)u.voice=v;
     let started=false;u.onstart=()=>{started=true;};u.onend=()=>toast(started?"iPhone voice: worked ✓":"iPhone voice: no sound",2500);u.onerror=e=>toast("iPhone voice error: "+(e.error||"unknown"),3500);synth.speak(u);
     setTimeout(()=>{if(!started)toast("iPhone voice didn't start — check Settings → Accessibility → Spoken Content",4000);},4000);},
