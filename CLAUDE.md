@@ -111,6 +111,11 @@ Safari → Add to Home Screen.
   status URL until `isAudioReady`, then play the finished MP3 (iOS is unreliable with streams);
   if status can't be read, try the stream, then retry the finished files. The "Test Ryusei"
   sheet shows which of the 3 steps fails (`questFail`) and has an iPhone-voice test.
+  Text for Ryusei goes through `vvText()`: spaces between Japanese characters removed (spaced
+  beginner kana makes VOICEVOX pause after every word and stress oddly), Japanese punctuation.
+  `cleanSpeech()` speaks the reading for 漢字(かな) instead of the kanji. Ryusei never starts while
+  the iPhone voice is still talking (`synthIdle()`), and an iPhone line that never started is
+  cancelled so it can't start late over Ryusei.
   iPhone speech (`sayDevice`/`sayChunk`): short sentence chunks (≤180 chars), resume if paused,
   120 ms gap after an audio clip, safety timer if "end" never fires, voice assignment guarded.
   Me → Voice shows the English voice in use (★ = Premium/Enhanced) with a 🔊 Test button.
