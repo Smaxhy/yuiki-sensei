@@ -19,8 +19,10 @@ Safari → Add to Home Screen.
   `K:` kana chart, `Q:` quiz, `T:` talk prompt in `TALK`. Progress in `S.plan` (`start`,
   `done["day:task"]`). Tasks tick themselves (`planAuto`, lesson completion, 4 Yuki replies
   via `UI.planCtx`) or by tapping the circle. Today's tasks show on Home; full plan in Learn.
-- **Updates**: `APP_VERSION` — bump it on every change. The app compares it with the live
-  copy on open (`checkUpdate`) and offers "Update now".
+- **Auto-update**: on open, on returning to the app, and every 15 min, `checkUpdate` fetches
+  the live page and compares its `<script>`/`<style>` with the running ones. If different it
+  reloads right away when idle (`canReloadNow`), otherwise when the app is next hidden. Loop
+  guard: at most one auto-reload per 2 min (`yuki-upd-at`). Still bump `APP_VERSION` (shown in Me).
 - **Tabs**: Home, Yuki (chat), Learn, Practice, Me.
 - **Yuki the AI tutor**: 26, from Kyoto, warm and playful, corrects mistakes clearly.
   Calls the Anthropic Messages API directly from the browser (`apiRequest()`) using the

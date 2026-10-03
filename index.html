@@ -189,7 +189,7 @@ input,textarea,select{font:inherit;font-size:16px;color:var(--text)}
 <script>
 "use strict";
 // Bump this on every change so phones can spot a new version and offer to update
-const APP_VERSION="2026.10.03-3";
+const APP_VERSION="2026.10.03-4";
 /* ============ DATA ============ */
 const LV = {
   n5:{label:"N5",name:"Beginner",color:"#9fd67c"},
@@ -407,7 +407,8 @@ function migrate(st){
   return st;
 }
 let saveT=null;
-function save(){clearTimeout(saveT);saveT=setTimeout(()=>{const d=JSON.stringify(S);if(lsOK){try{localStorage.setItem(KEY,d);return;}catch(e){}}if(window.storage){window.storage.set(KEY,d).catch(()=>{});}},150);}
+function saveNow(){clearTimeout(saveT);const d=JSON.stringify(S);if(lsOK){try{localStorage.setItem(KEY,d);return;}catch(e){}}if(window.storage){window.storage.set(KEY,d).catch(()=>{});}}
+function save(){clearTimeout(saveT);saveT=setTimeout(saveNow,150);}
 
 /* ============ HELPERS ============ */
 const $=s=>document.querySelector(s);
@@ -1031,7 +1032,7 @@ function vMe(){
    <p class="sub" style="margin-top:12px">${S.profile.learned.length} words & patterns taught · ${S.stats.msgs} messages · ${S.stats.cards} cards reviewed</p>
   </div>
   <div class="sec">App</div><div class="card">
-   <p class="sub">Version ${APP_VERSION}. Your progress saves automatically on this phone after everything you do. New versions of the app download when you open it; if one is waiting, you'll get an "Update now" button.</p>
+   <p class="sub">Version ${APP_VERSION}. Your progress saves automatically on this phone after everything you do. The app updates itself: new versions load automatically when you open Yuki (or the next time you leave it, if you're in the middle of something).</p>
    <button class="btn sm ghost" style="margin-top:10px" data-act="checkUpdate">Check for updates</button>
   </div>
   <div class="sec">Data</div><div class="card">
@@ -1203,7 +1204,6 @@ const ACT={
   clearChat:()=>{if(confirm("Clear the chat? Your progress and what Yuki knows about you stay.")){S.chat=[];S.currentLesson=null;save();toast("Chat cleared");}},
   resetAll:()=>{if(confirm("Erase EVERYTHING — progress, cards, memory, chat?")){const key=S.settings.apiKey;S=JSON.parse(JSON.stringify(DEFAULT));S.settings.apiKey=key;UI.ob=0;UI.obEdit=false;UI.place=null;UI.tab="home";save();render();}},
   checkUpdate:()=>checkUpdate(true),
-  doUpdate:()=>location.replace(location.pathname+"?v="+Date.now()),
   closeSheet:()=>closeSheet()
 };
 document.addEventListener("click",e=>{
@@ -1232,21 +1232,48 @@ window.addEventListener("resize",fitViewport);
 (function icon(){try{const c=document.createElement("canvas");c.width=c.height=180;const x=c.getContext("2d");const g=x.createLinearGradient(0,0,180,180);g.addColorStop(0,"#f4a3c0");g.addColorStop(1,"#a8577a");x.fillStyle=g;x.fillRect(0,0,180,180);x.fillStyle="#2a1520";x.font="bold 110px 'Hiragino Sans',sans-serif";x.textAlign="center";x.textBaseline="middle";x.fillText("ゆ",90,98);$("#touchIcon").href=c.toDataURL("image/png");}catch(e){}})();
 
 /* ============ UPDATES ============ */
-// Looks at the live copy on GitHub Pages; if its APP_VERSION differs, offers a one-tap update.
-let lastCheck=0;
+// Auto-update: compare this page's own code with the live copy on GitHub Pages.
+// Comparing the code itself (not just APP_VERSION) means any change gets picked up.
+let lastCheck=0,updPending=false;
+const UPD_KEY="yuki-upd-at";
+const norm=t=>(t||"").replace(/\r\n/g,"\n").trim();
+function liveDiffers(html){
+  const js=(html.match(/<script>([\s\S]*?)<\/script>/)||[])[1],css=(html.match(/<style>([\s\S]*?)<\/style>/)||[])[1];
+  if(js===undefined||css===undefined)return false;
+  return norm(js)!==norm(document.querySelector("script").textContent)||norm(css)!==norm(document.querySelector("style").textContent);
+}
+// Safe moment = nothing in progress that a reload would interrupt
+function canReloadNow(){
+  const a=document.activeElement,typing=a&&/INPUT|TEXTAREA/.test(a.tagName)&&a.value;
+  const midCards=UI.fc&&UI.fc.i>0&&UI.fc.i<UI.fc.q.length;
+  return !UI.busy&&!UI.voice&&!UI.listening&&!UI.place&&!midCards&&!typing;
+}
+function applyUpdate(){
+  // Loop guard: never auto-reload more than once every 2 minutes
+  let at=0;try{at=+localStorage.getItem(UPD_KEY)||0;}catch(e){}
+  if(Date.now()-at<120e3)return false;
+  try{localStorage.setItem(UPD_KEY,String(Date.now()));}catch(e){}
+  saveNow();location.replace(location.pathname+"?v="+Date.now());return true;
+}
 function checkUpdate(manual){
   if(location.protocol==="file:"){if(manual)toast("Updates only work on the website version");return;}
   lastCheck=Date.now();
-  fetch(location.pathname+"?check="+Date.now(),{cache:"no-store"}).then(r=>r.text()).then(t=>{
-    const m=t.match(/APP_VERSION="([^"]+)"/);
-    if(m&&m[1]!==APP_VERSION)sheet(`<div class="h2">✨ A new version of Yuki is ready</div><p class="sub" style="margin:8px 0 16px">Your progress is saved and stays exactly as it is.</p><button class="btn" data-act="doUpdate">Update now</button><button class="btn ghost" style="margin-top:8px" data-act="closeSheet">Later</button>`);
-    else if(manual)toast("You're on the latest version ✓");
+  fetch(location.pathname+"?check="+Date.now(),{cache:"no-store"}).then(r=>r.ok?r.text():"").then(t=>{
+    if(!t||!liveDiffers(t)){if(manual)toast("You're on the latest version ✓");return;}
+    if(manual||canReloadNow()){if(!applyUpdate()&&manual)toast("Updating… if nothing changes, close and reopen Yuki");}
+    else if(!updPending){updPending=true;toast("✨ Update ready — it'll load next time you open Yuki",3000);}
   }).catch(()=>{if(manual)toast("Couldn't check — are you online?");});
 }
-document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible"&&Date.now()-lastCheck>10*60e3)checkUpdate(false);});
+document.addEventListener("visibilitychange",()=>{
+  if(document.visibilityState==="hidden"){saveNow();if(updPending)applyUpdate();return;}
+  if(updPending){if(applyUpdate())return;}
+  if(Date.now()-lastCheck>60e3)checkUpdate(false);
+});
+// While the app stays open, look again every 15 minutes
+setInterval(()=>{if(document.visibilityState==="visible")checkUpdate(false);},15*60e3);
 
 /* ============ START ============ */
-loadState().then(()=>{fitViewport();render();setTimeout(()=>checkUpdate(false),3000);});
+loadState().then(()=>{fitViewport();render();setTimeout(()=>checkUpdate(false),1500);});
 </script>
 </body>
 </html>
