@@ -269,7 +269,7 @@ input,textarea,select{font:inherit;font-size:16px;color:var(--text)}
 <script>
 "use strict";
 // Bump this on every change so phones can spot a new version and offer to update
-const APP_VERSION="2026.10.04-2";
+const APP_VERSION="2026.10.04-3";
 /* ============ DATA ============ */
 const LV = {
   n5:{label:"N5",name:"Beginner",color:"#9fd67c"},
@@ -508,6 +508,7 @@ function migrate(st){
   const S2=st.settings;
   if(!["device","azure","voicevox"].includes(S2.tts))S2.tts="device";
   if(typeof S2.vvUrl!=="string")S2.vvUrl="";
+  if(S2.tts==="voicevox"&&!S2.vvUrl.trim())S2.tts="device";
   if(typeof S2.azKey!=="string")S2.azKey="";
   if(!AZ_REGIONS.includes(S2.azRegion))S2.azRegion="eastus";
   if(!AZ_VOICES.en.some(v=>v[0]===S2.azEn))S2.azEn=DEFAULT.settings.azEn;
@@ -612,7 +613,9 @@ let actx=null,natSrc=null,natPlaying=false,natLoading=false,natSeq=0,natFailNote
 const natCache=new Map();
 // iPhone only lets a page play sound after a tap, so the audio engine is woken on the first touch
 // "playback" lets voices play even when the iPhone's silent switch is on (Safari 16.4+)
-try{if(navigator.audioSession)navigator.audioSession.type="playback";}catch(e){}
+// ("playback" alone would block the microphone, so calls and the 🎤 switch to "play-and-record")
+function setAudioMode(m){try{if(navigator.audioSession&&navigator.audioSession.type!==m)navigator.audioSession.type=m;}catch(e){}}
+setAudioMode("playback");
 function audioCtx(){if(!actx){const C=window.AudioContext||window.webkitAudioContext;if(!C)return null;actx=new C();}if(actx.state==="suspended")actx.resume().catch(()=>{});return actx;}
 let audioUnlocked=false;
 document.addEventListener("touchend",()=>{if(audioUnlocked)return;const c=audioCtx();if(c){try{const b=c.createBuffer(1,1,22050),src=c.createBufferSource();src.buffer=b;src.connect(c.destination);src.start(0);audioUnlocked=true;}catch(e){}}},{passive:true});
@@ -737,6 +740,7 @@ async function speakVV(segs,rate,text,opts){
 function pingVV(){const b=useVV()?vvBase(S.settings.vvUrl):"";if(b)fetch(b+"/version").catch(()=>{});}
 function speakAI(text,opts){
   const segsN=segments(cleanSpeech(text)).filter(s=>s.k==="ja"||S.settings.speakEnglish||opts.forceEnglish);
+  if(!useVV()&&!useNatural()&&S.settings.jaRec!=="off"&&location.protocol!=="file:"&&segsN.some(sg=>sg.k==="ja"&&RECORDED.has(recKey(sg.t)))){if(synth)synth.cancel();speakWithRecordings(segsN,opts.rate||S.settings.rate,text,opts);return;}
   if(useVV()&&segsN.length){if(synth)synth.cancel();speakVV(segsN,opts.rate||S.settings.rate,text,opts);return;}
   if(useNatural()&&segsN.length){
     if(synth)synth.cancel();
@@ -749,6 +753,24 @@ function speakAI(text,opts){
     return;
   }
   speakDevice(text,opts);
+}
+// Any Japanese bit of a reply that matches a recording (all course words, kana, cards) plays in
+// Himari/Ryusei; the rest uses the iPhone voice. No server or key needed.
+const recKey=t=>t.replace(/[\s、。！？!?,.「」…~～]/g,"");
+async function speakWithRecordings(segs,rate,text,opts){
+  const my=++natSeq;natBusy=true;
+  const jobs=segs.map(sg=>{if(sg.k!=="ja")return null;const k=recKey(sg.t);if(!RECORDED.has(k))return null;
+    const url=`audio/${S.settings.jaRec}/${recId(k)}.mp3`;
+    return recCache.has(url)?Promise.resolve(recCache.get(url)):fetch(url).then(r=>{if(!r.ok)throw 0;return r.arrayBuffer();}).then(b=>audioCtx().decodeAudioData(b)).then(a=>{recCache.set(url,a);return a;});});
+  jobs.forEach(j=>j&&j.catch(()=>{}));
+  try{
+    for(let i=0;i<segs.length;i++){
+      if(my!==natSeq)return;
+      let audio=null;if(jobs[i]){natLoading=true;try{audio=await jobs[i];}catch(e){}natLoading=false;}
+      if(my!==natSeq)return;
+      if(audio)await playBuffer(audio,my);else await sayDevice(segs[i].t.trim(),segs[i].k==="ja"?"ja-JP":"en-US",rate);
+    }
+  }finally{if(my===natSeq){natBusy=false;natLoading=false;}}
 }
 function speakDevice(text,opts){
   opts=opts||{};
@@ -787,7 +809,8 @@ function startMic(onText,onDone){
     if(e.error==="not-allowed"||e.error==="service-not-allowed"||e.error==="audio-capture")micHelp("blocked");
     else if(e.error==="no-speech")toast("I didn't hear anything — tap and try again");
     else if(e.error!=="aborted")toast("Mic problem: "+e.error);};
-  rec.onend=()=>{UI.listening=false;refreshMic();if(!errored&&onDone)onDone(finalT.trim());};
+  rec.onend=()=>{UI.listening=false;if(!UI.voice)setAudioMode("playback");refreshMic();if(!errored&&onDone)onDone(finalT.trim());};
+  setAudioMode("play-and-record");
   try{rec.start();UI.listening=true;refreshMic();return true;}catch(e){UI.listening=false;micHelp("blocked");return false;}
 }
 function stopMic(){if(rec){try{rec.stop();}catch(e){}}}
@@ -915,13 +938,22 @@ function parseMem(raw){
   const text=raw.slice(0,i).trim();let mem={};
   const m=raw.slice(i+7).match(/\{[\s\S]*\}/);
   if(m){try{mem=JSON.parse(m[0]);}catch(e){}}
+  if(!mem||typeof mem!=="object"||Array.isArray(mem))mem={};
   return{text,mem};
+}
+// Yuki sometimes writes a field as text or as {"word":"meaning"} instead of a list; accept all of them
+function asList(x){
+  if(x==null||x===""||x===false)return[];
+  if(Array.isArray(x))return x.flatMap(v=>v&&typeof v==="object"?asList(v):[String(v)]);
+  if(typeof x==="object")return Object.entries(x).map(([k,v])=>typeof v==="string"&&v?k+" = "+v:k);
+  return String(x).split(/\s*[;\n]\s*/).filter(Boolean);
 }
 function applyMem(mem){
   const p=S.profile;
+  ["facts","learned","strong","weak","used","path"].forEach(k=>{if(k in mem)mem[k]=asList(mem[k]);});
   addUnique(p.facts,mem.facts,30);
   addUnique(p.learned,mem.learned,300);
-  if(mem.strong){addUnique(p.strong,mem.strong,30);p.weak=p.weak.filter(w=>!mem.strong.some(s=>s.toLowerCase()===w.toLowerCase()));}
+  if(mem.strong&&mem.strong.length){addUnique(p.strong,mem.strong,30);p.weak=p.weak.filter(w=>!mem.strong.some(s=>s.toLowerCase()===w.toLowerCase()));}
   addUnique(p.weak,mem.weak,30);
   if(+mem.right)S.stats.quizRight+=+mem.right;
   if(+mem.wrong)S.stats.quizWrong+=+mem.wrong;
@@ -942,7 +974,7 @@ async function send(display,apiText,mode){
   try{
     const raw=await callAI(UI.voice?"voice":mode);
     const {text,mem}=parseMem(raw);
-    applyMem(mem);
+    try{applyMem(mem);}catch(e){console.warn("memory skipped",e);}
     S.chat.push({role:"assistant",text:text||"…"});save();
     // A plan quiz or talk counts as done after a few back-and-forths with Yuki
     if(UI.planCtx&&++UI.planCtx.replies>=4){markNode(UI.planCtx.key);UI.planCtx=null;if(UI.tab==="chat"&&!UI.voice)rerenderChatHead();}
@@ -1492,9 +1524,10 @@ function vMe(){
   </div>
   <div class="sec">🔊 Voice</div><div class="card">
    <p class="sub" style="margin-bottom:6px">Voice engine</p>
-   ${chipRow("ttsSet","tts",st.tts,[["voicevox","🎌 Himari & Ryusei"],["device","iPhone voices"],["azure","✨ Azure"]])}
+   ${chipRow("ttsSet","tts",st.tts,[["device","🎌 Himari + iPhone"],["azure","✨ Azure"],["voicevox","Own server (advanced)"]])}
+   ${st.tts==="device"?`<p class="sub" style="margin:10px 0 0">Free, no key: every word from your lessons, flashcards and kana is spoken by ${esc((REC_VOICES[st.jaRec]||REC_VOICES.himari).name.split(" ")[0])} (recorded), including when Yuki uses them in chat. Other sentences use your best iPhone voice.</p>`:""}
    ${st.tts==="voicevox"?`
-    <p class="sub" style="margin:12px 0 0">Yuki speaks <b>all</b> Japanese in Himari or Ryusei, using your own free voice server (a free Hugging Face Space, no API key, no cost). English parts use your best iPhone voice.</p>
+    <p class="sub" style="margin:12px 0 0">Advanced: if you have your own VOICEVOX server (e.g. a Hugging Face Space — note some accounts now need billing for Docker Spaces), Yuki speaks <b>all</b> Japanese in Himari or Ryusei. English parts use your best iPhone voice.</p>
     <input class="field" id="vvIn" placeholder="yourname/yuki-voice  or  https://…hf.space" value="${esc(st.vvUrl)}" autocomplete="off" autocapitalize="off" spellcheck="false">
     <div class="grid2"><button class="btn sm" data-act="saveVV">Save & test</button><button class="btn sm ghost" data-act="vvHelp">Set it up (5 min)</button></div>
     <p class="sub" style="margin:10px 0 6px">Japanese voice</p>
@@ -1557,9 +1590,9 @@ function voicePicker(lang,label,cur){
 }
 
 /* ============ VOICE CALL ============ */
-function openVoice(){UI.voice=true;UI.vstate="idle";UI.vyou="";$("#voice").classList.remove("hidden");renderVoice();
+function openVoice(){setAudioMode("play-and-record");UI.voice=true;UI.vstate="idle";UI.vyou="";$("#voice").classList.remove("hidden");renderVoice();
   if(!S.chat.length||S.chat[S.chat.length-1].role!=="assistant"){/* nothing */}}
-function closeVoice(){UI.voice=false;stopMic();stopSpeak();$("#voice").classList.add("hidden");if(UI.tab==="chat")render();}
+function closeVoice(){setAudioMode("playback");UI.voice=false;stopMic();stopSpeak();$("#voice").classList.add("hidden");if(UI.tab==="chat")render();}
 function renderVoice(){
   if(!UI.voice)return;
   const last=[...S.chat].reverse().find(m=>m.role==="assistant");

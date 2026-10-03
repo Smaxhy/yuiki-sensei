@@ -66,14 +66,20 @@ Safari → Add to Home Screen.
   voices on any error. `isSpeaking()` / `stopSpeak()` cover both engines.
   Free recorded Japanese audio: every `CARDS[*].say` (incl. course words) is pre-recorded with VOICEVOX in
   `audio/himari/` and `audio/ryusei/` (file name = `recId(text)`), chosen with
-  `S.settings.jaRec`; `speak()` plays these first for exact matches. New decks: re-run
+  `S.settings.jaRec`; `speak()` plays these first for exact matches, and in the default
+  engine `speakWithRecordings()` also uses them for any matching Japanese segment inside Yuki's
+  replies (rest = iPhone voice). New decks: re-run
   `tools/gen_audio.py`. Credits "VOICEVOX:冥鳴ひまり" / "VOICEVOX:青山龍星" must stay (Me + README).
   Live "Himari & Ryusei" engine (`S.settings.tts="voicevox"`, `vvUrl`): the owner's own free
   VOICEVOX server (Hugging Face Space built from `voice-server/Dockerfile`, CORS open). `speakVV`
   synthesises Japanese segments on the server (`fetchVV`, speaker from `jaRec`, cached) and
   speaks English segments with the best iPhone voice, in order; falls back to iPhone voices if
   the server is asleep/unreachable. `pingVV()` wakes the server on open. `vvBase()` accepts
-  "user/space" or a full URL.
+  "user/space" or a full URL. Shown as "Own server (advanced)" (HF Docker Spaces may need billing).
+  iPhone audio session: `setAudioMode("playback")` normally, "play-and-record" while the mic
+  listens or a call is open ("playback" alone blocks the microphone).
+  `applyMem` coerces MEM fields with `asList()` and is wrapped in try/catch so an odd memory
+  line can never break a reply.
   Has Repeat and Slower buttons. If the mic is blocked, it shows iPhone fix-it steps.
 - **Listening**: Japanese wrapped in [[double brackets]] in AI replies shows as a hidden,
   tap-to-play audio clip.
