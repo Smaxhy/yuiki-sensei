@@ -93,8 +93,11 @@ Safari → Add to Home Screen.
   English voice doesn't mangle it.
   `applyMem` coerces MEM fields with `asList()` and is wrapped in try/catch so an odd memory
   line can never break a reply.
-  The mic listens in Japanese by default (`micLang="ja-JP"`, forced when a course talk starts);
-  English mode makes iPhone type Japanese as English look-alikes.
+  Two mic buttons everywhere (chat input bar and call screen): 🎤 日本語 and 🎤 English, each
+  starting recognition in that language for one utterance (`startMic(…, lang)`, `UI.micLang`),
+  because iPhone recognition handles one language at a time. Default `micLang="ja-JP"`.
+  Yuki is told English via the Japanese mic arrives as katakana and English-mode Japanese as
+  look-alikes ("Ohio"). Captions toggle sits top-right on the call screen.
   Has Repeat and Slower buttons. If the mic is blocked, it shows iPhone fix-it steps.
 - **Listening**: Japanese wrapped in [[double brackets]] in AI replies shows as a hidden,
   tap-to-play audio clip.
