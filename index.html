@@ -376,7 +376,7 @@ input,textarea,select{font:inherit;font-size:16px;color:var(--text)}
 <script>
 "use strict";
 // Bump this on every change so phones can spot a new version and offer to update
-const APP_VERSION="2026.10.07-1";
+const APP_VERSION="2026.10.07-2";
 /* ============ DATA ============ */
 const LV = {
   n5:{label:"N5",name:"Beginner",color:"#9fd67c"},
@@ -1534,6 +1534,7 @@ async function send(display,apiText,mode){
     try{applyMem(mem);}catch(e){console.warn("memory skipped",e);}
     const shown=stripHidden(text);
     box.push({role:"assistant",text:shown||"…",say:say||undefined});save();
+    try{trHarvest(shown,f0.fix);}catch(e){console.warn("bank skipped",e);}
     // A plan quiz or talk counts as done after a few back-and-forths with Yuki
     if(UI.planCtx&&++UI.planCtx.replies>=4){markNode(UI.planCtx.key);UI.planCtx=null;if(UI.tab==="chat"&&!UI.voice)rerenderChatHead();}
     showTyping(false);if(S.chat===box)appendLast();
@@ -2690,30 +2691,138 @@ function trSay(ja,say){
   else if(navigator.onLine!==false&&S.settings.tts!=="device"&&!/[A-Za-z]/.test(say))speakQuest([{k:"ja",t:say}],0.9,say,{noSplit:true}).catch(()=>sayDevice(say,"ja-JP",0.9));
   else sayDevice(say,"ja-JP",0.9);
 }
+/* ---- Free translation of anything you say (no AI, no credits) + a sentence bank that grows from your chats ---- */
+// Online: a free translation service (Google Translate's public endpoint, then MyMemory). It costs nothing and
+// never touches your Anthropic credits. Every translation and every Japanese sentence Yuki says is kept on the
+// phone (TRB, localStorage "yuki-trbank"), so the translator also finds them offline.
+const TRB_KEY="yuki-trbank",TRB_MAX=3000;
+let TRB=null,trbT=0;
+function trBank(){if(TRB)return TRB;try{TRB=JSON.parse(localStorage.getItem(TRB_KEY)||"[]");}catch(e){TRB=[];}if(!Array.isArray(TRB))TRB=[];return TRB;}
+function trBankSave(){clearTimeout(trbT);trbT=setTimeout(()=>{try{localStorage.setItem(TRB_KEY,JSON.stringify(trBank().slice(-TRB_MAX)));}catch(e){TRB.splice(0,500);}},500);}
+const JA_RE=/[ぁ-んァ-ヶ一-龯々]/;
+const trJaKey=t=>String(t).replace(/[\s「」『』（）()、。！？!?.,…~〜ー*_]/g,"");
+const trEnKey=t=>String(t).toLowerCase().replace(/[’‘]/g,"'").replace(/[^a-z0-9' ]+/g," ").replace(/\s+/g," ").trim();
+function trBankAdd(ja,en,src,ro){
+  ja=String(ja||"").replace(/\s+/g," ").replace(/^[「『\s]+|[」』\s]+$/g,"").trim();en=String(en||"").replace(/\s+/g," ").trim();
+  if(!JA_RE.test(ja)||ja.length<2||ja.length>160||en.length>200||/[A-Za-z]{3,}/.test(ja))return;
+  if(en&&(JA_RE.test(en)||!/[a-z]/i.test(en)))en="";
+  const b=trBank(),k=trJaKey(ja),i=b.findIndex(x=>trJaKey(x.ja)===k);
+  if(i>=0){const x=b[i];if(en&&(!x.en||src!=="yuki"))x.en=en,x.src=src;if(ro)x.ro=ro;x.at=Date.now();x.n=(x.n||1)+1;b.splice(i,1);b.push(x);}
+  else b.push(ro?{ja,en,src,ro,at:Date.now(),n:1}:{ja,en,src,at:Date.now(),n:1});
+  if(b.length>TRB_MAX)b.splice(0,b.length-TRB_MAX);trBankSave();
+}
+// Looks like romaji rather than English ("konnichiwa", "ohayou gozaimasu")?
+const ROMA_W=/^(?:(?:[kgsztdnhbpmyrwfjv]|sh|ch|ts|ky|gy|ny|hy|my|ry|by|py|j)?[aiueo]+|n|[kstpc](?=[kstpc]))+$/;
+const trRomaji=t=>{const w=trEnKey(t).split(" ").filter(Boolean);return w.length>0&&w.every(x=>ROMA_W.test(x));};
+// Pull Japanese ↔ English pairs out of what Yuki says (costs nothing: it's text that already arrived)
+function trHarvest(text,fix){
+  if(fix&&fix.ja&&fix.en&&JA_RE.test(fix.ja))trBankAdd(fix.ja,fix.en,"fix");
+  const t=String(text||"").replace(/\*\*|__|`/g,"").replace(/\[\[|\]\]/g,"").replace(/(^|\s)\*([^*\n]+)\*/g,"$1$2");
+  const J="[ぁ-んァ-ヶ一-龯々ー〜、0-9０-９・ 　]";
+  const used=new Set();
+  t.split(/\n+/).forEach(line=>{
+    line=line.replace(/^\s*(?:[-•▪︎·]|\d+[.)])\s*/,"").trim();if(!JA_RE.test(line))return;
+    // 日本語 (romaji) – English   /   日本語 (English)   /   日本語 = English   /   日本語: English
+    const re=new RegExp("("+J+"*[ぁ-んァ-ヶ一-龯々]"+J+"*[。！？!?]?)\\s*(?:[(（]([^()（）]{1,60})[)）])?\\s*(?:[-–—=:→]+\\s*([A-Za-z][^\\n()（）]{1,120}?)(?=$|\\s[-–—]\\s|[;|]|\\s{2}|[ぁ-んァ-ヶ一-龯]))?","g");
+    let m;while((m=re.exec(line))){
+      const ja=m[1].trim(),br=(m[2]||"").trim();let en=(m[3]||"").trim().replace(/[\s,;:–—-]+$/,"");
+      if(!en&&br&&/[a-z]/i.test(br)&&!trRomaji(br))en=br;
+      if(ja.replace(/[\s、。！？!?]/g,"").length<2)continue;
+      if(en)en=en.replace(/^["“']|["”']$/g,"").replace(/\s*\(.*$/,"");
+      used.add(trJaKey(ja));trBankAdd(ja,en,en?"yuki-en":"yuki");}
+  });
+  // every Japanese sentence Yuki says, even without English (filled in later for free when online)
+  (t.match(/[^。！？!?\n]*[ぁ-んァ-ヶ一-龯][^。！？!?\n]*[。！？!?]?/g)||[]).forEach(s=>{
+    const ja=(s.match(new RegExp(J+"+[。！？!?]?","g"))||[]).filter(x=>JA_RE.test(x)).sort((a,b)=>b.length-a.length)[0];
+    if(ja&&!used.has(trJaKey(ja))&&trJaKey(ja).length>=3)trBankAdd(ja.trim(),"","yuki");});
+  trFillSoon();
+}
+// Find a saved sentence: exact match first, then close ones (shared words / shared characters)
+function trBankFind(q,dir){
+  const b=trBank();if(!b.length)return[];
+  if(dir==="ja"){const k=trJaKey(q);if(!k)return[];const bg=s=>{const o=new Set();for(let i=0;i<s.length-1;i++)o.add(s.slice(i,i+2));return o;},qb=bg(k);
+    return b.filter(x=>x.en).map(x=>{const xk=trJaKey(x.ja);if(xk===k)return[1,x];const xb=bg(xk);let h=0;qb.forEach(g=>{if(xb.has(g))h++;});return[2*h/((qb.size+xb.size)||1),x];}).filter(r=>r[0]>=0.6).sort((a,b)=>b[0]-a[0]).slice(0,3);}
+  const k=trEnKey(q);if(!k)return[];const qw=new Set(k.split(" "));
+  return b.filter(x=>x.en).map(x=>{const xk=trEnKey(x.en);if(xk===k)return[1,x];const xw=new Set(xk.split(" "));let h=0;qw.forEach(w=>{if(xw.has(w))h++;});return[h/Math.max(qw.size,xw.size),x];}).filter(r=>r[0]>=0.75).sort((a,b)=>b[0]-a[0]).slice(0,3);
+}
+// Free online translation. Returns {text, ro} or throws.
+async function freeMT(text,sl,tl){
+  const go=async(url,parse)=>{const ac=new AbortController(),t=setTimeout(()=>ac.abort(),6000);try{const r=await fetch(url,{signal:ac.signal});if(!r.ok)throw new Error("HTTP "+r.status);return parse(await r.json());}finally{clearTimeout(t);}};
+  const q=encodeURIComponent(text);let lastErr;
+  for(const [url,parse] of [
+    ["https://translate.googleapis.com/translate_a/single?client=gtx&sl="+sl+"&tl="+tl+"&dt=t&dt=rm&q="+q,j=>{const seg=(j&&j[0])||[];const out=seg.filter(s=>s&&typeof s[0]==="string").map(s=>s[0]).join("").trim();
+      const tr=seg.find(s=>s&&s[0]==null&&(s[2]||s[3]));if(!out)throw new Error("empty");return{text:out,ro:tl==="ja"&&tr?String(tr[2]||""):""};}],
+    ["https://api.mymemory.translated.net/get?langpair="+sl+"|"+tl+"&q="+q,j=>{const out=j&&j.responseData&&j.responseData.translatedText;if(!out||+j.responseStatus!==200||/MYMEMORY WARNING|INVALID/i.test(out))throw new Error("mymemory");
+      const d=document.createElement("textarea");d.innerHTML=out;return{text:d.value.trim(),ro:""};}]]){
+    try{return await go(url,parse);}catch(e){lastErr=e;vlog&&vlog("✗ translate "+url.split("/")[2]+": "+e.message);}}
+  throw lastErr||new Error("offline");
+}
+// Fill in English for Yuki's sentences in the background, a few at a time, only when online (free)
+let trFillT=0,trFillN=0,trFilling=false;
+function trFillSoon(ms){clearTimeout(trFillT);trFillT=setTimeout(trFill,ms||15000);}
+async function trFill(){
+  if(trFilling||navigator.onLine===false||trFillN>=80||document.visibilityState!=="visible")return;
+  const todo=trBank().filter(x=>!x.en&&!x.tried).slice(-6);if(!todo.length)return;
+  trFilling=true;
+  for(const x of todo){x.tried=1;try{const r=await freeMT(x.ja,"ja","en");if(r.text&&!JA_RE.test(r.text)){x.en=r.text;x.src=x.src||"yuki";}trFillN++;}catch(e){break;}await new Promise(r=>setTimeout(r,1500));}
+  trBankSave();trFilling=false;if(trBank().some(x=>!x.en&&!x.tried))trFillSoon(30000);
+}
+
+const TR_SRC={online:"🌐 Translated online for free (no AI credits). Saved, so it works offline next time.",chats:"🧠 From your chats with Yuki. Works offline.",rec:"🎙️ Recorded in Ryusei's voice. Plays offline once saved.",built:"🧩 Built offline from words. Ryusei says it when you're online, the iPhone voice when you're offline.",phrase:"📖 Closest phrase I know offline."};
+const isKana=t=>/^[ぁ-んァ-ヶー\s、。？！!?]+$/.test(t);
 function vTranslate(){
-  const T=UI.tr||(UI.tr={q:"",res:[],cat:null});
-  const r=T.res[0];
-  return`<div class="pad"><div style="display:flex;align-items:center;justify-content:space-between"><div class="h1">🗣️ Translator</div><span class="sub">✈️ works offline</span></div>
-   <p class="sub" style="margin:4px 0 10px">Say or type it in English, in whole sentences: "two coffees and a water please", "where can I buy tickets to Kyoto", "I can't eat pork", "does this bus go to Shibuya", "can you take a photo of us".</p>
-   <div class="inputbar trbar"><button class="iconbtn micen${UI.listening?" live":""}" data-act="trMic" aria-label="Speak English">🎤</button>
-    <input id="trIn" class="field" value="${esc(T.q)}" placeholder="Type in English…" enterkeyhint="go" autocomplete="off" autocapitalize="off"><button class="send" data-act="trGo" aria-label="Translate">→</button></div>
-   ${r?`<div class="card trres"><div class="trja">${esc(r.ja)}</div><div class="trro">${esc(r.ro)}</div>${r.say&&r.say!==r.ja.replace(/\s+/g,"")?`<div class="trkj">${esc(r.say)}</div>`:""}<div class="tren">🇬🇧 ${esc(r.en)}</div>
+  const T=UI.tr||(UI.tr={q:"",res:[],dir:"en"});T.dir=T.dir||"en";const r=T.res[0],en=T.dir==="en",on=navigator.onLine!==false,nb=trBank().length;
+  const card=!r?"":en?`<div class="card trres"><div class="trja">${esc(r.ja)}</div>${r.ro?`<div class="trro">${esc(r.ro)}</div>`:""}${r.say&&r.say!==r.ja.replace(/\s+/g,"")?`<div class="trkj">${esc(r.say)}</div>`:""}<div class="tren">🇬🇧 ${esc(r.en)}</div>
      ${r.chunks&&r.chunks.length>1?`<div class="trbits">${r.chunks.map(c=>`<span class="trbit"><b>${esc(c.k.replace(/[。？！、]$/,""))}</b><i>${esc(kanaRomaji(c.k.replace(/[。？！、]$/,"")))}</i>${c.e?`<em>${esc(c.e)}</em>`:""}</span>`).join("")}</div>`:""}
      ${r.guess&&r.guess.length?`<p class="sub" style="margin-top:8px">✏️ I don't know “${esc(r.guess.join("”, “"))}” yet, so it stays in English letters. Staff can usually read names.</p>`:""}
      <div class="grid2" style="margin-top:12px"><button class="btn" data-act="trPlay" data-i="0">🔊 Play${r.rec?" (Ryusei)":""}</button><button class="btn ghost" data-act="trShow" data-i="0">📱 Show staff</button></div>
-     <p class="sub" style="margin-top:8px;font-size:12px">${r.rec?"🎙️ Recorded: plays offline once saved.":"🧩 Built from words: Ryusei says it when you're online, the iPhone voice when you're offline."}</p></div>
-     ${T.res.length>1?`<div class="sec">Or did you mean</div>${T.res.slice(1).map((x,i)=>`<button class="row" data-act="trPick" data-i="${i+1}"><span class="rt"><b>${esc(x.ja)}</b><span>${esc(x.en)}</span></span><span class="chev">›</span></button>`).join("")}`:""}`
-    :T.q?`<div class="card"><b>No match yet</b><p class="sub" style="margin-top:6px">Try simpler words ("water please", "where station", "how much"), or pick a phrase below.</p></div>`:""}
-   <div class="sec">📖 Phrasebook</div>
-   <div class="chips">${Object.entries(TR_CATS).map(([k,t])=>`<button class="chip${T.cat===k?" on":""}" data-act="trCat" data-v="${k}">${t}</button>`).join("")}</div>
-   ${T.cat?TR_FIX.filter(f=>f[0]===T.cat).map(f=>`<button class="row trrow" data-act="trFix" data-ja="${esc(f[2])}"><span class="rt"><b>${esc(f[2])}</b><span>${esc(f[1].split("|")[0].replace(/^i /,"I ").replace(/^\w/,c=>c.toUpperCase()))}</span></span><span class="chev">🔊</span></button>`).join(""):""}
-   <div class="card" style="margin-top:14px"><b>✈️ Offline</b><p class="sub" style="margin:6px 0 10px">${navigator.serviceWorker?"Tap once while on Wi-Fi to save every recorded sentence to your phone. Then the translator and its voice work with no internet. (Speaking into the 🎤 may need internet on some iPhones; typing, or the keyboard's own mic button, always works.)":"Offline saving isn't available in this browser."}</p>
+     <p class="sub" style="margin-top:8px;font-size:12px">${TR_SRC[r.src]||""}</p></div>`
+    :`<div class="card trres"><div class="trja" style="font-size:26px">${esc(r.en)}</div><div class="trkj">🇯🇵 ${esc(r.ja)}</div>
+     <div class="grid2" style="margin-top:12px"><button class="btn" data-act="trPlay" data-i="0">🔊 Play English</button><button class="btn ghost" data-act="trPlayJa" data-i="0">🇯🇵 Hear Japanese</button></div>
+     <p class="sub" style="margin-top:8px;font-size:12px">${TR_SRC[r.src]||""}</p></div>`;
+  return`<div class="pad"><div style="display:flex;align-items:center;justify-content:space-between"><div class="h1">🗣️ Translator</div><span class="sub">${on?"🌐 online":"✈️ offline"}</span></div>
+   <div class="chips" style="margin:6px 0 10px"><button class="chip${en?" on":""}" data-act="trDir" data-v="en">🇬🇧 English → 🇯🇵</button><button class="chip${en?"":" on"}" data-act="trDir" data-v="ja">🇯🇵 Japanese → 🇬🇧</button></div>
+   <div class="inputbar trbar"><button class="iconbtn micen${UI.listening?" live":""}" data-act="trMic" aria-label="Speak">🎤</button>
+    <input id="trIn" class="field" value="${esc(T.q)}" placeholder="${en?"Say or type anything in English…":"日本語で話す・書く…"}" enterkeyhint="go" autocomplete="off" autocapitalize="off"><button class="send" data-act="trGo" aria-label="Translate">→</button></div>
+   ${T.busy?`<p class="sub" style="margin:10px 2px">⏳ Translating…</p>`:""}
+   ${card}
+   ${r&&T.res.length>1?`<div class="sec">Other ways to say it</div>${T.res.slice(1).map((x,i)=>`<button class="row" data-act="trPick" data-i="${i+1}"><span class="rt"><b>${esc(en?x.ja:x.en)}</b><span>${esc(en?x.en:x.ja)}</span></span><span class="chev">›</span></button>`).join("")}`:""}
+   ${!r&&T.q&&!T.busy?`<div class="card"><b>${on?"Couldn't translate that":"No internet, and I haven't seen this sentence yet"}</b><p class="sub" style="margin-top:6px">${on?"The free translation service didn't answer. Try again in a moment.":"Offline I use the sentence builder and everything saved in your sentence bank. Try simpler words, or translate it once while online and it's saved for next time."}</p></div>`:""}
+   <div class="card" style="margin-top:14px"><b>🧠 Sentence bank: ${nb}</b><p class="sub" style="margin:6px 0 10px">Every Japanese sentence Yuki says to you and every translation you make is saved on your phone (no AI credits), so the translator finds them offline too.</p>
+    ${nb?`<button class="btn sm ghost" data-act="trBankView">📚 Browse saved sentences</button>`:""}</div>
+   <div class="card" style="margin-top:12px"><b>✈️ Offline</b><p class="sub" style="margin:6px 0 10px">${navigator.serviceWorker?"Online it translates anything for free. Offline it builds sentences itself and uses your sentence bank. Tap once on Wi-Fi to save Ryusei's recordings so they play with no internet. (The 🎤 may need internet on some iPhones; typing, or the keyboard's own mic button, always works.)":"Offline saving isn't available in this browser."}</p>
     <button class="btn sm ghost" data-act="trSave">${T.saved?"✓ Saved for offline ("+T.saved+")":"⬇️ Save the voice for offline"}</button></div>
   </div>`;
 }
-function trRun(q){
-  const T=UI.tr||(UI.tr={q:"",res:[],cat:null});T.q=q;T.res=translateEn(q);rerender();
-  if(T.res[0])trSay(T.res[0].ja,T.res[0].say);
+let trSeq=0;
+const trCapEn=q=>q.trim().replace(/\s+/g," ").replace(/^\w/,c=>c.toUpperCase()).replace(/\bi\b/g,"I");
+function trMerge(arr){const seen=new Set(),out=[];arr.forEach(r=>{if(!r)return;const k=r.ja+"|"+r.en;if(seen.has(trJaKey(r.ja))&&r.src!=="online")return;seen.add(trJaKey(r.ja));out.push(r);});return out.slice(0,4);}
+async function trRun(q){
+  const T=UI.tr||(UI.tr={q:"",res:[],dir:"en"});T.q=q;const my=++trSeq,online=navigator.onLine!==false;
+  if(T.dir==="ja"){
+    const bank=trBankFind(q,"ja").map(([sc,x])=>({ja:x.ja,en:x.en,src:"chats"}));
+    T.res=bank;T.busy=online;rerender();
+    if(online){try{const r=await freeMT(q,"ja","en");if(my!==trSeq)return;if(r.text){T.res=trMerge([{ja:q,en:r.text,src:"online"},...bank]);trBankAdd(q,r.text,"mt");}}catch(e){}
+      if(my!==trSeq)return;T.busy=false;rerender();}
+    if(T.res[0])trSayEn(T.res[0].en);
+    return;}
+  const local=translateEn(q).map(r=>({...r,src:r.rec?"rec":r.chunks?"built":"phrase"}));
+  const bank=trBankFind(q,"en").map(([sc,x])=>({ja:x.ja,say:x.ja,en:x.en,ro:x.ro||(isKana(x.ja)?kanaRomaji(x.ja):""),rec:TR_REC.has(x.ja),src:"chats",exact:sc===1}));
+  const exact=bank[0]&&bank[0].exact;
+  T.res=trMerge(exact?[bank[0],...local,...bank.slice(1)]:[...local,...bank]);
+  const sure=exact||(local[0]&&local[0].rec&&local[0].chunks&&!(local[0].guess||[]).length);
+  if(sure||!online){T.busy=false;rerender();if(T.res[0])trSay(T.res[0].ja,T.res[0].say);return;}
+  T.busy=true;rerender();
+  try{const r=await freeMT(q,"en","ja");if(my!==trSeq)return;
+    if(r.text&&JA_RE.test(r.text)){T.res=trMerge([{ja:r.text,say:r.text,en:trCapEn(q),ro:r.ro||(isKana(r.text)?kanaRomaji(r.text):""),rec:TR_REC.has(r.text),src:"online"},...T.res]);trBankAdd(r.text,trCapEn(q),"mt",r.ro);}}catch(e){}
+  if(my!==trSeq)return;T.busy=false;rerender();if(T.res[0])trSay(T.res[0].ja,T.res[0].say);
+}
+function trSayEn(t){stopSpeak();resetAudio();sayDevice(t,"en-US",1);}
+function trBankSheet(){
+  const b=trBank().slice().reverse(),SRC={fix:"✏️",mt:"🌐","yuki-en":"💬",yuki:"💬"};
+  sheet(`<div class="h2" style="margin-bottom:6px">🧠 Sentence bank</div><p class="sub" style="margin-bottom:10px">${b.length} saved · 💬 Yuki said it · ✏️ your corrected sentences · 🌐 your translations. English for Yuki's sentences is added for free when you're online.</p>
+   ${b.slice(0,60).map(x=>`<button class="row" data-act="trBankPlay" data-ja="${esc(x.ja)}"><span class="rt"><b>${esc(x.ja)}</b><span>${SRC[x.src]||"💬"} ${esc(x.en||"(English comes when you're online)")}</span></span><span class="chev">🔊</span></button>`).join("")}
+   <button class="btn ghost" data-act="closeSheet" style="margin-top:10px">Close</button>`);
 }
 function trShowSheet(r){
   sheet(`<div style="text-align:center;padding:10px 0 4px"><p class="sub" style="margin-bottom:10px">Please read this · こちらをどうぞ</p><div class="trbig">${esc(r.say||r.ja)}</div>${r.say&&r.say!==r.ja.replace(/\s+/g,"")?`<p style="font-size:20px;margin-top:8px">${esc(r.ja)}</p>`:""}<p class="sub" style="margin-top:12px">${esc(r.en)}</p>
@@ -3404,13 +3513,17 @@ function startQuiz(q){
 const ACT={
   tab:el=>{const t=el.dataset.tab;if(t!==UI.tab)stopSpeak();if(t!=="me"||UI.tab==="me")UI.me=null;if(t!==UI.tab){UI.fc=null;UI.qz=null;}UI.tab=t;if(t!=="practice")UI.chart=null;render();},
   cardsF:el=>{UI.cardsF=el.dataset.v;rerender();},
-  translate:()=>{stopSpeak();UI.tab="translate";render();},
+  translate:()=>{stopSpeak();UI.tab="translate";render();trFillSoon(3000);},
   trGo:()=>{const i=$("#trIn");if(i&&i.value.trim())trRun(i.value.trim());else toast("Type or say something in English");},
-  trMic:()=>{if(UI.listening){stopMic();return;}const i=$("#trIn");
-    startMic(t=>{if(i)i.value=t;},final=>{if(final)trRun(final);else rerender();},"en-US");},
-  trPlay:el=>{const r=UI.tr&&UI.tr.res[+el.dataset.i];if(r)trSay(r.ja,r.say);},
+  trMic:()=>{if(UI.listening){stopMic();return;}const i=$("#trIn"),ja=UI.tr&&UI.tr.dir==="ja";
+    startMic(t=>{if(i)i.value=t;},final=>{if(final)trRun(final);else rerender();},ja?"ja-JP":"en-US");},
+  trDir:el=>{const T=UI.tr||(UI.tr={q:"",res:[],dir:"en"});if(T.dir!==el.dataset.v){T.dir=el.dataset.v;T.q="";T.res=[];stopSpeak();}rerender();},
+  trPlayJa:el=>{const r=UI.tr&&UI.tr.res[+el.dataset.i];if(r)trSay(r.ja,r.ja);},
+  trBankView:()=>trBankSheet(),
+  trBankPlay:el=>trSay(el.dataset.ja,el.dataset.ja),
+  trPlay:el=>{const r=UI.tr&&UI.tr.res[+el.dataset.i];if(!r)return;if(UI.tr.dir==="ja")trSayEn(r.en);else trSay(r.ja,r.say);},
   trShow:el=>{const r=UI.tr&&UI.tr.res[+el.dataset.i];if(r)trShowSheet(r);},
-  trPick:el=>{const T=UI.tr,r=T&&T.res[+el.dataset.i];if(!r)return;T.res=[r,...T.res.filter(x=>x!==r)];rerender();trSay(r.ja,r.say);},
+  trPick:el=>{const T=UI.tr,r=T&&T.res[+el.dataset.i];if(!r)return;T.res=[r,...T.res.filter(x=>x!==r)];rerender();if(T.dir==="ja")trSayEn(r.en);else trSay(r.ja,r.say);},
   trCat:el=>{const T=UI.tr||(UI.tr={q:"",res:[],cat:null});T.cat=T.cat===el.dataset.v?null:el.dataset.v;rerender();},
   trFix:el=>{const ja=el.dataset.ja,f=TR_FIX.find(x=>x[2]===ja),T=UI.tr;T.q=f?f[1].split("|")[0]:"";T.res=[{ja,say:f?f[3]:ja,en:T.q.replace(/^\w/,c=>c.toUpperCase()).replace(/\bi\b/g,"I"),rec:TR_REC.has(ja),ro:kanaRomaji(ja)}];rerender();$("#main").scrollTop=0;trSay(ja,f?f[3]:ja);},
   trSave:()=>trSaveOffline(),

@@ -273,6 +273,16 @@ Safari → Add to Home Screen.
   → else Ryusei live via `speakQuest` when online (not in ⚡ Fast mode, no English letters) → else the iPhone
   Japanese voice. "Save the voice for offline" (`trSaveOffline`) puts all clips and the page in the cache.
   New common sentences: add them to `TR_EXTRA` and re-run the generator.
+- **Free translation + sentence bank** (no AI, no credits): the translator has two directions (`UI.tr.dir` "en"/"ja",
+  🎤 in en-US or ja-JP). `trRun`: a sure offline hit (exact sentence-bank match, or a recorded built sentence) plays
+  at once; otherwise, when online, `freeMT(text,sl,tl)` = Google Translate's public `client=gtx` endpoint (romaji
+  via `dt=rm`), falling back to MyMemory, with a 6 s timeout; offline it uses the sentence builder/patterns/bank.
+  The phrasebook chips were removed from the screen (owner: "I don't need preset texts"; `TR_FIX` still powers
+  exact matches). Sentence bank `TRB` (localStorage `yuki-trbank`, max 3000, not in backups): every free
+  translation, every `<<FIX>>` pair, and every Japanese sentence in Yuki's replies (`trHarvest(shown, fix)` in
+  `send`, pairs like 「日本語 (English)」/「日本語 – English」, romaji brackets skipped via `trRomaji`).
+  Sentences without English get it filled in for free in the background when online (`trFill`, ≤80 per session).
+  `trBankFind` (exact, then shared words / character pairs); "📚 Browse saved sentences" sheet (`trBankSheet`).
 - **Offline helper** `sw.js` (service worker, registered on https): navigations are network-first with the
   page cached for offline (auto-update unaffected); `/audio/` is served from the cache when saved (Range
   requests answered with 206 for Safari), otherwise fetched and cached.
