@@ -56,7 +56,7 @@ Safari → Add to Home Screen.
   "✓ Done" marks it complete.
 - **Voice call mode**: full-screen orb, Web Speech API speech recognition (ja-JP or en-US)
   and speechSynthesis that splits Japanese and English into separate voices. Voices are
-  ranked by `voiceScore()` (Premium/Enhanced/Siri first, novelty voices excluded) and can be
+  ranked by `voiceScore()` (Premium/Enhanced/Siri first, detected from name or `voiceURI` via `isHQ()`, novelty voices excluded) and can be
   chosen in Me (`S.settings.voiceEn` / `voiceJa`).
   Optional "Natural voices" engine (`S.settings.tts="azure"`): Microsoft Azure neural TTS
   (same voices as Edge Read Aloud; Edge TTS itself can't be called from iPhone Safari) via
@@ -81,7 +81,7 @@ Safari → Add to Home Screen.
   VOICEVOX service tts.quest (`questUrl` → mp3StreamingUrl, played on one shared <audio> element
   unlocked on first tap; speaker id from `REC_VOICES`); English parts use Ryusei or the iPhone voice; any
   failure (busy/unreachable) falls back to the iPhone voice for that segment. With
-  `enVoice="ryusei"` (default) English is sent to VOICEVOX too, lower-cased with contractions
+  `enVoice="ryusei"` (opt-in; default "iphone" since VOICEVOX can't speak English well) English is sent to VOICEVOX too, lower-cased with contractions
   expanded (`englishForVV`), neighbouring live segments merged into one request.
   All recordings and tts.quest clips play through one shared <audio> element (`questPlayer`,
   `playUrl`, unlocked on first touch/pointer) rather than Web Audio, which iOS silently suspends
@@ -102,7 +102,7 @@ Safari → Add to Home Screen.
   settings, what Yuki remembers, and backup/restore as JSON (key excluded).
 
 ## Technical notes
-- State object `S` (currently `v:11`) saved to localStorage key `yuki-sensei-v3`. Keep it backward
+- State object `S` (currently `v:12`) saved to localStorage key `yuki-sensei-v3`. Keep it backward
   compatible. Saved data (and restored backups) go through `migrate()`; if the shape
   changes, bump `DEFAULT.v` and add a step there instead of wiping progress.
 - Clicks route through `data-act` attributes to the `ACT` object.

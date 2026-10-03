@@ -269,7 +269,7 @@ input,textarea,select{font:inherit;font-size:16px;color:var(--text)}
 <script>
 "use strict";
 // Bump this on every change so phones can spot a new version and offer to update
-const APP_VERSION="2026.10.04-6";
+const APP_VERSION="2026.10.04-7";
 /* ============ DATA ============ */
 const LV = {
   n5:{label:"N5",name:"Beginner",color:"#9fd67c"},
@@ -459,14 +459,14 @@ const KANJI_LV={none:"none yet",few:"under 50",some:"50–300",many:"300+"};
 /* ============ STATE ============ */
 const KEY="yuki-sensei-v3";
 const DEFAULT={
-  v:11,onboarded:false,name:"",level:"n5",goal:"",
+  v:12,onboarded:false,name:"",level:"n5",goal:"",
   about:{done:false,focus:[],hira:"",kata:"",kanji:"",location:"",native:"English",minutes:15,notes:""},
   placement:null,plan:null,course:null,
   profile:{facts:[],weak:[],strong:[],learned:[]},
   stats:{msgs:0,quizRight:0,quizWrong:0,cards:0,streak:0,lastDay:""},
   done:[],cards:{},chat:[],currentLesson:null,
   settings:{apiKey:"",model:"claude-haiku-4-5-20251001",rate:0.9,autoSpeakChat:false,speakEnglish:true,micLang:"ja-JP",
-    style:{length:"normal",english:"balanced",script:"auto",simple:false},history:12,voiceEn:"",voiceJa:"",jaRec:"ryusei",vvUrl:"",enVoice:"ryusei",
+    style:{length:"normal",english:"balanced",script:"auto",simple:false},history:12,voiceEn:"",voiceJa:"",jaRec:"ryusei",vvUrl:"",enVoice:"iphone",
     tts:"quest",azKey:"",azRegion:"eastus",azEn:"en-US-AvaMultilingualNeural",azJa:"ja-JP-NanamiNeural",ttsChars:{month:"",n:0},captions:true}
 };
 let S=JSON.parse(JSON.stringify(DEFAULT));
@@ -513,7 +513,9 @@ function migrate(st){
   // v9 → v10: Ryusei everywhere (live voice via free tts.quest, recordings in Ryusei)
   if((st.v||0)<10){S2.jaRec="ryusei";if(S2.tts==="device")S2.tts="quest";}
   // v10 → v11: Ryusei can read English too
-  if(!["ryusei","iphone"].includes(S2.enVoice))S2.enVoice="ryusei";
+  if(!["ryusei","iphone"].includes(S2.enVoice))S2.enVoice="iphone";
+  // v11 → v12: Ryusei can't really speak English, so English goes back to the iPhone voice
+  if((st.v||0)<12)S2.enVoice="iphone";
   if(typeof S2.azKey!=="string")S2.azKey="";
   if(!AZ_REGIONS.includes(S2.azRegion))S2.azRegion="eastus";
   if(!AZ_VOICES.en.some(v=>v[0]===S2.azEn))S2.azEn=DEFAULT.settings.azEn;
@@ -562,8 +564,11 @@ if(synth){loadVoices();synth.onvoiceschanged=()=>{const had=voices.length;loadVo
 const NOVELTY=/albert|bad news|bahh|bells|boing|bubbles|cellos|good news|jester|organ|superstar|trinoids|whisper|wobble|zarvox|deranged|hysterical|fred|junior|ralph|kathy|grandma|grandpa|eddy|flo\b|reed|rocko|sandy|shelley/i;
 const GOOD={en:/ava|zoe|evan|nathan|noelle|joelle|allison|samantha|susan|tom\b|serena|daniel|karen|moira|tessa|jamie|matilda|isha|google us english|microsoft (aria|jenny|guy).*natural/i,ja:/kyoko|o-ren|otoya|hattori|sakura|google 日本語/i};
 const vlang=v=>v.lang.replace("_","-").toLowerCase();
+// iPhone marks quality in the voice id (e.g. com.apple.voice.premium.en-US.Ava), not always in the name
+const vq=v=>(v.name+" "+(v.voiceURI||"")).toLowerCase();
+const isHQ=v=>/premium|enhanced|siri/.test(vq(v));
 function voiceScore(v,L){
-  let s=0;const n=v.name;
+  let s=0;const n=vq(v);
   if(vlang(v)===L)s+=20;
   if(/premium/i.test(n))s+=60;else if(/enhanced/i.test(n))s+=45;
   if(/siri/i.test(n))s+=35;
@@ -1590,9 +1595,10 @@ function vMe(){
   <div class="sec">🔊 Voice</div><div class="card">
    <p class="sub" style="margin-bottom:6px">Voice engine</p>
    ${chipRow("ttsSet","tts",st.tts,[["quest","🎌 "+(REC_VOICES[st.jaRec]||REC_VOICES.ryusei).name.split(" ")[0]+" everywhere"],["device","Recordings + iPhone"],["azure","✨ Azure"],["voicevox","Own server"]])}
-   ${st.tts==="quest"?`<p class="sub" style="margin:10px 0 0">Free, no key: all Japanese — lessons, chat, calls — is spoken by ${esc((REC_VOICES[st.jaRec]||REC_VOICES.ryusei).name.split(" ")[0])}. Words you're learning play instantly from recordings; new sentences come live from the free VOICEVOX service <b>tts.quest</b> (can take a few seconds; if it's busy, that sentence uses the iPhone voice). English parts can be ${esc((REC_VOICES[st.jaRec]||REC_VOICES.ryusei).name.split(" ")[0])} too, or your best iPhone voice.</p>
+   ${st.tts==="quest"?`<p class="sub" style="margin:10px 0 0">Free, no key: all Japanese — lessons, chat, calls — is spoken by ${esc((REC_VOICES[st.jaRec]||REC_VOICES.ryusei).name.split(" ")[0])}. Words you're learning play instantly from recordings; new sentences come live from the free VOICEVOX service <b>tts.quest</b> (can take a few seconds; if it's busy, that sentence uses the iPhone voice). English parts use a natural English voice from your iPhone.</p>
     <p class="sub" style="margin:10px 0 6px">Voice</p>${chipRow("recSet","jaRec",st.jaRec==="off"?"ryusei":st.jaRec,Object.entries(REC_VOICES).map(([k,v])=>[k,v.name.split(" ")[0]]))}
-    <p class="sub" style="margin:12px 0 6px">English parts</p>${chipRow("enVoiceSet","enVoice",st.enVoice,[["ryusei",(REC_VOICES[st.jaRec]||REC_VOICES.ryusei).name.split(" ")[0]+" (Japanese accent)"],["iphone","iPhone voice"]])}
+    <p class="sub" style="margin:12px 0 6px">English parts</p>${chipRow("enVoiceSet","enVoice",st.enVoice,[["iphone","Natural English (iPhone)"],["ryusei",(REC_VOICES[st.jaRec]||REC_VOICES.ryusei).name.split(" ")[0]+" (strong accent)"]])}
+    ${st.enVoice==="iphone"?voicePicker("en","English voice",st.voiceEn):""}
     <p class="sub" style="margin-top:6px">Voice: ${esc((REC_VOICES[st.jaRec]||REC_VOICES.ryusei).credit)} · live audio by tts.quest</p>${st.enVoice==="iphone"?englishTip():""}`:""}
    ${st.tts==="device"?`<p class="sub" style="margin:10px 0 0">Free, no key: every word from your lessons, flashcards and kana is spoken by ${esc((REC_VOICES[st.jaRec]||REC_VOICES.himari).name.split(" ")[0])} (recorded), including when Yuki uses them in chat. Other sentences use your best iPhone voice.</p>`:""}
    ${st.tts==="voicevox"?`
@@ -1614,7 +1620,7 @@ function vMe(){
     <label class="sub">Japanese voice</label>
     <select class="field" data-set="azJa">${AZ_VOICES.ja.map(([id,n,d])=>`<option value="${id}"${st.azJa===id?" selected":""}>${esc(n)} — ${esc(d)}</option>`).join("")}</select>
     <p class="sub">Used this month: ${(st.ttsChars.month===isoDay().slice(0,7)?st.ttsChars.n:0).toLocaleString()} / 500,000 free characters</p>`
-   :`${voicePicker("en","English voice",st.voiceEn)}${englishTip()}${voicePicker("ja","Japanese voice",st.voiceJa)}`}
+   :st.tts==="quest"?"":`${voicePicker("en","English voice",st.voiceEn)}${englishTip()}${voicePicker("ja","Japanese voice",st.voiceJa)}`}
    ${st.tts==="quest"||st.tts==="voicevox"?"":`<p class="sub" style="margin:14px 0 6px">Flashcard & kana audio (free, recorded, works offline once played)</p>
    ${chipRow("recSet","jaRec",st.jaRec,[...Object.entries(REC_VOICES).map(([k,v])=>[k,v.name.split(" ")[0]]),["off","Off"]])}
    ${st.jaRec!=="off"?`<p class="sub" style="margin-top:6px">${esc(REC_VOICES[st.jaRec].desc)} · Voice: ${esc(REC_VOICES[st.jaRec].credit)}</p>`:""}`}
@@ -1645,7 +1651,7 @@ function vMe(){
 // Nudge to download a Premium English voice if the phone doesn't have one yet
 function englishTip(){
   const best=voiceList("en-US")[0];
-  if(!best||/premium|enhanced|siri/i.test(best.name))return"";
+  if(!best||isHQ(best))return"";
   return`<button class="row" data-act="voiceHelp" style="margin-top:4px;border-color:var(--gold)"><span class="ri">💡</span><span class="rt"><b>Get a much better English voice (free)</b><span>Download "Ava (Premium)" on your iPhone in 1 minute</span></span></button>`;
 }
 function voicePicker(lang,label,cur){
@@ -1654,7 +1660,7 @@ function voicePicker(lang,label,cur){
   const best=list[0];
   return`<label class="sub" style="display:block;margin-top:10px">${label}</label><select class="field" data-set="voice.${lang}">
    <option value=""${cur?"":" selected"}>Automatic (best: ${esc(best.name)})</option>
-   ${list.filter(v=>!NOVELTY.test(v.name)).slice(0,25).map(v=>`<option value="${esc(v.name)}"${cur===v.name?" selected":""}>${esc(v.name)} · ${esc(v.lang)}${/premium|enhanced|siri/i.test(v.name)?" ★":""}</option>`).join("")}
+   ${list.filter(v=>!NOVELTY.test(v.name)).slice(0,25).map(v=>`<option value="${esc(v.name)}"${cur===v.name?" selected":""}>${esc(v.name)} · ${esc(v.lang)}${isHQ(v)?" ★ "+(/premium/.test(vq(v))?"Premium":/enhanced/.test(vq(v))?"Enhanced":"Siri"):""}</option>`).join("")}
   </select>`;
 }
 
@@ -1786,9 +1792,10 @@ const ACT={
   voiceHelp:()=>sheet(`<div class="h2" style="margin-bottom:10px">🔊 Make Yuki sound better</div>
     <p class="sub" style="margin-bottom:10px">Your iPhone has much nicer voices, but you have to download them first (free):</p><ol>
     <li>Open <b>Settings → Accessibility → Spoken Content → Voices</b>.</li>
-    <li>Tap <b>English</b>, pick a voice like <b>Ava</b>, <b>Zoe</b> or <b>Evan</b>, and download the <b>Premium</b> or <b>Enhanced</b> version.</li>
-    <li>Go back, tap <b>Japanese</b>, and download <b>Kyoko (Enhanced)</b> or <b>O-ren (Premium)</b>.</li>
-    <li>Close Yuki fully (swipe it away) and reopen it. In <b>Me → Voice</b>, pick the new voices (they have a ★), then tap <b>Test voice</b>.</li></ol>
+    <li>Tap <b>English</b> → <b>English (US)</b> (or UK/Australia), pick <b>Ava</b>, <b>Zoe</b> or <b>Evan</b>, and tap the download button next to <b>Premium</b> (best) or <b>Enhanced</b>. It's about 100–400 MB, so use Wi-Fi.</li>
+    <li>Wait until the download finishes, then close Yuki fully (swipe it away) and reopen it.</li>
+    <li>In <b>Me → Voice → English voice</b>, the new voice shows a <b>★ Premium</b>. Pick it (or leave "Automatic") and tap <b>Test voice</b>.</li></ol>
+    <p class="sub" style="margin-top:10px">Japanese is already handled by Ryusei, so you only need an English voice.</p>
     <p class="sub" style="margin-top:10px">"Automatic" already picks the best voice your phone has, so after downloading you may not need to change anything.</p>
     <button class="btn" style="margin-top:14px" data-act="closeSheet">Got it</button>`),
   voice:()=>openVoice(),
