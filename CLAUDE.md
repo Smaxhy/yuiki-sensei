@@ -58,6 +58,10 @@ Safari → Add to Home Screen.
   reply switching between `azEn`/`azJa` voices (`AZ_VOICES`), played with Web Audio, cached
   (`natCache`), monthly characters counted (`ttsChars`, free tier 500k). Falls back to iPhone
   voices on any error. `isSpeaking()` / `stopSpeak()` cover both engines.
+  Free recorded Japanese audio: every `CARDS[*].say` is pre-recorded with VOICEVOX in
+  `audio/himari/` and `audio/ryusei/` (file name = `recId(text)`), chosen with
+  `S.settings.jaRec`; `speak()` plays these first for exact matches. New decks: re-run
+  `tools/gen_audio.py`. Credits "VOICEVOX:冥鳴ひまり" / "VOICEVOX:青山龍星" must stay (Me + README).
   Has Repeat and Slower buttons. If the mic is blocked, it shows iPhone fix-it steps.
 - **Listening**: Japanese wrapped in [[double brackets]] in AI replies shows as a hidden,
   tap-to-play audio clip.
@@ -70,7 +74,7 @@ Safari → Add to Home Screen.
   settings, what Yuki remembers, and backup/restore as JSON (key excluded).
 
 ## Technical notes
-- State object `S` (currently `v:7`) saved to localStorage key `yuki-sensei-v3`. Keep it backward
+- State object `S` (currently `v:8`) saved to localStorage key `yuki-sensei-v3`. Keep it backward
   compatible. Saved data (and restored backups) go through `migrate()`; if the shape
   changes, bump `DEFAULT.v` and add a step there instead of wiping progress.
 - Clicks route through `data-act` attributes to the `ACT` object.

@@ -231,7 +231,7 @@ input,textarea,select{font:inherit;font-size:16px;color:var(--text)}
 <script>
 "use strict";
 // Bump this on every change so phones can spot a new version and offer to update
-const APP_VERSION="2026.10.03-6";
+const APP_VERSION="2026.10.03-7";
 /* ============ DATA ============ */
 const LV = {
   n5:{label:"N5",name:"Beginner",color:"#9fd67c"},
@@ -400,14 +400,14 @@ const KANJI_LV={none:"none yet",few:"under 50",some:"50–300",many:"300+"};
 /* ============ STATE ============ */
 const KEY="yuki-sensei-v3";
 const DEFAULT={
-  v:7,onboarded:false,name:"",level:"n5",goal:"",
+  v:8,onboarded:false,name:"",level:"n5",goal:"",
   about:{done:false,focus:[],hira:"",kata:"",kanji:"",location:"",native:"English",minutes:15,notes:""},
   placement:null,plan:null,
   profile:{facts:[],weak:[],strong:[],learned:[]},
   stats:{msgs:0,quizRight:0,quizWrong:0,cards:0,streak:0,lastDay:""},
   done:[],cards:{},chat:[],currentLesson:null,
   settings:{apiKey:"",model:"claude-haiku-4-5-20251001",rate:0.9,autoSpeakChat:false,speakEnglish:true,micLang:"ja-JP",
-    style:{length:"normal",english:"balanced",script:"auto",simple:false},history:12,voiceEn:"",voiceJa:"",
+    style:{length:"normal",english:"balanced",script:"auto",simple:false},history:12,voiceEn:"",voiceJa:"",jaRec:"himari",
     tts:"device",azKey:"",azRegion:"eastus",azEn:"en-US-AvaMultilingualNeural",azJa:"ja-JP-NanamiNeural",ttsChars:{month:"",n:0},captions:true}
 };
 let S=JSON.parse(JSON.stringify(DEFAULT));
@@ -454,6 +454,8 @@ function migrate(st){
   if(!AZ_VOICES.ja.some(v=>v[0]===S2.azJa))S2.azJa=DEFAULT.settings.azJa;
   S2.ttsChars=obj(S2.ttsChars);S2.ttsChars.n=num(S2.ttsChars.n);if(typeof S2.ttsChars.month!=="string")S2.ttsChars.month="";
   S2.captions=S2.captions!==false;
+  // v7 → v8: free recorded Japanese voice for cards and kana
+  if(!["himari","ryusei","off"].includes(S2.jaRec))S2.jaRec="himari";
   if(![6,12,24].includes(+st.settings.history))st.settings.history=12;else st.settings.history=+st.settings.history;
   st.v=DEFAULT.v;
   return st;
@@ -550,7 +552,8 @@ const natCache=new Map();
 // "playback" lets voices play even when the iPhone's silent switch is on (Safari 16.4+)
 try{if(navigator.audioSession)navigator.audioSession.type="playback";}catch(e){}
 function audioCtx(){if(!actx){const C=window.AudioContext||window.webkitAudioContext;if(!C)return null;actx=new C();}if(actx.state==="suspended")actx.resume().catch(()=>{});return actx;}
-document.addEventListener("touchend",()=>{if(S.settings.tts==="azure"){const c=audioCtx();if(c){try{const b=c.createBuffer(1,1,22050),src=c.createBufferSource();src.buffer=b;src.connect(c.destination);src.start(0);}catch(e){}}}},{passive:true});
+let audioUnlocked=false;
+document.addEventListener("touchend",()=>{if(audioUnlocked)return;const c=audioCtx();if(c){try{const b=c.createBuffer(1,1,22050),src=c.createBufferSource();src.buffer=b;src.connect(c.destination);src.start(0);audioUnlocked=true;}catch(e){}}},{passive:true});
 const useNatural=()=>S.settings.tts==="azure"&&S.settings.azKey.trim()&&S.settings.azRegion;
 const xmlEsc=t=>t.replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&apos;"}[c]));
 const pct=r=>{const p=Math.round((r-1)*100);return(p>=0?"+":"")+p+"%";};
@@ -587,9 +590,35 @@ async function speakNatural(segs,rate,en,ja){
   src.onended=()=>{if(natSrc===src){natSrc=null;natPlaying=false;}};
   natSrc=src;natPlaying=true;src.start(0);
 }
+/* ---- Free recorded Japanese voice (VOICEVOX, made ahead of time, served from this site) ---- */
+// Every flashcard/kana sound is recorded in two voices under audio/<voice>/. Credits required by the voice terms.
+const REC_VOICES={himari:{name:"Himari (冥鳴ひまり)",desc:"female · calm, natural",credit:"VOICEVOX:冥鳴ひまり"},ryusei:{name:"Ryusei (青山龍星)",desc:"male · deep, clear",credit:"VOICEVOX:青山龍星"}};
+const RECORDED=new Set(Object.values(CARDS).map(c=>c.say));
+const recId=t=>Array.from(t).map(c=>c.codePointAt(0).toString(16)).join("_");
+const recCache=new Map();
+async function playRecorded(t,rate){
+  const my=++natSeq,ctx=audioCtx();if(!ctx)throw new Error("no audio");
+  const url=`audio/${S.settings.jaRec}/${recId(t)}.mp3`;
+  let audio=recCache.get(url);
+  if(!audio){natLoading=true;const r=await fetch(url);if(!r.ok)throw new Error("missing");audio=await ctx.decodeAudioData(await r.arrayBuffer());recCache.set(url,audio);if(recCache.size>200)recCache.delete(recCache.keys().next().value);}
+  if(my!==natSeq)return;
+  natLoading=false;
+  const src=ctx.createBufferSource();src.buffer=audio;if(rate&&rate<0.75)src.playbackRate.value=0.85;src.connect(ctx.destination);
+  src.onended=()=>{if(natSrc===src){natSrc=null;natPlaying=false;}};
+  natSrc=src;natPlaying=true;src.start(0);
+}
 function speak(text,opts){
   opts=opts||{};
   stopNatural();
+  const plain=String(text).trim();
+  if(S.settings.jaRec!=="off"&&RECORDED.has(plain)&&location.protocol!=="file:"){
+    if(synth)synth.cancel();
+    playRecorded(plain,opts.rate).catch(()=>{natLoading=false;natPlaying=false;speakAI(text,opts);});
+    return;
+  }
+  speakAI(text,opts);
+}
+function speakAI(text,opts){
   const segsN=segments(cleanSpeech(text)).filter(s=>s.k==="ja"||S.settings.speakEnglish||opts.forceEnglish);
   if(useNatural()&&segsN.length){
     if(synth)synth.cancel();
@@ -1239,6 +1268,9 @@ function vMe(){
     <select class="field" data-set="azJa">${AZ_VOICES.ja.map(([id,n,d])=>`<option value="${id}"${st.azJa===id?" selected":""}>${esc(n)} — ${esc(d)}</option>`).join("")}</select>
     <p class="sub">Used this month: ${(st.ttsChars.month===isoDay().slice(0,7)?st.ttsChars.n:0).toLocaleString()} / 500,000 free characters</p>`
    :`${voicePicker("en","English voice",st.voiceEn)}${voicePicker("ja","Japanese voice",st.voiceJa)}`}
+   <p class="sub" style="margin:14px 0 6px">Flashcard & kana audio (free, recorded, works offline once played)</p>
+   ${chipRow("recSet","jaRec",st.jaRec,[...Object.entries(REC_VOICES).map(([k,v])=>[k,v.name.split(" ")[0]]),["off","Off"]])}
+   ${st.jaRec!=="off"?`<p class="sub" style="margin-top:6px">${esc(REC_VOICES[st.jaRec].desc)} · Voice: ${esc(REC_VOICES[st.jaRec].credit)}</p>`:""}
    <div class="toggle" style="margin-top:8px"><span>Speaking speed</span><input type="range" min="0.5" max="1.2" step="0.05" value="${st.rate}" data-set="rate" style="width:45%"></div>
    ${sw("autoSpeakChat",st.autoSpeakChat,"Read replies aloud in chat")}
    ${sw("speakEnglish",st.speakEnglish,"Read English parts too")}
@@ -1369,6 +1401,7 @@ const ACT={
   sayMsg:el=>{const m=S.chat[+el.dataset.i];if(m)speak(m.text);},
   sayText:el=>speak(el.dataset.text,{rate:0.8}),
   reveal:el=>el.classList.toggle("show"),
+  recSet:el=>{S.settings.jaRec=el.dataset.v;save();rerender();if(el.dataset.v!=="off")speak("ともだち",{});},
   ttsSet:el=>{S.settings.tts=el.dataset.v;natFailNote=false;save();rerender();},
   saveAz:()=>{const v=$("#azKeyIn");S.settings.azKey=v?v.value.trim():"";natCache.clear();natFailNote=false;save();toast(S.settings.azKey?"Key saved — tap Test voice 🔊":"Key removed");rerender();},
   azHelp:()=>sheet(`<div class="h2" style="margin-bottom:10px">✨ Getting natural voices (free)</div><ol>
