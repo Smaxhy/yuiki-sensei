@@ -23,7 +23,14 @@ Safari → Add to Home Screen.
   the live page and compares its `<script>`/`<style>` with the running ones. If different it
   reloads right away when idle (`canReloadNow`), otherwise when the app is next hidden. Loop
   guard: at most one auto-reload per 2 min (`yuki-upd-at`). Still bump `APP_VERSION` (shown in Me).
-- **Tabs**: Home, Yuki (chat), Learn, Practice, Me.
+- **Path (home tab)**: Duolingo-style winding path of nodes. N5 uses the 12-week `PLAN`;
+  other levels get one built from `CUR[level]` (lessons + a 🏆 unit review per unit). Built by
+  `pathNodes()` / `pathUnits()`; node keys: `day:task` (N5), `L:id` (lessons), `lv:unit:q`,
+  `c:id` (custom ⭐). Sticky unit header (`pathScroll`), unit sheet with "skip unit",
+  level sheet. Custom lessons in `S.plan.custom` ({id,title,before,level}) are added from the
+  "⭐ Add a lesson" sheet or by Yuki via the `path` MEM field.
+- **Tabs**: Path, Yuki (chat), Practice, Me. "All lessons" (`UI.tab="learn"`) opens from the
+  path, the level sheet, or Practice.
 - **Yuki the AI tutor**: 26, from Kyoto, warm and playful, corrects mistakes clearly.
   Calls the Anthropic Messages API directly from the browser (`apiRequest()`) using the
   owner's API key, which is saved only in localStorage (never in the repo).
@@ -35,7 +42,7 @@ Safari → Add to Home Screen.
   English. Turned into prompt lines by `styleRules()`.
 - **Credit saver** (`S.settings.history`): 6/12/24 recent messages sent per request.
 - **Memory**: every AI reply ends with a hidden line `<<MEM>>{json}` containing facts,
-  weak, strong, learned, right, wrong, lessonDone. The app strips it (`parseMem`), saves it
+  weak, strong, learned, right, wrong, lessonDone, path. The app strips it (`parseMem`), saves it
   to the profile (`applyMem`), and feeds the profile back into `systemPrompt()`.
   Don't break this format.
 - **Lessons**: 100+ lessons in the `CUR` object, grouped by level (n5–n1) → unit →
@@ -57,7 +64,7 @@ Safari → Add to Home Screen.
   settings, what Yuki remembers, and backup/restore as JSON (key excluded).
 
 ## Technical notes
-- State object `S` (currently `v:5`) saved to localStorage key `yuki-sensei-v3`. Keep it backward
+- State object `S` (currently `v:6`) saved to localStorage key `yuki-sensei-v3`. Keep it backward
   compatible. Saved data (and restored backups) go through `migrate()`; if the shape
   changes, bump `DEFAULT.v` and add a step there instead of wiping progress.
 - Clicks route through `data-act` attributes to the `ACT` object.
