@@ -216,13 +216,20 @@ input,textarea,select{font:inherit;font-size:16px;color:var(--text)}
 .vtext{max-height:28vh;overflow-y:auto;font-size:19px;line-height:1.55;text-align:center;padding:0 8px;font-weight:600}
 .vtext.off{filter:blur(8px);opacity:.5}
 .vyou{font-size:14.5px;color:var(--dim);text-align:center;min-height:22px;margin-top:12px}
-.vctrl{display:flex;justify-content:space-around;align-items:flex-start;max-width:400px;width:100%;margin:8px auto 0}
-.vbtn{display:flex;flex-direction:column;align-items:center;gap:7px;font-size:12px;color:var(--dim);font-weight:700;min-width:64px}
-.vbtn i{font-style:normal;width:58px;height:58px;border-radius:50%;background:#ffffff12;display:flex;align-items:center;justify-content:center;font-size:21px}
+.vctrl{display:flex;justify-content:space-between;align-items:flex-start;gap:4px;max-width:420px;width:100%;margin:8px auto 0}
+.vbtn{display:flex;flex-direction:column;align-items:center;gap:7px;font-size:12px;color:var(--dim);font-weight:700;min-width:52px}
+.vbtn i{font-style:normal;width:52px;height:52px;border-radius:50%;background:#ffffff12;display:flex;align-items:center;justify-content:center;font-size:21px}
 .vbtn.on i{background:#ffffff2a}
 .bigmic{width:84px;height:84px;border-radius:50%;background:linear-gradient(140deg,var(--sakura),var(--sakura2));font-size:34px;box-shadow:0 8px 34px #f4a3c060;display:flex;align-items:center;justify-content:center;margin-top:-13px}
 .bigmic.live{background:linear-gradient(140deg,#ff9a9a,#d64f63);animation:throb 1.2s infinite}
 .vend{background:#d64f63!important}
+.micbtn{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;width:78px;height:78px;flex-shrink:0;border-radius:50%;font-size:12px;font-weight:800;margin-top:-13px;color:#2a1520}
+.micbtn span{font-size:28px;line-height:1}
+.micbtn.ja{background:linear-gradient(140deg,var(--sakura),var(--sakura2));box-shadow:0 8px 30px #f4a3c055}
+.micbtn.en{background:linear-gradient(140deg,#a9d3ff,var(--sky));box-shadow:0 8px 30px #7cb8f455;color:#0f2235}
+.micbtn.live{background:linear-gradient(140deg,#ff9a9a,#d64f63);color:#fff;animation:throb 1.2s infinite}
+.iconbtn small{font-size:9px;font-weight:900;margin-left:-2px;align-self:flex-end;margin-bottom:9px}
+.micen{color:var(--sky)}
 /* sheet + toast */
 #sheet{position:fixed;inset:0;background:#000a;z-index:80;display:flex;align-items:flex-end}
 #sheet .sh{background:var(--ink2);width:100%;max-height:85vh;overflow-y:auto;border-radius:22px 22px 0 0;padding:20px 18px calc(20px + var(--safeB))}
@@ -269,7 +276,7 @@ input,textarea,select{font:inherit;font-size:16px;color:var(--text)}
 <script>
 "use strict";
 // Bump this on every change so phones can spot a new version and offer to update
-const APP_VERSION="2026.10.04-9";
+const APP_VERSION="2026.10.04-10";
 /* ============ DATA ============ */
 const LV = {
   n5:{label:"N5",name:"Beginner",color:"#9fd67c"},
@@ -871,12 +878,12 @@ document.addEventListener("touchend",()=>{if(unlocked||!synth)return;unlocked=tr
 /* ============ SPEECH IN ============ */
 let rec=null;
 function micSupported(){return !!(window.SpeechRecognition||window.webkitSpeechRecognition);}
-function startMic(onText,onDone){
+function startMic(onText,onDone,lang){
   const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
   if(!SR){micHelp("unsupported");return false;}
   stopSpeak();
   try{rec=new SR();}catch(e){micHelp("blocked");return false;}
-  rec.lang=S.settings.micLang;rec.interimResults=true;rec.continuous=false;rec.maxAlternatives=1;
+  UI.micLang=lang||S.settings.micLang;rec.lang=UI.micLang;rec.interimResults=true;rec.continuous=false;rec.maxAlternatives=1;
   let finalT="",errored=false;
   rec.onresult=e=>{let interim="";for(let i=e.resultIndex;i<e.results.length;i++){const r=e.results[i];if(r.isFinal)finalT+=r[0].transcript;else interim+=r[0].transcript;}onText((finalT+interim).trim());};
   rec.onerror=e=>{errored=true;UI.listening=false;refreshMic();
@@ -888,7 +895,7 @@ function startMic(onText,onDone){
   try{rec.start();UI.listening=true;refreshMic();return true;}catch(e){UI.listening=false;micHelp("blocked");return false;}
 }
 function stopMic(){if(rec){try{rec.stop();}catch(e){}}}
-function refreshMic(){const b=$("#micBtn");if(b)b.classList.toggle("live",UI.listening);if(UI.voice)renderVoice();}
+function refreshMic(){document.querySelectorAll(".micja,.micen").forEach(b=>b.classList.toggle("live",UI.listening&&b.dataset.v===UI.micLang));if(UI.voice)renderVoice();}
 function micHelp(kind){
   sheet(`<div class="h2" style="margin-bottom:10px">🎤 The microphone is blocked</div>
   <p class="sub" style="margin-bottom:12px">${kind==="unsupported"?"This browser doesn't support speech recognition.":"Your phone or browser said no to the mic."} Here's how to fix it:</p>
@@ -944,6 +951,7 @@ ${styleRules()}
 - The app has a learning path (a step-by-step pathway of lessons). If they ask to add, change or focus their path on something, say you've added it and put the topic in the "path" memory field.
 - Follow their requests directly: if they ask for a quiz, give a quiz; a roleplay, play the role; flashcard-style drilling, do it.
 - QUIZZES: one question at a time, wait for the answer, say right or wrong with a short reason, keep a running score (e.g. 3/4), finish after 10 or when they say stop, then summarize what to review.
+- BOTH LANGUAGES: the student may mix English and Japanese. When they use the Japanese mic, English they say often arrives as katakana (アイ ドント ノウ = "I don't know", オーケー = "okay"); read it as the English they meant and answer naturally.
 - VOICE TYPING: the student often speaks and the phone types it. Japanese they say can arrive as English look-alikes ("Ohio" = おはよう, "arigato" = ありがとう, "cone itchy wa" = こんにちは). Treat these as the Japanese they meant (count them as used), and gently show the proper Japanese spelling.
 - Make every question easy to understand: write the instruction in English, and put an English translation in brackets after any Japanese question sentence (never give away the answer itself). After they answer, translate the full correct sentence too.
 - LISTENING: when you want them to listen without reading, wrap the Japanese in double square brackets like [[きょうは いい てんき ですね]]. The app hides it behind a play button.
@@ -1458,8 +1466,8 @@ function vChat(){
   ${S.course?`<div class="tbar"><span class="sub">Use these words:</span>${talkChips()}</div>`:""}
   <div id="msgs" class="msgs">${S.chat.length?S.chat.map(msgHTML).join(""):emptyChat()}</div>
   <div class="chatfoot"><div class="chips">${chips.map(c=>`<button class="chip" data-act="chip" data-t="${esc(c)}">${esc(c)}</button>`).join("")}</div>
-  <div class="inputbar"><button id="micBtn" class="iconbtn${UI.listening?" live":""}" data-act="mic" aria-label="Speak">🎤</button>
-  <textarea id="inp" rows="1" placeholder="${S.settings.micLang==="ja-JP"?"Message Yuki… (🎤 = Japanese)":"Message Yuki… (🎤 = English)"}" enterkeyhint="send"></textarea>
+  <div class="inputbar"><button id="micBtn" class="iconbtn micja${UI.listening&&UI.micLang==="ja-JP"?" live":""}" data-act="mic" data-v="ja-JP" aria-label="Speak Japanese">🎤<small>あ</small></button><button class="iconbtn micen${UI.listening&&UI.micLang==="en-US"?" live":""}" data-act="mic" data-v="en-US" aria-label="Speak English">🎤<small>EN</small></button>
+  <textarea id="inp" rows="1" placeholder="Message Yuki…" enterkeyhint="send"></textarea>
   <button class="send" data-act="send" aria-label="Send">↑</button></div></div></div>`;
 }
 function rerenderChatHead(){const box=$("#msgs");const y=box?box.scrollTop:0;render();const b=$("#msgs");if(b)b.scrollTop=y||b.scrollHeight;}
@@ -1693,28 +1701,28 @@ function renderVoice(){
   if(!UI.voice)return;
   const last=[...S.chat].reverse().find(m=>m.role==="assistant");
   const st=UI.listening?"listening":UI.vstate;
-  const label={idle:"Tap the mic to talk",listening:"Listening… tap when you're done",thinking:"Thinking…",speaking:"Speaking · tap the mic to interrupt"}[st];
+  const label={idle:"Tap 🎤 日本語 or 🎤 English, then talk",listening:(UI.micLang==="en-US"?"Listening (English)…":"Listening (日本語)…")+" tap when you're done",thinking:"Thinking…",speaking:"Speaking · tap the mic to interrupt"}[st];
   const cap=last&&!last.err?esc(cleanSpeech(last.text).replace(/\s+\n/g,"\n").trim()).replace(/\n+/g,"<br>"):last&&last.err?"Connection problem — check the chat.":"Say hi! Try 「こんにちは」 or ask me anything in English.";
   const cc=S.settings.captions;
   $("#voice").innerHTML=`<div class="vtop"><button class="iconbtn" data-act="closeVoice" aria-label="Close">✕</button>
    <div class="vtitle"><b>Yuki</b><small>${useQuest()?"🎌 "+(REC_VOICES[S.settings.jaRec]||REC_VOICES.ryusei).name.split(" ")[0]+"'s voice":useVV()?"🎌 "+(REC_VOICES[S.settings.jaRec]||REC_VOICES.himari).name.split(" ")[0]+"'s voice":useNatural()?"✨ natural voice":"voice call"}</small></div>
-   <div class="seg" aria-label="I'm speaking"><button class="${S.settings.micLang==="ja-JP"?"on":""}" data-act="micLang" data-v="ja-JP">🎤 日本語</button><button class="${S.settings.micLang==="en-US"?"on":""}" data-act="micLang" data-v="en-US">EN</button></div></div>
+   <button class="iconbtn" data-act="vCaptions" aria-label="Captions" style="font-size:15px;font-weight:800">${cc?"CC":"🙈"}</button></div>
    <div class="orbwrap"><div class="orb ${st}">ゆ</div><div class="vstat">${label}</div>
     <div class="vcap"><div class="vtext${cc?"":" off"}">${cap}</div><div class="vyou">${UI.vyou?"You: "+esc(UI.vyou):""}</div></div></div>
    <div class="vctrl">
     <button class="vbtn" data-act="vRepeat"><i>🔁</i>Repeat</button>
-    <button class="vbtn${cc?" on":""}" data-act="vCaptions"><i>${cc?"💬":"🙈"}</i>${cc?"Captions":"Hidden"}</button>
-    <button class="bigmic${UI.listening?" live":""}" data-act="vMic" aria-label="Talk">${UI.listening?"■":"🎤"}</button>
     <button class="vbtn" data-act="vSlow"><i>🐢</i>Slower</button>
+    <button class="micbtn ja${UI.listening&&UI.micLang==="ja-JP"?" live":""}" data-act="vMic" data-v="ja-JP" aria-label="Speak Japanese"><span>${UI.listening&&UI.micLang==="ja-JP"?"■":"🎤"}</span>日本語</button>
+    <button class="micbtn en${UI.listening&&UI.micLang==="en-US"?" live":""}" data-act="vMic" data-v="en-US" aria-label="Speak English"><span>${UI.listening&&UI.micLang==="en-US"?"■":"🎤"}</span>English</button>
     <button class="vbtn" data-act="closeVoice"><i class="vend">📞</i>End</button>
    </div>`;
 }
 setInterval(()=>{if(UI.voice&&UI.vstate==="speaking"&&!isSpeaking()){UI.vstate="idle";renderVoice();}},400);
-function voiceMic(){
+function voiceMic(lang){
   if(UI.listening){stopMic();return;}
   stopSpeak();UI.vyou="";
   startMic(t=>{UI.vyou=t;const y=document.querySelector(".vyou");if(y)y.textContent=t?"You: "+t:"";},
-    final=>{if(final){UI.vyou=final;send(final,null,"voice");}else{UI.vstate="idle";renderVoice();}});
+    final=>{if(final){UI.vyou=final;send(final,null,"voice");}else{UI.vstate="idle";renderVoice();}},lang);
 }
 
 /* ============ SHEET ============ */
@@ -1777,7 +1785,7 @@ const ACT={
   setLevel:el=>{S.level=el.dataset.v;save();rerender();},
   send:()=>doSend(),
   chip:el=>{const t=el.dataset.t;if(t.startsWith("Say it slower")){const last=[...S.chat].reverse().find(m=>m.role==="assistant"&&!m.err);if(last)speak(last.text,{rate:0.6});return;}send(t);},
-  mic:()=>{if(UI.listening){stopMic();return;}const inp=$("#inp");startMic(t=>{if(inp){inp.value=t;inp.dispatchEvent(new Event("input"));}},final=>{if(final&&inp&&inp.value.trim())doSend();});},
+  mic:el=>{if(UI.listening){stopMic();return;}const inp=$("#inp");startMic(t=>{if(inp){inp.value=t;inp.dispatchEvent(new Event("input"));}},final=>{if(final&&inp&&inp.value.trim())doSend();},el.dataset.v);},
   sayMsg:el=>{const m=S.chat[+el.dataset.i];if(m)speak(m.text);},
   sayText:el=>speak(el.dataset.text,{rate:0.8}),
   reveal:el=>el.classList.toggle("show"),
@@ -1821,7 +1829,7 @@ const ACT={
     <button class="btn" style="margin-top:14px" data-act="closeSheet">Got it</button>`),
   voice:()=>openVoice(),
   closeVoice:()=>closeVoice(),
-  vMic:()=>voiceMic(),
+  vMic:el=>voiceMic(el.dataset.v),
   vCaptions:()=>{S.settings.captions=!S.settings.captions;save();renderVoice();},
   vRepeat:()=>{const l=[...S.chat].reverse().find(m=>m.role==="assistant"&&!m.err);if(l){UI.vstate="speaking";renderVoice();speak(l.text);}},
   vSlow:()=>{const l=[...S.chat].reverse().find(m=>m.role==="assistant"&&!m.err);if(l){UI.vstate="speaking";renderVoice();speak(l.text,{rate:0.6});}},
