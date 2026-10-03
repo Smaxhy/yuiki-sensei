@@ -296,7 +296,7 @@ input,textarea,select{font:inherit;font-size:16px;color:var(--text)}
 <script>
 "use strict";
 // Bump this on every change so phones can spot a new version and offer to update
-const APP_VERSION="2026.10.04-21";
+const APP_VERSION="2026.10.04-22";
 /* ============ DATA ============ */
 const LV = {
   n5:{label:"N5",name:"Beginner",color:"#9fd67c"},
@@ -667,7 +667,7 @@ function cleanSpeech(t){
    // 「こんにちは」(konnichiwa) → こんにちは: the romaji only repeats the Japanese, and an English voice mangles it
    .replace(/([\u3040-\u30ff\u3400-\u9fff\u3005][」』]?)\s*[（(]\s*[A-Za-zāēīōūÂâÊêÎîÔôÛû'\- ]+\s*[)）]/g,"$1")
    .replace(/\[\[|\]\]/g,"")
-   .replace(/([\u3400-\u9fff\u3005]+)[（(]([\u3040-\u30ff]+)[)）]/g,"$1")
+   .replace(/([\u3400-\u9fff\u3005]+)[（(]([\u3040-\u30ff]+)[)）]/g,"$2")
    .replace(/[*_#`>|]/g," ")
    .replace(/\p{Extended_Pictographic}/gu,"")
    .replace(/[→←↑↓•]/g,", ");
@@ -811,9 +811,13 @@ function sayChunk(t,lang,rate){return new Promise(res=>{
   u.lang=lang;const v=pickVoice(lang);try{if(v)u.voice=v;}catch(e){}
   u.rate=lang==="ja-JP"?rate:Math.max(0.85,Math.min(1.05,rate+0.1));u.pitch=1;
   u.onstart=()=>{st=true;};u.onend=fin;u.onerror=e=>{vlog("✗ iPhone voice error: "+(e.error||"?"));fin();};
-  const guard=setTimeout(()=>{if(!st)vlog("✗ iPhone voice ("+lang+(v?", "+v.name:"")+") didn't start: "+t.slice(0,30));fin();},2500+t.length*120);
+  const guard=setTimeout(async()=>{
+    if(!st){vlog("✗ iPhone voice ("+lang+(v?", "+v.name:"")+") didn't start: "+t.slice(0,30));try{synth.cancel();}catch(e){}fin();return;}
+    await synthIdle(20000);fin();},2500+t.length*120);
   try{if(synth.paused)synth.resume();synth.speak(u);}catch(e){vlog("✗ iPhone voice: "+e.message);fin();}
 });}
+// Wait until the iPhone voice has really stopped (iOS sometimes reports "end" late or early)
+async function synthIdle(max){if(!synth)return;const t0=Date.now();while((synth.speaking||synth.pending)&&Date.now()-t0<(max||6000))await new Promise(r=>setTimeout(r,150));}
 async function sayDevice(t,lang,rate){
   if(!synth){vlog("✗ iPhone voice: not available");return;}
   t=String(t).trim();if(!t)return;
@@ -881,6 +885,12 @@ function questPlayer(){if(!qa){qa=new Audio();qa.preload="auto";qa.playsInline=t
 function unlockPlayer(){const a=questPlayer();if(a.dataset.ok||natPlaying)return;a.src=SILENT_MP3;a.play().then(()=>{a.dataset.ok="1";}).catch(()=>{});}
 document.addEventListener("touchend",unlockPlayer,{passive:true});
 document.addEventListener("pointerdown",unlockPlayer,{passive:true});
+// Japanese is written without spaces; beginner-style spaced kana makes the voice read は as "ha", へ as "he"
+function vvText(t){
+  return String(t).trim()
+    .replace(/([\u3040-\u30ff\u3400-\u9fff\u3005ー])[ \u3000]+(?=[\u3040-\u30ff\u3400-\u9fff\u3005ー])/g,"$1")
+    .replace(/\.(\s|$)/g,"。$1").replace(/,\s*/g,"、").replace(/!/g,"！").replace(/\?/g,"？").replace(/\s+/g," ").trim();
+}
 // Asks tts.quest for Ryusei audio. Without a key the free service often answers "wait N seconds";
 // like its official browser example, keep waiting and retrying (up to ~25 s in total).
 let questLastErr="";
@@ -967,7 +977,7 @@ async function speakQuest(segs,rate,text,opts){
   }
   const my=++natSeq;natBusy=true;
   const recUrl=sg=>{const k=recKey(sg.t);return RECORDED.has(k)?recUrlFor(k):null;};
-  const jobs=segs.map(sg=>sg.k!=="ja"?null:(recUrl(sg)||questUrl(sg.t.trim())));
+  const jobs=segs.map(sg=>sg.k!=="ja"?null:(recUrl(sg)||questUrl(vvText(sg.t))));
   jobs.forEach(j=>j&&j.catch&&j.catch(()=>{}));
   try{
     for(let i=0;i<segs.length;i++){
@@ -977,7 +987,7 @@ async function speakQuest(segs,rate,text,opts){
       natLoading=true;let url=null;try{url=typeof jobs[i]==="string"?jobs[i]:await jobs[i];}catch(e){
         if(!questNote){questNote=true;toast("Ryusei's voice didn't answer ("+e.message+"). Tap Me → Voice → Test Ryusei for details.",4500);}}
       natLoading=false;if(my!==natSeq)return;
-      if(url){try{await playQuestAudio(url,my,rate);continue;}catch(e){if(!questNote){questNote=true;toast("Ryusei's audio: "+e.message+" — using the iPhone voice",4000);}}}
+      if(url){await synthIdle(6000);if(my!==natSeq)return;try{await playQuestAudio(url,my,rate);continue;}catch(e){if(!questNote){questNote=true;toast("Ryusei's audio: "+e.message+" — using the iPhone voice",4000);}}}
       if(my!==natSeq)return;
       if(segs[i].orig!==undefined)await speakPlainDevice(segs[i].orig,rate);else await sayDevice(segs[i].t.trim(),"ja-JP",rate);
     }
@@ -994,7 +1004,7 @@ async function speakWithRecordings(segs,rate,text,opts){
     for(let i=0;i<segs.length;i++){
       if(my!==natSeq)return;
       const k=recKey(segs[i].t);
-      if(segs[i].k==="ja"&&RECORDED.has(k)&&segs.length===1){try{await playUrl(recUrlFor(k),my,rate);continue;}catch(e){}}
+      if(segs[i].k==="ja"&&RECORDED.has(k)&&segs.length===1){await synthIdle(6000);try{await playUrl(recUrlFor(k),my,rate);continue;}catch(e){}}
       if(my!==natSeq)return;
       await sayDevice(segs[i].t.trim(),segs[i].k==="ja"?"ja-JP":"en-US",rate);
     }
