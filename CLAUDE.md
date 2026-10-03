@@ -14,6 +14,13 @@ Safari → Add to Home Screen.
   No AI, no credits. Result saved to `S.placement` and can set `S.level`.
 - **Learner card**: `learnerCard()` turns `S.about` + `S.placement` into one compact line
   sent with every request so Yuki always knows who the student is.
+- **Guided plan**: 12 weeks / 84 days in `PLAN` (flattened to `PDAYS`), aimed at kana +
+  basic conversation. Task codes: `L:` lesson, `C:` flashcard deck (`due` = review),
+  `K:` kana chart, `Q:` quiz, `T:` talk prompt in `TALK`. Progress in `S.plan` (`start`,
+  `done["day:task"]`). Tasks tick themselves (`planAuto`, lesson completion, 4 Yuki replies
+  via `UI.planCtx`) or by tapping the circle. Today's tasks show on Home; full plan in Learn.
+- **Updates**: `APP_VERSION` — bump it on every change. The app compares it with the live
+  copy on open (`checkUpdate`) and offers "Update now".
 - **Tabs**: Home, Yuki (chat), Learn, Practice, Me.
 - **Yuki the AI tutor**: 26, from Kyoto, warm and playful, corrects mistakes clearly.
   Calls the Anthropic Messages API directly from the browser (`apiRequest()`) using the
@@ -48,7 +55,7 @@ Safari → Add to Home Screen.
   settings, what Yuki remembers, and backup/restore as JSON (key excluded).
 
 ## Technical notes
-- State object `S` (currently `v:4`) saved to localStorage key `yuki-sensei-v3`. Keep it backward
+- State object `S` (currently `v:5`) saved to localStorage key `yuki-sensei-v3`. Keep it backward
   compatible. Saved data (and restored backups) go through `migrate()`; if the shape
   changes, bump `DEFAULT.v` and add a step there instead of wiping progress.
 - Clicks route through `data-act` attributes to the `ACT` object.
