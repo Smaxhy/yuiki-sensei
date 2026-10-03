@@ -173,6 +173,8 @@ Safari → Add to Home Screen.
   "speaking" for seconds after a line ended). `noteLat()` records live clip times; when the free service is
   slow (`questSlow()`, median of the last 3 > 4.5 s) the cut-off is shorter (3.5 s first, 2.5 s later) and a
   one-time tip suggests the free tts.quest key.
+  Call screen has a "🎌 Ryusei / ⚡ Fast voice" switch (`ACT.vFast`): Fast = `tts="device"` (recordings for
+  learned words, the iPhone's own Japanese/English voices for everything else, no waiting).
   A mic with no sign of life retries once by itself (`MIC.retried`) before pausing.
   Text for Ryusei goes through `vvText()`: spaces between Japanese characters removed (spaced
   beginner kana makes VOICEVOX pause after every word and stress oddly), Japanese punctuation.

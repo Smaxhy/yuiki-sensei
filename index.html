@@ -364,7 +364,7 @@ input,textarea,select{font:inherit;font-size:16px;color:var(--text)}
 <script>
 "use strict";
 // Bump this on every change so phones can spot a new version and offer to update
-const APP_VERSION="2026.10.05-5";
+const APP_VERSION="2026.10.05-6";
 /* ============ DATA ============ */
 const LV = {
   n5:{label:"N5",name:"Beginner",color:"#9fd67c"},
@@ -1126,7 +1126,7 @@ const questLat=[];let slowTip=false;
 const questSlow=()=>{if(questLat.length<2)return false;const l=questLat.slice(-3).sort((a,b)=>a-b);return l[Math.floor(l.length/2)]>4500;};
 function noteLat(ms){questLat.push(ms);if(questLat.length>6)questLat.shift();
   if(questSlow()&&!slowTip&&!S.settings.questKey){slowTip=true;vlog("🐢 tts.quest is slow right now ("+Math.round(ms/100)/10+" s)");
-    toast("🐢 Ryusei's free voice service is slow right now, so the iPhone voice helps out. A free tts.quest key (Me → Voice) makes him faster.",6000);}}
+    toast("🐢 Ryusei's free voice service is slow right now. Tap ⚡ on the call screen for an instant voice, or add a free tts.quest key (Me → Voice).",6000);}}
 async function prepClip(job,my){
   const t0=Date.now(),live=typeof job!=="string";
   const o=typeof job==="string"?job:await job;
@@ -2334,7 +2334,7 @@ function vMe(){
   `,
    voice:()=>`<div class="card">
    <p class="sub" style="margin-bottom:6px">Voice engine</p>
-   ${chipRow("ttsSet","tts",st.tts,[["quest","🎌 "+(REC_VOICES[st.jaRec]||REC_VOICES.ryusei).name.split(" ")[0]+" everywhere"],["device","Recordings + iPhone"],["azure","✨ Azure"],["voicevox","Own server"]])}
+   ${chipRow("ttsSet","tts",st.tts,[["quest","🎌 "+(REC_VOICES[st.jaRec]||REC_VOICES.ryusei).name.split(" ")[0]+" everywhere"],["device","⚡ Fast (iPhone voice)"],["azure","✨ Azure"],["voicevox","Own server"]])}
    ${st.tts==="quest"?`<p class="sub" style="margin:10px 0 0">Free, no key: all Japanese — lessons, chat, calls — is spoken by ${esc((REC_VOICES[st.jaRec]||REC_VOICES.ryusei).name.split(" ")[0])}. Words you're learning play instantly from recordings; new sentences come live from the free VOICEVOX service <b>tts.quest</b> (can take a few seconds; if it's busy, that sentence uses the iPhone voice). English parts use your iPhone's voice (or ${esc((REC_VOICES[st.jaRec]||REC_VOICES.ryusei).name.split(" ")[0])} with a Japanese accent, if you prefer).</p>
     <p class="sub" style="margin:10px 0 6px">Voice</p>${chipRow("recSet","jaRec",st.jaRec==="off"?"ryusei":st.jaRec,Object.entries(REC_VOICES).map(([k,v])=>[k,v.name.split(" ")[0]]))}
     <p class="sub" style="margin:12px 0 6px">English parts</p>${chipRow("enVoiceSet","enVoice",st.enVoice,[["ryusei",(REC_VOICES[st.jaRec]||REC_VOICES.ryusei).name.split(" ")[0]+" (Japanese accent)"],["iphone","iPhone voice"]])}
@@ -2447,7 +2447,7 @@ function renderVoice(){
   $("#voice").innerHTML=`<div class="vtop"><button class="iconbtn" data-act="closeVoice" aria-label="Close">✕</button>
    <div class="vtitle" data-act="voiceLog" role="button" title="Voice log"><b>Yuki</b><small>${useQuest()?"🎌 "+(REC_VOICES[S.settings.jaRec]||REC_VOICES.ryusei).name.split(" ")[0]+"'s voice":useVV()?"🎌 "+(REC_VOICES[S.settings.jaRec]||REC_VOICES.himari).name.split(" ")[0]+"'s voice":useNatural()?"✨ natural voice":"voice call"}</small></div>
    <button class="iconbtn" data-act="vCaptions" aria-label="Captions" style="font-size:15px;font-weight:800">${cc?"CC":"🙈"}</button></div>
-   <div class="vopts"><button class="vopt${S.settings.handsFree?" on":""}" data-act="vHands">${S.settings.handsFree?"🙌 Hands-free":"✋ Tap to talk"}</button>
+   <div class="vopts"><button class="vopt${S.settings.tts==="device"?" on":""}" data-act="vFast">${S.settings.tts==="device"?"⚡ Fast voice":"🎌 Ryusei"}</button><button class="vopt${S.settings.handsFree?" on":""}" data-act="vHands">${S.settings.handsFree?"🙌 Hands-free":"✋ Tap to talk"}</button>
     <span class="vlen">${[["tiny","Very short"],["short","Short"],["normal","Normal"]].map(([v,t])=>`<button class="vopt${len===v?" on":""}" data-act="vLen" data-v="${v}">${t}</button>`).join("")}</span></div>
    <div class="orbwrap${activeCourse()?" compact":""}"><div class="orb ${st}">ゆ</div><div class="vstat">${label}</div>
     ${activeCourse()?`<div class="vchips">${talkChips()}</div>${courseDoneCard(true)}${activeCourse().keep?`<button class="vopt on" data-act="courseDone" style="margin-top:6px">✓ Finish lesson</button>`:""}`:""}
@@ -2611,7 +2611,7 @@ const ACT={
     <li>Tap <b>English</b> → <b>English (US)</b> (or UK/Australia), pick <b>Ava</b>, <b>Zoe</b> or <b>Evan</b>, and tap the download button next to <b>Premium</b> (best) or <b>Enhanced</b>. It's about 100–400 MB, so use Wi-Fi.</li>
     <li>Wait until the download finishes, then close Yuki fully (swipe it away) and reopen it.</li>
     <li>In <b>Me → Voice → English voice</b>, the new voice shows a <b>★ Premium</b>. Pick it (or leave "Automatic") and tap <b>Test voice</b>.</li></ol>
-    <p class="sub" style="margin-top:10px">Japanese is already handled by Ryusei, so you only need an English voice.</p>
+    <p class="sub" style="margin-top:10px"><b>Using ⚡ Fast voice?</b> Do the same for Japanese: <b>Voices → Japanese</b>, download <b>O-ren (Premium)</b> or <b>Kyoko (Enhanced)</b>. Then Yuki's live Japanese sounds natural with no waiting. (With 🎌 Ryusei, Japanese is spoken by Ryusei.)</p>
     <p class="sub" style="margin-top:10px">"Automatic" already picks the best voice your phone has, so after downloading you may not need to change anything.</p>
     <button class="btn" style="margin-top:14px" data-act="closeSheet">Got it</button>`),
   voice:()=>openVoice(),
@@ -2619,6 +2619,9 @@ const ACT={
   vMic:el=>voiceMic(el.dataset.v),
   vSend:()=>stopMic(),
   vCancel:()=>{stopMic(true);UI.vyou="";},
+  // One tap between Ryusei (live from a free online service, can lag) and the iPhone's own Japanese voice (instant)
+  vFast:()=>{const fast=S.settings.tts!=="device";S.settings.tts=fast?"device":"quest";if(!fast&&S.settings.jaRec==="off")S.settings.jaRec="ryusei";questNote=false;save();renderVoice();
+    toast(fast?"⚡ Fast voice: the iPhone's Japanese voice, no waiting (words you've learned still play in Ryusei)":"🎌 Ryusei for everything (can lag when the free service is busy)",3500);},
   vHands:()=>{S.settings.handsFree=!S.settings.handsFree;save();renderVoice();toast(S.settings.handsFree?"🙌 Yuki tries to listen after she talks (iPhone may still need a tap)":"✋ Tap 🎤 yourself to answer",2500);},
   vLen:el=>{S.settings.style.length=el.dataset.v;save();renderVoice();},
   vCaptions:()=>{S.settings.captions=!S.settings.captions;save();renderVoice();},
