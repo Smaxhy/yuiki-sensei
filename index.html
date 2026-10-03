@@ -273,7 +273,7 @@ input,textarea,select{font:inherit;font-size:16px;color:var(--text)}
 .obnav{display:flex;gap:8px;margin-top:18px}
 .obnav .btn{flex:1}
 .obnav .btn.ghost{flex:0 0 96px}
-.qzrev{margin-top:12px;font-size:15px;color:var(--dim);text-align:center}
+.qzrev{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:-4px 2px 12px;padding:8px 8px 8px 14px;border-radius:14px;background:var(--ink2);font-size:15px}
 /* corrections under your messages */
 .ubw{display:flex;flex-direction:column;align-items:flex-end;max-width:86%}
 .ubw .bub{max-width:100%}
@@ -365,7 +365,7 @@ input,textarea,select{font:inherit;font-size:16px;color:var(--text)}
 <script>
 "use strict";
 // Bump this on every change so phones can spot a new version and offer to update
-const APP_VERSION="2026.10.05-7";
+const APP_VERSION="2026.10.05-8";
 /* ============ DATA ============ */
 const LV = {
   n5:{label:"N5",name:"Beginner",color:"#9fd67c"},
@@ -2243,10 +2243,11 @@ function vQuiz(){
   return`<div class="pad"><div style="display:flex;justify-content:space-between;align-items:center"><button class="mini" data-act="qzClose">✕ Stop</button><span class="sub">🧠 ${z.i+1} / ${z.qs.length} · ${z.right} right</span></div>
    <div class="bar"><i style="width:${Math.round(z.i/z.qs.length*100)}%"></i></div>
    <p class="sub lpk">${q.ask}</p>
-   <div class="qcard"><div class="${jpPrompt?"wjp":"qen2"}">${esc(q.prompt)}</div>
-    ${p!=null?`<div class="qzrev">${esc(c.front)}${c.sub?` · ${esc(c.sub)}`:""} — ${esc(c.back)} <button class="mini" data-act="sayText" data-text="${esc(c.say)}" style="margin-left:6px">🔊</button></div>`:""}</div>
+   <div class="qcard"><div class="${jpPrompt?"wjp":"qen2"}">${esc(q.prompt)}</div></div>
    <div class="opts">${q.opts.map(o=>{const st=p==null?"":o===q.answer?" right":o===p?" wrong":" dim";return`<button class="opt${st}" data-act="qzPick" data-v="${esc(o)}"${p!=null?" disabled":""}><b>${esc(o)}</b></button>`;}).join("")}</div>
-   ${p!=null?`<div class="fb ${p===q.answer?"ok":"no"}">${p===q.answer?"✓ Correct!":"✗ It's <b>"+esc(q.answer)+"</b>"}</div><button class="btn" data-act="qzNext">${z.i<z.qs.length-1?"Next":"See my score"}</button>`:""}</div>`;
+   ${p!=null?`<div class="fb ${p===q.answer?"ok":"no"}">${p===q.answer?"✓ Correct!":"✗ It's <b>"+esc(q.answer)+"</b>"}</div>
+    <div class="qzrev"><span>${esc(c.front)}${c.sub?` (${esc(c.sub)})`:""} = ${esc(c.back)}</span><button class="mini" data-act="sayText" data-text="${esc(c.say)}" aria-label="Hear it">🔊</button></div>
+    <button class="btn" data-act="qzNext">${z.i<z.qs.length-1?"Next":"See my score"}</button>`:""}</div>`;
 }
 // Cards tab: every card you've learned (not the ones still to come), with practice buttons and a list
 const CARD_KIND={all:["All",()=>true],words:["Words",i=>/^[wv]:/.test(i)],kana:["Kana",i=>/^[hk]:/.test(i)],kanji:["Kanji",i=>i.startsWith("j:")]};
