@@ -269,7 +269,7 @@ input,textarea,select{font:inherit;font-size:16px;color:var(--text)}
 <script>
 "use strict";
 // Bump this on every change so phones can spot a new version and offer to update
-const APP_VERSION="2026.10.04-5";
+const APP_VERSION="2026.10.04-6";
 /* ============ DATA ============ */
 const LV = {
   n5:{label:"N5",name:"Beginner",color:"#9fd67c"},
@@ -666,16 +666,12 @@ const REC_VOICES={himari:{name:"Himari (冥鳴ひまり)",desc:"female · calm, 
 const RECORDED=new Set(Object.values(CARDS).map(c=>c.say));
 const recId=t=>Array.from(t).map(c=>c.codePointAt(0).toString(16)).join("_");
 const recCache=new Map();
-async function playRecorded(t,rate){
-  const my=++natSeq,ctx=audioCtx();if(!ctx)throw new Error("no audio");
-  const url=`audio/${S.settings.jaRec}/${recId(t)}.mp3`;
-  let audio=recCache.get(url);
-  if(!audio){natLoading=true;const r=await fetch(url);if(!r.ok)throw new Error("missing");audio=await ctx.decodeAudioData(await r.arrayBuffer());recCache.set(url,audio);if(recCache.size>200)recCache.delete(recCache.keys().next().value);}
-  if(my!==natSeq)return;
-  natLoading=false;
-  const src=ctx.createBufferSource();src.buffer=audio;if(rate&&rate<0.75)src.playbackRate.value=0.85;src.connect(ctx.destination);
-  src.onended=()=>{if(natSrc===src){natSrc=null;natPlaying=false;}};
-  natSrc=src;natPlaying=true;src.start(0);
+// Recordings play through the shared <audio> player (not Web Audio): iPhone allows it straight from a
+// tap, it isn't silenced when iOS pauses Web Audio after a call/mic/app switch, and it ignores the silent switch.
+const recUrlFor=t=>`audio/${S.settings.jaRec==="off"?"ryusei":S.settings.jaRec}/${recId(t)}.mp3`;
+function playRecorded(t,rate){
+  const my=++natSeq;natBusy=true;
+  return playUrl(recUrlFor(t),my,rate).finally(()=>{if(my===natSeq)natBusy=false;});
 }
 function speak(text,opts){
   opts=opts||{};
@@ -768,7 +764,9 @@ let qa=null,questNote=false;
 const questCache=new Map();
 // One shared <audio> player, unlocked on the first tap (iPhone rule), so later clips can play by themselves
 function questPlayer(){if(!qa){qa=new Audio();qa.preload="auto";qa.playsInline=true;}return qa;}
-document.addEventListener("touchend",()=>{const a=questPlayer();if(a.dataset.ok)return;a.src=SILENT_MP3;a.play().then(()=>{a.dataset.ok="1";}).catch(()=>{});},{passive:true});
+function unlockPlayer(){const a=questPlayer();if(a.dataset.ok||natPlaying)return;a.src=SILENT_MP3;a.play().then(()=>{a.dataset.ok="1";}).catch(()=>{});}
+document.addEventListener("touchend",unlockPlayer,{passive:true});
+document.addEventListener("pointerdown",unlockPlayer,{passive:true});
 async function questUrl(text){
   const key=vvSpeaker()+"|"+text;
   if(questCache.has(key))return questCache.get(key);
@@ -788,7 +786,7 @@ function playUrl(url,my,rate){return new Promise((res,rej)=>{
   const t=setTimeout(()=>fin(false),45000);
   a.onended=()=>fin(true);a.onerror=()=>fin(false);
   a.src=url;a.playbackRate=rate&&rate<0.75?0.8:1;natPlaying=true;
-  a.play().catch(()=>fin(false));
+  a.play().then(()=>{a.dataset.ok="1";}).catch(()=>fin(false));
 });}
 function stopQuest(){if(qa){try{qa.pause();}catch(e){}}}
 // VOICEVOX reads English best in lower case with short forms written out ("Hi" would be spelled "H-I")
@@ -805,15 +803,15 @@ async function speakQuest(segs,rate,text,opts){
     segs=merged.map(m=>({k:"ja",t:m.t,orig:m.orig,live:m.mode==="live"}));
   }
   const my=++natSeq;natBusy=true;
-  const recUrl=sg=>{const k=recKey(sg.t);return RECORDED.has(k)?`audio/${S.settings.jaRec}/${recId(k)}.mp3`:null;};
-  const jobs=segs.map(sg=>sg.k!=="ja"?null:(recUrl(sg)?Promise.resolve(recUrl(sg)):questUrl(sg.t.trim())));
-  jobs.forEach(j=>j&&j.catch(()=>{}));
+  const recUrl=sg=>{const k=recKey(sg.t);return RECORDED.has(k)?recUrlFor(k):null;};
+  const jobs=segs.map(sg=>sg.k!=="ja"?null:(recUrl(sg)||questUrl(sg.t.trim())));
+  jobs.forEach(j=>j&&j.catch&&j.catch(()=>{}));
   try{
     for(let i=0;i<segs.length;i++){
       if(my!==natSeq)return;
       if(!jobs[i]){await sayDevice(segs[i].t.trim(),"en-US",rate);continue;}
       // (with enVoice "ryusei" every segment is sent as "ja", so it never reaches the iPhone English voice unless the service fails)
-      natLoading=true;let url=null;try{url=await jobs[i];}catch(e){
+      natLoading=true;let url=null;try{url=typeof jobs[i]==="string"?jobs[i]:await jobs[i];}catch(e){
         if(!questNote){questNote=true;toast(/busy|limit|wait/i.test(e.message)?"Ryusei's live voice is busy — using the iPhone voice for a moment":"Couldn't reach Ryusei's live voice — using the iPhone voice",3500);}}
       natLoading=false;if(my!==natSeq)return;
       if(url){try{await playUrl(url,my,rate);continue;}catch(e){}}
@@ -829,16 +827,13 @@ async function speakPlainDevice(t,rate){for(const sg of segments(t))await sayDev
 const recKey=t=>t.replace(/[\s、。！？!?,.「」…~～]/g,"");
 async function speakWithRecordings(segs,rate,text,opts){
   const my=++natSeq;natBusy=true;
-  const jobs=segs.map(sg=>{if(sg.k!=="ja")return null;const k=recKey(sg.t);if(!RECORDED.has(k))return null;
-    const url=`audio/${S.settings.jaRec}/${recId(k)}.mp3`;
-    return recCache.has(url)?Promise.resolve(recCache.get(url)):fetch(url).then(r=>{if(!r.ok)throw 0;return r.arrayBuffer();}).then(b=>audioCtx().decodeAudioData(b)).then(a=>{recCache.set(url,a);return a;});});
-  jobs.forEach(j=>j&&j.catch(()=>{}));
   try{
     for(let i=0;i<segs.length;i++){
       if(my!==natSeq)return;
-      let audio=null;if(jobs[i]){natLoading=true;try{audio=await jobs[i];}catch(e){}natLoading=false;}
+      const k=recKey(segs[i].t);
+      if(segs[i].k==="ja"&&RECORDED.has(k)){try{await playUrl(recUrlFor(k),my,rate);continue;}catch(e){}}
       if(my!==natSeq)return;
-      if(audio)await playBuffer(audio,my);else await sayDevice(segs[i].t.trim(),segs[i].k==="ja"?"ja-JP":"en-US",rate);
+      await sayDevice(segs[i].t.trim(),segs[i].k==="ja"?"ja-JP":"en-US",rate);
     }
   }finally{if(my===natSeq){natBusy=false;natLoading=false;}}
 }
@@ -1143,8 +1138,8 @@ const wordInfo=jp=>{for(const l of CLESSONS)for(const w of l.w)if(w[0]===jp)retu
 /* ---- lesson player: learn → practise → (talk) ---- */
 function startCourseNode(n){
   ensurePlan();UI.planCtx=null;
-  if(n.t==="CL"){const l=clessonById(n.k);UI.lp={node:n,kind:"words",items:l.w,step:"learn",i:0};render();return;}
-  if(n.t==="CK"){UI.lp={node:n,kind:"kana",items:[...n.k].map(ch=>{const id=(/[ァ-ン]/.test(ch)?"k:":"h:")+ch;return[ch,CARDS[id].back,"",id];}),step:"learn",i:0};render();return;}
+  if(n.t==="CL"){const l=clessonById(n.k);UI.lp={node:n,kind:"words",items:l.w,step:"learn",i:0};render();lpSay();return;}
+  if(n.t==="CK"){UI.lp={node:n,kind:"kana",items:[...n.k].map(ch=>{const id=(/[ァ-ン]/.test(ch)?"k:":"h:")+ch;return[ch,CARDS[id].back,"",id];}),step:"learn",i:0};render();lpSay();return;}
   if(n.t==="CR")startTalk(n);
 }
 const itemId=(lp,it)=>lp.kind==="kana"?it[3]:"w:"+it[0];
