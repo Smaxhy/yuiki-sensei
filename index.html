@@ -297,7 +297,7 @@ input,textarea,select{font:inherit;font-size:16px;color:var(--text)}
 <script>
 "use strict";
 // Bump this on every change so phones can spot a new version and offer to update
-const APP_VERSION="2026.10.04-25";
+const APP_VERSION="2026.10.04-26";
 /* ============ DATA ============ */
 const LV = {
   n5:{label:"N5",name:"Beginner",color:"#9fd67c"},
@@ -521,6 +521,7 @@ function openThread(id,title,kind,fresh){
   if(!t)t=S.threads[id]={title,kind,msgs:[],at:Date.now()};
   t.title=title||t.title;t.kind=kind||t.kind;t.at=Date.now();
   if(fresh)t.msgs.length=0;
+  if(S.chatId!==id)stopSpeak();
   S.chatId=id;linkChat();
   // keep the 30 most recent lesson chats (plus the main one)
   const ids=Object.keys(S.threads).filter(k=>k!=="main").sort((a,b)=>S.threads[b].at-S.threads[a].at);
@@ -762,7 +763,7 @@ const engineName=()=>({quest:"Ryusei everywhere",device:"Recordings + iPhone",az
 function speak(text,opts){
   opts=opts||{};
   vlog("▶ speak ["+engineName()+"]: "+String(opts.say||text).replace(/\s+/g," ").slice(0,50));
-  stopNatural();
+  spGen++;stopNatural();
   const plain=String(text).trim();
   if(S.settings.jaRec!=="off"&&RECORDED.has(plain)&&location.protocol!=="file:"){
     if(synth)synth.cancel();
@@ -808,12 +809,13 @@ function playBuffer(audio,my){return new Promise(res=>{if(my!==natSeq)return res
 // iPhone speech: short sentence chunks (long ones get cut off on iOS), resume if iOS paused the
 // synthesizer, a short gap after an audio clip, and a safety timer in case "end" never fires.
 async function sayChunk(t,lang,rate){
-  if(await sayChunkOnce(t,lang,rate))return;
+  const g=spGen;
+  if(await sayChunkOnce(t,lang,rate)||g!==spGen)return;
   vlog("↺ trying that line again");try{synth.cancel();if(synth.paused)synth.resume();}catch(e){}
-  await new Promise(r=>setTimeout(r,150));await sayChunkOnce(t,lang,rate);
+  await new Promise(r=>setTimeout(r,150));if(g===spGen)await sayChunkOnce(t,lang,rate);
 }
 function sayChunkOnce(t,lang,rate){return new Promise(res=>{
-  const u=new SpeechSynthesisUtterance(t);let st=false,done=false;const fin=()=>{if(done)return;done=true;clearTimeout(guard);clearTimeout(early);res(st||ok);};let ok=true;
+  const u=new SpeechSynthesisUtterance(t);let st=false,done=false;const fin=()=>{if(done)return;done=true;clearTimeout(guard);clearTimeout(early);if(st)synthEndAt=Date.now();res(st||ok);};let ok=true;
   u.lang=lang;const v=pickVoice(lang);try{if(v)u.voice=v;}catch(e){}
   u.rate=lang==="ja-JP"?rate:Math.max(0.85,Math.min(1.05,rate+0.1));u.pitch=1;
   u.onstart=()=>{st=true;};u.onend=fin;u.onerror=e=>{vlog("✗ iPhone voice error: "+(e.error||"?"));fin();};
@@ -829,10 +831,10 @@ async function synthIdle(max){if(!synth)return;const t0=Date.now();while((synth.
 async function sayDevice(t,lang,rate){
   if(!synth){vlog("✗ iPhone voice: not available");return;}
   t=String(t).trim();if(!t)return;
-  const gap=120-(Date.now()-clipEndAt);if(gap>0)await new Promise(r=>setTimeout(r,gap));
+  const g=spGen,gap=120-(Date.now()-clipEndAt);if(gap>0)await new Promise(r=>setTimeout(r,gap));
   const parts=t.match(/[^.!?。！？\n]+[.!?。！？]*\s*/g)||[t];
   let buf="";const chunks=[];parts.forEach(p=>{if((buf+p).length>180&&buf){chunks.push(buf);buf="";}buf+=p;});if(buf.trim())chunks.push(buf);
-  for(const c of chunks)await sayChunk(c.trim(),lang,rate);
+  for(const c of chunks){if(g!==spGen)return;await sayChunk(c.trim(),lang,rate);}
 }
 // Japanese parts in Himari/Ryusei from the server, English parts in the best iPhone voice, played in order
 async function speakVV(segs,rate,text,opts){
@@ -932,7 +934,7 @@ async function questUrl(text){
 // Plays one clip on the shared player. Once sound has actually started, the clip counts as played no
 // matter what happens next (an iPhone glitch near the end must never make Ryusei say it again).
 // Stalls are treated as finished, and a newer clip or Stop ends the old one cleanly.
-let playId=0,clipEndAt=0;
+let playId=0,clipEndAt=0,synthEndAt=0;
 function playUrl(url,my,rate){return new Promise((res,rej)=>{
   if(my!==natSeq)return res();
   const a=questPlayer(),id=++playId,name=url.split("/").slice(-2).join("/");
@@ -1038,7 +1040,11 @@ async function speakQuest(segs,rate,text,opts){
         if(clip===LATE){clip=null;vlog("… Ryusei not ready after "+(wait/1000).toFixed(1)+" s, iPhone voice says this part (tts.quest busy)");}}catch(e){
         if(!questNote){questNote=true;toast("Ryusei's voice didn't answer ("+e.message+"). Tap Me → Voice → Test Ryusei for details.",4500);}}
       natLoading=false;if(my!==natSeq)return;
-      if(clip){await synthIdle(6000);if(my!==natSeq)return;
+      if(clip){await synthIdle(6000);
+        // iPhone keeps other sound turned down for a moment after its own voice ("ducking"); starting
+        // Ryusei inside that moment made him sound quiet, so let it pass first
+        const duck=300-(Date.now()-synthEndAt);if(duck>0)await new Promise(r=>setTimeout(r,duck));
+        if(my!==natSeq)return;
         if(clip.blob){try{await playUrl(clip.blob,my,rate);continue;}catch(e){vlog("… preloaded clip wouldn't play, trying the original");}}
         if(my!==natSeq)return;
         try{await playQuestAudio(clip.o,my,rate,clip.ready);continue;}catch(e){if(!questNote){questNote=true;toast("Ryusei's audio: "+e.message+" — using the iPhone voice",4000);}}}
@@ -1048,7 +1054,7 @@ async function speakQuest(segs,rate,text,opts){
   }finally{if(my===natSeq){natBusy=false;natLoading=false;}}
 }
 // Fallback reader for mixed text: split again and read each part with the right iPhone voice
-async function speakPlainDevice(t,rate){for(const sg of segments(t))await sayDevice(sg.t.trim(),sg.k==="ja"?"ja-JP":"en-US",rate);}
+async function speakPlainDevice(t,rate){const g=spGen;for(const sg of segments(t)){if(g!==spGen)return;await sayDevice(sg.t.trim(),sg.k==="ja"?"ja-JP":"en-US",rate);}}
 // Any Japanese bit of a reply that matches a recording (all course words, kana, cards) plays in
 // Himari/Ryusei; the rest uses the iPhone voice. No server or key needed.
 const recKey=t=>t.replace(/[\s、。！？!?,.「」…~～]/g,"");
@@ -1080,7 +1086,9 @@ function speakDevice(text,opts){
     synth.speak(u);
   });
 }
-function stopSpeak(){if(synth)synth.cancel();stopNatural();}
+// spGen goes up on every stop, so a reply that was cut off can never carry on with its next sentence
+let spGen=0;
+function stopSpeak(){spGen++;if(synth)synth.cancel();stopNatural();}
 // "Say it again": a full reset of both voices first (iPhone sometimes leaves the speech engine or the
 // audio player stuck after many replies), done inside the tap so the fresh player is allowed to play.
 function resetAudio(){
@@ -1155,7 +1163,7 @@ function switchMicLang(lang){resumeMic(lang);}
 function stopMic(cancel){
   if(!MIC.on)return;MIC.stopReq=true;if(cancel)MIC.cancel=true;
   if(rec&&!MIC.paused){const r=rec;try{r.stop();}catch(e){micFinish();return;}
-    setTimeout(()=>{if(MIC.on&&rec===r){MIC.base=micText();MIC.sess="";micFinish();}},1500);}   // iPhone sometimes never fires "end"
+    setTimeout(()=>{if(MIC.on&&rec===r){vlog("■ mic didn't end, closing it");try{r.onend=null;r.abort();}catch(e){}MIC.base=micText();MIC.sess="";micFinish();}},1500);}   // iPhone sometimes never fires "end"
   else micFinish();
 }
 function micFinish(cancelled){
@@ -1355,7 +1363,7 @@ async function send(display,apiText,mode){
     if(UI.planCtx&&++UI.planCtx.replies>=4){markNode(UI.planCtx.key);UI.planCtx=null;if(UI.tab==="chat"&&!UI.voice)rerenderChatHead();}
     showTyping(false);if(S.chat===box)appendLast();
     if(UI.voice){UI.vstate="speaking";renderVoice();speak(text,{say});}
-    else if(S.settings.autoSpeakChat)speak(text,{say});
+    else if(S.settings.autoSpeakChat&&S.chat===box&&UI.tab==="chat"&&document.visibilityState==="visible")speak(text,{say});
   }catch(err){
     showTyping(false);
     const noKey=!S.settings.apiKey.trim();
@@ -2117,7 +2125,7 @@ function startQuiz(q){
   send(`🧩 ${t?t[2]:"Quiz"}`,p);
 }
 const ACT={
-  tab:el=>{UI.tab=el.dataset.tab;if(UI.tab!=="practice"){UI.fc=null;UI.chart=null;}render();},
+  tab:el=>{if(el.dataset.tab!==UI.tab)stopSpeak();UI.tab=el.dataset.tab;if(UI.tab!=="practice"){UI.fc=null;UI.chart=null;}render();},
   ob:el=>{if(el.dataset.step==="exit"){UI.obEdit=false;render();return;}const n=$("#obName");S.name=n?n.value.trim():S.name;UI.ob=+el.dataset.step;render();},
   obLevel:el=>{const v=el.dataset.v;S.level=v==="n5b"?"n5":v;S._kana=v==="n5b";if(S._kana&&!S.about.hira)S.about.hira="some";UI.ob=2;render();},
   obGoal:el=>{S.goal=el.dataset.v;UI.ob=3;save();render();},
@@ -2242,11 +2250,11 @@ const ACT={
     save();touchDay();render();},
   lpTalk:()=>{const n=UI.lp.node;startTalk(n);},
   lpClose:()=>{UI.lp=null;UI.tab="home";render();},
-  courseDone:()=>{const c=S.course;if(c)markNode(c.key,!!(S.plan&&S.plan.done[c.key]));S.course=null;if(UI.voice)closeVoice();S.chatId="main";linkChat();save();UI.tab="home";render();},
+  courseDone:()=>{stopSpeak();const c=S.course;if(c)markNode(c.key,!!(S.plan&&S.plan.done[c.key]));S.course=null;if(UI.voice)closeVoice();S.chatId="main";linkChat();save();UI.tab="home";render();},
   keepPractising:()=>{const c=activeCourse();if(c){c.keep=true;save();}if(UI.voice)renderVoice();else rerenderChatHead();toast("Keep going! Tap ✓ Finish whenever you want to move on",2200);},
   courseExit:()=>{S.course=null;if(UI.voice)closeVoice();S.chatId="main";linkChat();save();UI.tab="home";render();},
   chatsSheet:()=>chatsSheet(),
-  openChat:el=>{S.chatId=el.dataset.id;linkChat();S.threads[S.chatId].at=Date.now();save();UI.tab="chat";render();},
+  openChat:el=>{if(S.chatId!==el.dataset.id)stopSpeak();S.chatId=el.dataset.id;linkChat();S.threads[S.chatId].at=Date.now();save();UI.tab="chat";render();},
   resumeCourse:()=>{const c=S.course;if(!c)return;S.chatId=c.key;linkChat();save();UI.tab="chat";render();if(c.speaking)openVoice();},
   node:el=>{const n=pathNodes().find(x=>x.key===el.dataset.key);if(n)startNode(n);},
   ctxDone:()=>{if(UI.planCtx){markNode(UI.planCtx.key);UI.planCtx=null;}UI.tab="home";render();},
@@ -2345,7 +2353,7 @@ function checkUpdate(manual){
 }
 document.addEventListener("visibilitychange",()=>{
   if(document.visibilityState==="visible")pingVV();
-  if(document.visibilityState==="hidden"){saveNow();if(updPending)applyUpdate();return;}
+  if(document.visibilityState==="hidden"){stopSpeak();saveNow();if(updPending)applyUpdate();return;}
   if(updPending){if(applyUpdate())return;}
   if(Date.now()-lastCheck>60e3)checkUpdate(false);
 });
