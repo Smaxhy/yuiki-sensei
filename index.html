@@ -173,7 +173,7 @@ input,textarea,select{font:inherit;font-size:16px;color:var(--text)}
 .bubwrap .bub{max-width:100%;position:relative;padding-bottom:6px}
 .bub.withsay{display:flex;align-items:flex-end;gap:2px;padding-right:4px;padding-bottom:4px}
 .bub.withsay>.bt{flex:1;min-width:0;padding-bottom:7px}
-.say{width:40px;height:40px;margin:-4px -2px -2px 0;border-radius:12px;font-size:15px;opacity:.7;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0}
+.say{width:44px;height:44px;margin:-4px -2px -2px 0;border-radius:12px;font-size:17px;opacity:1;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0}
 .say.on{color:var(--sakura)}
 .bub code{background:var(--ink3);padding:1px 5px;border-radius:5px}
 .listen{display:inline-flex;flex-direction:column;gap:4px;margin:4px 0}
@@ -226,6 +226,7 @@ input,textarea,select{font:inherit;font-size:16px;color:var(--text)}
 .orb.speaking{animation:talk .45s infinite alternate}
 .vstat{font-size:14px;color:var(--dim);font-weight:700;letter-spacing:.02em}
 .vcap{width:100%;max-width:520px;min-height:90px}
+.vopt.again{display:block;margin:10px auto 0;min-height:44px;padding:0 18px;font-size:14px;color:#fff;background:rgba(255,255,255,.14)}
 .vtext{max-height:28vh;overflow-y:auto;font-size:19px;line-height:1.55;text-align:center;padding:0 8px;font-weight:600}
 .vtext.off{filter:blur(8px);opacity:.5}
 .vyou{font-size:14.5px;color:var(--dim);text-align:center;min-height:22px;margin-top:12px}
@@ -296,7 +297,7 @@ input,textarea,select{font:inherit;font-size:16px;color:var(--text)}
 <script>
 "use strict";
 // Bump this on every change so phones can spot a new version and offer to update
-const APP_VERSION="2026.10.04-24";
+const APP_VERSION="2026.10.04-25";
 /* ============ DATA ============ */
 const LV = {
   n5:{label:"N5",name:"Beginner",color:"#9fd67c"},
@@ -806,14 +807,21 @@ function playBuffer(audio,my){return new Promise(res=>{if(my!==natSeq)return res
   src.onended=()=>{if(natSrc===src){natSrc=null;natPlaying=false;}res();};natSrc=src;natPlaying=true;src.start(0);});}
 // iPhone speech: short sentence chunks (long ones get cut off on iOS), resume if iOS paused the
 // synthesizer, a short gap after an audio clip, and a safety timer in case "end" never fires.
-function sayChunk(t,lang,rate){return new Promise(res=>{
-  const u=new SpeechSynthesisUtterance(t);let st=false,done=false;const fin=()=>{if(done)return;done=true;clearTimeout(guard);res();};
+async function sayChunk(t,lang,rate){
+  if(await sayChunkOnce(t,lang,rate))return;
+  vlog("↺ trying that line again");try{synth.cancel();if(synth.paused)synth.resume();}catch(e){}
+  await new Promise(r=>setTimeout(r,150));await sayChunkOnce(t,lang,rate);
+}
+function sayChunkOnce(t,lang,rate){return new Promise(res=>{
+  const u=new SpeechSynthesisUtterance(t);let st=false,done=false;const fin=()=>{if(done)return;done=true;clearTimeout(guard);clearTimeout(early);res(st||ok);};let ok=true;
   u.lang=lang;const v=pickVoice(lang);try{if(v)u.voice=v;}catch(e){}
   u.rate=lang==="ja-JP"?rate:Math.max(0.85,Math.min(1.05,rate+0.1));u.pitch=1;
   u.onstart=()=>{st=true;};u.onend=fin;u.onerror=e=>{vlog("✗ iPhone voice error: "+(e.error||"?"));fin();};
   const guard=setTimeout(async()=>{
-    if(!st){vlog("✗ iPhone voice ("+lang+(v?", "+v.name:"")+") didn't start: "+t.slice(0,30));try{synth.cancel();}catch(e){}fin();return;}
+    if(!st){vlog("✗ iPhone voice ("+lang+(v?", "+v.name:"")+") didn't start: "+t.slice(0,30));try{synth.cancel();}catch(e){}ok=false;fin();return;}
     await synthIdle(20000);fin();},2500+t.length*120);
+  // a line that hasn't started after 1.8 s is stuck: stop waiting and let sayChunk try it once more
+  const early=setTimeout(()=>{if(!st&&!done){vlog("✗ iPhone voice ("+lang+") didn't start: "+t.slice(0,30));try{synth.cancel();}catch(e){}ok=false;fin();}},1800);
   try{if(synth.paused)synth.resume();synth.speak(u);}catch(e){vlog("✗ iPhone voice: "+e.message);fin();}
 });}
 // Wait until the iPhone voice has really stopped (iOS sometimes reports "end" late or early)
@@ -893,7 +901,7 @@ function vvText(t){
 }
 // Asks tts.quest for Ryusei audio. Without a key the free service often answers "wait N seconds";
 // like its official browser example, keep waiting and retrying (up to ~25 s in total).
-let questLastErr="";
+let questLastErr="",questQ=Promise.resolve();
 async function questUrl(text){
   const key=vvSpeaker()+"|"+text;
   if(questCache.has(key))return questCache.get(key);
@@ -901,6 +909,8 @@ async function questUrl(text){
     const qk=(S.settings.questKey||"").trim();
     const url=`${QUEST_API}?speaker=${vvSpeaker()}&text=${encodeURIComponent(text)}${qk?"&key="+encodeURIComponent(qk):""}`;
     let waited=0;
+    const prev=questQ;let release;questQ=new Promise(r=>release=r);await prev;
+    try{
     for(let attempt=0;attempt<6;attempt++){
       let r,j;
       vlog("… tts.quest request ("+text.length+" chars)");
@@ -913,6 +923,7 @@ async function questUrl(text){
       questLastErr=j.errorMessage||("HTTP "+r.status);throw new Error(questLastErr);
     }
     questLastErr="busy for too long";throw new Error(questLastErr);
+    }finally{release();}
   })();
   questCache.set(key,p);p.catch(()=>questCache.delete(key));
   if(questCache.size>80)questCache.delete(questCache.keys().next().value);
@@ -1015,12 +1026,16 @@ async function speakQuest(segs,rate,text,opts){
   const recUrl=sg=>{const k=recKey(sg.t);return RECORDED.has(k)?recUrlFor(k):null;};
   const jobs=segs.map(sg=>sg.k!=="ja"?null:prepClip(recUrl(sg)||questUrl(vvText(sg.t)),my));
   jobs.forEach(j=>j&&j.catch(()=>{}));
+  const t0=Date.now(),LATE={};
   try{
     for(let i=0;i<segs.length;i++){
       if(my!==natSeq)return;
       if(!jobs[i]){await sayDevice(segs[i].t.trim(),"en-US",rate);continue;}
       // (with enVoice "ryusei" every segment is sent as "ja", so it never reaches the iPhone English voice unless the service fails)
-      natLoading=true;let clip=null;try{clip=await jobs[i];}catch(e){
+      natLoading=true;let clip=null;
+      const wait=Math.max(2500,(i?0:7000)-(Date.now()-t0));
+      try{clip=await Promise.race([jobs[i],new Promise(r=>setTimeout(()=>r(LATE),wait))]);
+        if(clip===LATE){clip=null;vlog("… Ryusei not ready after "+(wait/1000).toFixed(1)+" s, iPhone voice says this part (tts.quest busy)");}}catch(e){
         if(!questNote){questNote=true;toast("Ryusei's voice didn't answer ("+e.message+"). Tap Me → Voice → Test Ryusei for details.",4500);}}
       natLoading=false;if(my!==natSeq)return;
       if(clip){await synthIdle(6000);if(my!==natSeq)return;
@@ -1066,6 +1081,15 @@ function speakDevice(text,opts){
   });
 }
 function stopSpeak(){if(synth)synth.cancel();stopNatural();}
+// "Say it again": a full reset of both voices first (iPhone sometimes leaves the speech engine or the
+// audio player stuck after many replies), done inside the tap so the fresh player is allowed to play.
+function resetAudio(){
+  stopSpeak();try{if(synth){synth.cancel();if(synth.paused)synth.resume();}}catch(e){}
+  if(qa){try{qa.onended=qa.onerror=qa.onplaying=qa.ontimeupdate=null;qa.pause();qa.removeAttribute("src");qa.load();}catch(e){}}
+  qa=null;playId++;const a=questPlayer();a.src=SILENT_MP3;a.play().then(()=>{a.dataset.ok="1";}).catch(()=>{});
+  vlog("↺ voice reset");
+}
+function sayAgain(m){if(!m)return;resetAudio();if(UI.voice){UI.vstate="speaking";renderVoice();}speak(m.text,{say:m.say});}
 // Is any voice (iPhone or natural) talking right now?
 function isSpeaking(){return natBusy||natPlaying||natLoading||(synth&&(synth.speaking||synth.pending));}
 let unlocked=false;
@@ -2035,7 +2059,7 @@ function renderVoice(){
     <span class="vlen">${[["tiny","Very short"],["short","Short"],["normal","Normal"]].map(([v,t])=>`<button class="vopt${len===v?" on":""}" data-act="vLen" data-v="${v}">${t}</button>`).join("")}</span></div>
    <div class="orbwrap${activeCourse()?" compact":""}"><div class="orb ${st}">ゆ</div><div class="vstat">${label}</div>
     ${activeCourse()?`<div class="vchips">${talkChips()}</div>${courseDoneCard(true)}${activeCourse().keep?`<button class="vopt on" data-act="courseDone" style="margin-top:6px">✓ Finish lesson</button>`:""}`:""}
-    <div class="vcap">${UI.listening?`<div class="vtext vlive">${UI.vyou?esc(UI.vyou):"…"}</div>`:`<div class="vtext${cc?"":" off"}">${cap}</div><div class="vyou">${UI.vyou?"You: "+esc(UI.vyou):""}</div>`}</div></div>
+    <div class="vcap">${UI.listening?`<div class="vtext vlive">${UI.vyou?esc(UI.vyou):"…"}</div>`:`<div class="vtext${cc?"":" off"}">${cap}</div>${last&&!last.err?`<button class="vopt again" data-act="vRepeat">🔁 Say it again</button>`:""}<div class="vyou">${UI.vyou?"You: "+esc(UI.vyou):""}</div>`}</div></div>
    ${UI.listening?`<div class="vctrl">
     <button class="vbtn" data-act="vCancel"><i>✕</i>Cancel</button>
     ${MIC.paused?`<button class="micbtn ${UI.micLang==="ja-JP"?"ja":"en"}" data-act="vMic" data-v="${UI.micLang}" aria-label="Keep talking"><span>🎤</span>Continue</button>`:`<button class="micbtn ${other==="ja-JP"?"ja":"en"} alt" data-act="vMic" data-v="${other}" aria-label="Continue in ${other==="ja-JP"?"Japanese":"English"}"><span>⇄</span>${other==="ja-JP"?"+ 日本語":"+ English"}</button>`}
@@ -2127,7 +2151,7 @@ const ACT={
     if(UI.listening){if(MIC.paused||lang!==UI.micLang){resumeMic(lang);return;}stopMic();return;}
     const inp=$("#inp");const before=inp?inp.value.trim():"";
     startMic(t=>{if(inp){inp.value=(before?before+" ":"")+t;inp.dispatchEvent(new Event("input"));}},()=>{const i=$("#inp");if(i)i.focus();},lang);},
-  sayMsg:el=>{const m=S.chat[+el.dataset.i];if(m)speak(m.text,{say:m.say});},
+  sayMsg:el=>sayAgain(S.chat[+el.dataset.i]),
   sayText:el=>speak(el.dataset.text,{rate:0.8}),
   reveal:el=>el.classList.toggle("show"),
   recSet:el=>{S.settings.jaRec=el.dataset.v;save();rerender();if(el.dataset.v!=="off")speak("ともだち",{});},
@@ -2196,7 +2220,7 @@ const ACT={
   vHands:()=>{S.settings.handsFree=!S.settings.handsFree;save();renderVoice();toast(S.settings.handsFree?"🙌 Yuki tries to listen after she talks (iPhone may still need a tap)":"✋ Tap 🎤 yourself to answer",2500);},
   vLen:el=>{S.settings.style.length=el.dataset.v;save();renderVoice();},
   vCaptions:()=>{S.settings.captions=!S.settings.captions;save();renderVoice();},
-  vRepeat:()=>{const l=[...S.chat].reverse().find(m=>m.role==="assistant"&&!m.err);if(l){UI.vstate="speaking";renderVoice();speak(l.text,{say:l.say});}},
+  vRepeat:()=>sayAgain([...S.chat].reverse().find(m=>m.role==="assistant"&&!m.err)),
   vSlow:()=>{const l=[...S.chat].reverse().find(m=>m.role==="assistant"&&!m.err);if(l){UI.vstate="speaking";renderVoice();speak(l.text,{rate:0.6,say:l.say});}},
   micLang:el=>{S.settings.micLang=el.dataset.v;save();toast(el.dataset.v==="ja-JP"?"🎤 Listening for Japanese — speak Japanese and it types in Japanese":"🎤 Listening for English",2200);if(UI.voice)renderVoice();else rerender();},
   review:()=>startDeck("all"),
