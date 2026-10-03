@@ -113,6 +113,11 @@ Safari → Add to Home Screen.
   tts.quest `questReady`, then download into memory with `toBlobUrl`, cached) while the iPhone voice is
   still talking, so each clip starts the moment the English ends. The 120 ms gap before the iPhone voice
   only applies right after a clip (`clipEndAt`).
+  Ryusei never holds Yuki up: if a clip isn't ready 2.5 s after its turn (7 s for the first one), the
+  iPhone voice says that part. tts.quest requests go one at a time (`questQ`; bursts trigger "wait").
+  An iPhone line that hasn't started after 1.8 s is cancelled and tried once more (`sayChunk`).
+  "🔁 Say it again" (call screen, under the captions; also Repeat and the chat 🔊) runs `sayAgain()`:
+  `resetAudio()` fully resets the speech engine and makes a fresh audio player inside the tap.
   iPhone audio session: left on "auto" (forcing "playback" could silence speechSynthesis);
   "play-and-record" only while the mic is actually listening, then back to "auto" (keeping
   "play-and-record" for a whole call makes voices sound muffled/telephone-like).
