@@ -55,11 +55,11 @@ input,textarea,select{font:inherit;font-size:16px;color:var(--text)}
 .row.done .ri{background:#2f4426}
 .chips{display:flex;gap:6px;overflow-x:auto;padding:2px 0 4px;scrollbar-width:none}
 .chips::-webkit-scrollbar{display:none}
-.chip{flex-shrink:0;background:var(--ink3);border:1px solid var(--line);border-radius:999px;padding:7px 13px;font-size:13.5px;white-space:nowrap}
+.chip{flex-shrink:0;display:inline-flex;align-items:center;min-height:44px;background:var(--ink3);border:1px solid var(--line);border-radius:999px;padding:0 14px;font-size:13.5px;white-space:nowrap}
 .chip.on{background:#4a2c3c;border-color:var(--sakura);color:var(--sakura)}
 .btn{display:block;width:100%;padding:15px;border-radius:14px;font-weight:700;font-size:16px;background:linear-gradient(140deg,var(--sakura),var(--sakura2));color:#2a1520;text-align:center}
 .btn.ghost{background:var(--ink3);color:var(--text);border:1px solid var(--line)}
-.btn.sm{padding:10px;font-size:14px}
+.btn.sm{padding:10px;font-size:14px;min-height:44px}
 .stat3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
 .stat{background:var(--ink);border-radius:12px;padding:12px 6px;text-align:center}
 .stat b{display:block;font-size:22px}
@@ -73,6 +73,7 @@ input,textarea,select{font:inherit;font-size:16px;color:var(--text)}
 .toggle{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--line);font-size:15px}
 .toggle:last-child{border-bottom:none}
 .sw{width:50px;height:30px;border-radius:15px;background:var(--line);position:relative;transition:.2s;flex-shrink:0}
+.sw::before{content:"";position:absolute;inset:-7px -4px}
 .sw::after{content:"";position:absolute;top:3px;left:3px;width:24px;height:24px;border-radius:50%;background:#fff;transition:.2s}
 .sw.on{background:var(--matcha)}
 .sw.on::after{left:23px}
@@ -82,7 +83,7 @@ input,textarea,select{font:inherit;font-size:16px;color:var(--text)}
 .chathead .ct{flex:1;min-width:0}
 .chathead .ct b{display:block;font-size:15px}
 .chathead .ct small{display:block;color:var(--dim);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.mini{background:var(--ink3);border:1px solid var(--line);border-radius:10px;padding:7px 10px;font-size:13px;font-weight:700}
+.mini{display:inline-flex;align-items:center;justify-content:center;min-height:44px;min-width:44px;background:var(--ink3);border:1px solid var(--line);border-radius:12px;padding:0 12px;font-size:13px;font-weight:700}
 .mini.ok{border-color:var(--matcha);color:var(--matcha)}
 .iconbtn{width:44px;height:44px;border-radius:14px;background:var(--ink3);border:1px solid var(--line);font-size:20px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .iconbtn.live{background:#4a2630;border-color:var(--red);animation:throb 1.2s infinite}
@@ -95,11 +96,11 @@ input,textarea,select{font:inherit;font-size:16px;color:var(--text)}
 .m.a .av{width:30px;height:30px;font-size:14px;margin-top:2px}
 .bubwrap{display:flex;flex-direction:column;gap:4px;max-width:84%}
 .bubwrap .bub{max-width:100%}
-.say{align-self:flex-start;font-size:13px;color:var(--dim);padding:4px 8px;border-radius:8px;background:var(--ink3)}
+.say{align-self:flex-start;min-height:44px;font-size:13px;color:var(--dim);padding:0 12px;border-radius:10px;background:var(--ink3)}
 .bub code{background:var(--ink3);padding:1px 5px;border-radius:5px}
 .listen{display:inline-flex;flex-direction:column;gap:4px;margin:4px 0}
-.play{background:var(--sky);color:#0f2235;font-weight:800;border-radius:10px;padding:8px 14px;font-size:14px}
-.hid{filter:blur(6px);font-size:14px;color:var(--dim)}
+.play{min-height:44px;background:var(--sky);color:#0f2235;font-weight:800;border-radius:10px;padding:0 16px;font-size:14px}
+.hid{filter:blur(6px);font-size:14px;color:var(--dim);padding:8px 0;cursor:pointer}
 .hid.show{filter:none}
 .err{background:#3a2026;border:1px solid #6b3340;border-radius:14px;padding:12px;font-size:14px;line-height:1.5}
 .dots{display:flex;gap:5px;padding:4px 2px}
@@ -292,7 +293,22 @@ async function loadState(){
   let raw=null;
   if(lsOK){try{raw=localStorage.getItem(KEY);}catch(e){}}
   else if(window.storage){try{const r=await window.storage.get(KEY);raw=r&&r.value;}catch(e){}}
-  if(raw){try{S=merge(JSON.parse(JSON.stringify(DEFAULT)),JSON.parse(raw));}catch(e){}}
+  if(raw){try{S=migrate(merge(JSON.parse(JSON.stringify(DEFAULT)),JSON.parse(raw)));}catch(e){}}
+}
+// Upgrades older or damaged saves in place so progress is never wiped.
+// When the shape of S changes, bump DEFAULT.v and add a step here.
+function migrate(st){
+  const arr=x=>Array.isArray(x)?x:[], num=x=>Number.isFinite(+x)?+x:0;
+  const obj=x=>x&&typeof x==="object"&&!Array.isArray(x)?x:{};
+  ["facts","weak","strong","learned"].forEach(k=>st.profile[k]=arr(st.profile[k]).map(String));
+  ["msgs","quizRight","quizWrong","cards","streak"].forEach(k=>st.stats[k]=num(st.stats[k]));
+  st.done=arr(st.done);st.chat=arr(st.chat).filter(m=>m&&typeof m.text==="string");st.cards=obj(st.cards);
+  for(const id in st.cards){const c=st.cards[id];if(!CARDS[id]||!c||typeof c!=="object")delete st.cards[id];else{c.box=Math.max(0,Math.min(6,num(c.box)));c.due=num(c.due);}}
+  if(!LV[st.level])st.level="n5";
+  if(st.currentLesson&&!lessonById(st.currentLesson))st.currentLesson=null;
+  if(!["claude-haiku-4-5-20251001","claude-sonnet-5-5"].includes(st.settings.model))st.settings.model=DEFAULT.settings.model;
+  st.v=DEFAULT.v;
+  return st;
 }
 let saveT=null;
 function save(){clearTimeout(saveT);saveT=setTimeout(()=>{const d=JSON.stringify(S);if(lsOK){try{localStorage.setItem(KEY,d);return;}catch(e){}}if(window.storage){window.storage.set(KEY,d).catch(()=>{});}},150);}
@@ -445,16 +461,19 @@ function buildMessages(){
   });
   return msgs;
 }
-async function callAI(mode){
+// One place that talks to the Anthropic API. With no key saved, it sends no auth
+// (that only works inside Claude's own preview); otherwise it uses your key.
+async function apiRequest(body){
   const key=S.settings.apiKey.trim();
   const headers={"Content-Type":"application/json"};
   let model="claude-sonnet-4-6";
   if(key){headers["x-api-key"]=key;headers["anthropic-version"]="2023-06-01";headers["anthropic-dangerous-direct-browser-access"]="true";model=S.settings.model;}
-  const res=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers,body:JSON.stringify({model,max_tokens:1000,system:systemPrompt(mode),messages:buildMessages()})});
+  const res=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers,body:JSON.stringify({model,...body})});
   let data=null;try{data=await res.json();}catch(e){}
   if(!res.ok||!data||data.error){const msg=(data&&data.error&&data.error.message)||("HTTP "+res.status);const err=new Error(msg);err.status=res.status;throw err;}
   return (data.content||[]).map(b=>b.text||"").join("").trim();
 }
+function callAI(mode){return apiRequest({max_tokens:1000,system:systemPrompt(mode),messages:buildMessages()});}
 function parseMem(raw){
   const i=raw.lastIndexOf("<<MEM>>");
   if(i<0)return{text:raw,mem:{}};
@@ -805,10 +824,8 @@ const ACT={
   toggle:el=>{const k=el.dataset.k;S.settings[k]=!S.settings[k];save();el.classList.toggle("on",S.settings[k]);},
   saveKey:()=>{S.settings.apiKey=$("#keyIn").value.trim();save();toast(S.settings.apiKey?"Key saved on this phone 🔐":"Key removed");render();},
   testAI:async()=>{const v=$("#keyIn");if(v){S.settings.apiKey=v.value.trim();save();}toast("Calling Yuki…");
-    try{const key=S.settings.apiKey;const h={"Content-Type":"application/json"};let model="claude-sonnet-4-6";if(key){h["x-api-key"]=key;h["anthropic-version"]="2023-06-01";h["anthropic-dangerous-direct-browser-access"]="true";model=S.settings.model;}
-      const r=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:h,body:JSON.stringify({model,max_tokens:60,messages:[{role:"user",content:"Say a one-line cheerful hello in Japanese with English in brackets."}]})});
-      const d=await r.json();if(!r.ok||d.error)throw new Error((d.error&&d.error.message)||r.status);
-      const t=(d.content||[]).map(b=>b.text||"").join("");toast("✅ "+t,4000);speak(t);}
+    try{const t=await apiRequest({max_tokens:60,messages:[{role:"user",content:"Say a one-line cheerful hello in Japanese with English in brackets."}]});
+      toast("✅ "+t,4000);speak(t);}
     catch(e){toast("❌ "+e.message,5000);}},
   keyHelp:()=>sheet(`<div class="h2" style="margin-bottom:10px">Getting Yuki's brain (API key)</div><ol>
     <li>Go to <b>console.anthropic.com</b> in Safari and sign up.</li>
@@ -821,7 +838,7 @@ const ACT={
   exportData:()=>{const d=JSON.stringify({...S,settings:{...S.settings,apiKey:""}});sheet(`<div class="h2">Backup</div><p class="sub" style="margin:8px 0">Copy this and keep it somewhere safe (Notes works). Your API key isn't included.</p><textarea class="field" rows="6" readonly>${esc(d)}</textarea><button class="btn" data-act="copyBackup">Copy</button><button class="btn ghost" style="margin-top:8px" data-act="closeSheet">Close</button>`);},
   copyBackup:()=>{const t=document.querySelector("#sheet textarea");if(navigator.clipboard)navigator.clipboard.writeText(t.value).then(()=>toast("Copied"),()=>{t.select();toast("Select all and copy");});else{t.select();toast("Select all and copy");}},
   importData:()=>sheet(`<div class="h2">Restore</div><p class="sub" style="margin:8px 0">Paste a backup below.</p><textarea id="impT" class="field" rows="6"></textarea><button class="btn" data-act="doImport">Restore</button><button class="btn ghost" style="margin-top:8px" data-act="closeSheet">Cancel</button>`),
-  doImport:()=>{try{const d=JSON.parse($("#impT").value);const key=S.settings.apiKey;S=merge(JSON.parse(JSON.stringify(DEFAULT)),d);S.settings.apiKey=key;save();closeSheet();toast("Restored ✅");render();}catch(e){toast("That doesn't look like a backup");}},
+  doImport:()=>{try{const d=JSON.parse($("#impT").value);const key=S.settings.apiKey;S=migrate(merge(JSON.parse(JSON.stringify(DEFAULT)),d));S.settings.apiKey=key;save();closeSheet();toast("Restored ✅");render();}catch(e){toast("That doesn't look like a backup");}},
   clearChat:()=>{if(confirm("Clear the chat? Your progress and what Yuki knows about you stay.")){S.chat=[];S.currentLesson=null;save();toast("Chat cleared");}},
   resetAll:()=>{if(confirm("Erase EVERYTHING — progress, cards, memory, chat?")){const key=S.settings.apiKey;S=JSON.parse(JSON.stringify(DEFAULT));S.settings.apiKey=key;UI.ob=0;UI.tab="home";save();render();}},
   closeSheet:()=>closeSheet()
