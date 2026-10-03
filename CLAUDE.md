@@ -50,7 +50,9 @@ Safari → Add to Home Screen.
 - **Yuki the AI tutor**: 26, from Kyoto, warm and playful, corrects mistakes clearly.
   Calls the Anthropic Messages API directly from the browser (`apiRequest()`) using the
   owner's API key, which is saved only in localStorage (never in the repo).
-  Default model: `claude-haiku-4-5-20251001`. Optional "Smart" model: `claude-sonnet-5-5`
+  Default model: `claude-haiku-4-5-20251001`. Calls always use Haiku (`FAST_MODEL`, `apiRequest(body,cheap)`), at
+  most 6 recent messages, max_tokens 400, and a shorter system prompt (no chat-only rules). Note: Haiku 4.5
+  only caches prompts of 4096+ tokens, so Yuki's prompt isn't cached on Haiku; savings come from sending less. Optional "Smart" model: `claude-sonnet-5-5`
   (sent with `output_config.effort:"low"` and server-side fallbacks; Haiku 4.5 rejects effort).
   The system prompt is two blocks: a stable one (persona, learner card, style rules; marked
   `cache_control`) and `memoryPrompt()` (memory, stats, current lesson) which changes per turn.
@@ -107,6 +109,10 @@ Safari → Add to Home Screen.
   A clip counts as played once it has started (`playUrl`, `playId`): an error after it started, or 3 s
   without progress, ends it instead of retrying, so Ryusei never repeats a sentence. Retries (stream,
   then a few tries of the finished file) only happen if no sound came out at all.
+  No gaps when switching voices: `speakQuest` prepares every Ryusei clip up front (`prepClip`: wait for
+  tts.quest `questReady`, then download into memory with `toBlobUrl`, cached) while the iPhone voice is
+  still talking, so each clip starts the moment the English ends. The 120 ms gap before the iPhone voice
+  only applies right after a clip (`clipEndAt`).
   iPhone audio session: left on "auto" (forcing "playback" could silence speechSynthesis);
   "play-and-record" only while the mic is actually listening, then back to "auto" (keeping
   "play-and-record" for a whole call makes voices sound muffled/telephone-like).
