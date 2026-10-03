@@ -273,6 +273,7 @@ input,textarea,select{font:inherit;font-size:16px;color:var(--text)}
 .obnav{display:flex;gap:8px;margin-top:18px}
 .obnav .btn{flex:1}
 .obnav .btn.ghost{flex:0 0 96px}
+.qzrev{margin-top:12px;font-size:15px;color:var(--dim);text-align:center}
 /* corrections under your messages */
 .ubw{display:flex;flex-direction:column;align-items:flex-end;max-width:86%}
 .ubw .bub{max-width:100%}
@@ -364,7 +365,7 @@ input,textarea,select{font:inherit;font-size:16px;color:var(--text)}
 <script>
 "use strict";
 // Bump this on every change so phones can spot a new version and offer to update
-const APP_VERSION="2026.10.05-6";
+const APP_VERSION="2026.10.05-7";
 /* ============ DATA ============ */
 const LV = {
   n5:{label:"N5",name:"Beginner",color:"#9fd67c"},
@@ -1376,7 +1377,7 @@ ${sayWanted()?`SPOKEN VERSION (very important)
 Your reply is read aloud by a Japanese-only voice that cannot read English letters. Just before the memory line, add one line starting with <<SAY>> followed by the WHOLE reply rewritten for that voice: keep Japanese as it is, write every English word in katakana the way it sounds (e.g. "Great job! Now say hello." → グレート ジョブ！ ナウ セイ ハロー。), and drop emojis, romaji in brackets, markdown and symbols. Never mention this line.
 
 `:""}CORRECTION LINE (very important)
-Whenever the student's latest message is their own sentence containing Japanese (kana, kanji or romaji), add one line just before the memory line: <<FIX>> followed by compact JSON {"ja":"their sentence as correct, natural Japanese with proper punctuation (、。？！), written at their reading level (kana, kanji only with the reading in brackets for beginners)","en":"a natural English translation with proper capitals, commas and full stops","ok":true if what they wrote was already correct (punctuation and spaces from voice typing don't count as mistakes),"why":"if not ok: the main fix in a few words"}. Skip it for English-only messages and app commands. The app shows this under their message, so in your visible reply just mention the key fix briefly (or not at all if it was fine); on a call, say the key fix out loud in a few words. Never mention this line.
+Whenever the student's latest message is their own sentence containing Japanese (kana, kanji or romaji), add one line just before the memory line: <<FIX>> followed by compact JSON {"ja":"their sentence as correct, natural Japanese with proper punctuation (、。？！), written at their reading level (kana, kanji only with the reading in brackets for beginners)","en":"a natural English translation with proper capitals, commas and full stops","ok":true if what they wrote was already correct (punctuation and spaces from voice typing don't count as mistakes),"why":"if not ok: the main fix in a few words"}. If their sentence is in English (e.g. they spoke English to you), still add the line, with "en" = their sentence with grammar, capitals and punctuation fixed, "ja" = how to say it in natural Japanese at their level, and "ok"/"why" about their English. Skip it only for app commands and requests to you (like "quiz me", "next", "give me a hint"). The app shows this under their message, so in your visible reply just mention the key fix briefly (or not at all if it was fine); on a call, say the key fix out loud in a few words. Never mention this line.
 
 MEMORY (very important)
 At the very end of EVERY reply, on its own line, write <<MEM>> followed by compact JSON with anything NEW from this turn. Fields (all optional): "facts" (things about the student's life, interests or preferences), "weak" (specific items they got wrong or struggle with), "strong" (things they clearly mastered), "learned" (new words or patterns taught, as "word = meaning"), "right" (number of quiz answers correct this turn), "wrong" (number incorrect this turn), "lessonDone" (true only when the current lesson's core is mastered), "used" (only during conversation practice: target words the student used correctly this turn), "path" (short lesson topics to add to their learning path, like ["Ordering ramen"], only when they ask you to add or change something in their path or plan, or when a clear gap needs its own lesson; at most 2). If nothing new: <<MEM>>{}. Never mention this line to the student.`;
@@ -2153,13 +2154,18 @@ function vChat(){
 }
 function rerenderChatHead(){const box=$("#msgs");const y=box?box.scrollTop:0;render();const b=$("#msgs");if(b)b.scrollTop=y||b.scrollHeight;}
 // Under your message: the correct Japanese (tap 🔊 to hear it) and a proper English translation
-function fixHTML(f){
-  return`<div class="fix${f.ok?" ok":""}"><div class="fxh"><b>${f.ok?"✓ Perfect":"✏️ Better"}</b>${f.ja?`<button class="fxs" data-act="sayText" data-text="${esc(f.ja)}" aria-label="Hear it">🔊</button>`:""}</div>
+function fixHTML(f,said){
+  const en=said!=null&&!JP.test(said);  // you spoke English: your fixed English first, then how to say it in Japanese
+  const say=f.ja?`<button class="fxs" data-act="sayText" data-text="${esc(f.ja)}" aria-label="Hear it">🔊</button>`:"";
+  if(en)return`<div class="fix${f.ok?" ok":""}"><div class="fxh"><b>${f.ok?"✓ Good English":"✏️ Better English"}</b></div>
+   ${f.en?`<div class="fj">${esc(f.en)}</div>`:""}${!f.ok&&f.why?`<div class="fw">💡 ${esc(f.why)}</div>`:""}
+   ${f.ja?`<div class="fxh" style="margin-top:4px"><b style="color:var(--sky)">🇯🇵 In Japanese</b>${say}</div><div class="fj">${esc(f.ja)}</div>`:""}</div>`;
+  return`<div class="fix${f.ok?" ok":""}"><div class="fxh"><b>${f.ok?"✓ Perfect":"✏️ Better"}</b>${say}</div>
    ${f.ja?`<div class="fj">${esc(f.ja)}</div>`:""}${f.en?`<div class="fe">🇬🇧 ${esc(f.en)}</div>`:""}${!f.ok&&f.why?`<div class="fw">💡 ${esc(f.why)}</div>`:""}</div>`;
 }
 function emptyChat(){return`<div style="text-align:center;padding:30px 10px" class="sub"><div class="av big" style="margin:0 auto 12px">ゆ</div>Ask me anything, or try one of the buttons below.</div>`;}
 function msgHTML(m,i){
-  if(m.role==="user")return`<div class="m u" data-i="${i}"><div class="ubw"><div class="bub">${esc(m.text)}</div>${m.fix?fixHTML(m.fix):""}</div></div>`;
+  if(m.role==="user")return`<div class="m u" data-i="${i}"><div class="ubw"><div class="bub">${esc(m.text)}</div>${m.fix?fixHTML(m.fix,m.text):""}</div></div>`;
   // Yuki's avatar only on the first of several messages in a row
   const prev=S.chat[i-1],cont=prev&&prev.role==="assistant";
   const av=cont?`<div style="width:30px;flex-shrink:0"></div>`:`<div class="av" style="width:30px;height:30px;font-size:14px;margin-top:2px">ゆ</div>`;
@@ -2201,9 +2207,51 @@ function vLearn(){
   </div>`;
 }
 
+/* ---- Multiple-choice quiz from the cards you've learned: no audio, no reading until you answer ---- */
+const cardKind=id=>/^[hk]:/.test(id)?"kana":id.startsWith("j:")?"kanji":"word";
+const firstReading=c=>String(c.sub||"").split(/[・,、/]/)[0].replace(/[()（）]/g,"").trim();
+function buildQz(kind){
+  const learned=Object.keys(S.cards).filter(i=>CARDS[i]&&(kind==="all"||cardKind(i)===kind));
+  if(!learned.length)return null;
+  const pick=shuffle(learned.slice()).sort((a,b)=>(S.cards[a].due<=Date.now()?0:1)-(S.cards[b].due<=Date.now()?0:1)).slice(0,10);
+  const pool=k=>Object.keys(CARDS).filter(i=>cardKind(i)===k);
+  return shuffle(pick).map(id=>{
+    const c=CARDS[id],k=cardKind(id),P=pool(k);
+    const types=k==="kana"?["sound","kana"]:k==="kanji"&&firstReading(c)?["meaning","reading"]:["meaning","word"];
+    const type=types[Math.floor(Math.random()*types.length)];
+    const val={sound:x=>CARDS[x].back,kana:x=>CARDS[x].front,meaning:x=>CARDS[x].back,word:x=>CARDS[x].front,reading:x=>firstReading(CARDS[x])}[type];
+    const answer=val(id),others=[...new Set(shuffle(P.filter(x=>x!==id)).map(val).filter(v=>v&&v!==answer))].slice(0,3);
+    const prompt=type==="kana"||type==="word"?c.back:c.front;
+    const ask={sound:"What sound is this?",kana:"Which character is this sound?",meaning:"What does this mean?",word:"How do you say this in Japanese?",reading:"How is this kanji read?"}[type];
+    return{id,type,prompt,answer,ask,opts:shuffle([answer,...others])};
+  });
+}
+function startQz(kind){
+  const qs=buildQz(kind||"all");
+  if(!qs){toast("Learn a few cards first (path lessons or a deck in Practice), then quiz yourself");return;}
+  stopSpeak();UI.fc=null;UI.qz={kind:kind||"all",qs,i:0,picked:null,right:0,missed:[]};if(UI.tab!=="practice")UI.tab="cards";render();
+}
+function vQuiz(){
+  const z=UI.qz;
+  if(z.i>=z.qs.length){const n=z.qs.length,pc=Math.round(z.right/n*100);
+    return`<div class="pad" style="text-align:center;padding-top:40px"><div style="font-size:60px">${pc===100?"🏆":pc>=70?"🌸":"💪"}</div>
+     <div class="h1" style="margin:10px 0">${z.right}/${n} right</div><p class="sub">${pc===100?"Perfect! You really know these.":pc>=70?"Nice work — a few to polish.":"Good practice. The missed ones will come back sooner."}</p>
+     ${z.missed.length?`<div class="card" style="margin-top:16px;text-align:left"><b>To review</b><div class="tags" style="margin-top:8px">${[...new Set(z.missed)].map(id=>`<button class="tg w" data-act="sayText" data-text="${esc(CARDS[id].say)}">${esc(CARDS[id].front)} · ${esc(CARDS[id].back)}</button>`).join("")}</div></div>`:""}
+     <button class="btn" style="margin-top:14px" data-act="qzStart" data-k="${z.kind}">🧠 New quiz</button>
+     <button class="btn ghost" style="margin-top:8px" data-act="qzClose">Done</button></div>`;}
+  const q=z.qs[z.i],c=CARDS[q.id],p=z.picked,jpPrompt=q.type!=="kana"&&q.type!=="word";
+  return`<div class="pad"><div style="display:flex;justify-content:space-between;align-items:center"><button class="mini" data-act="qzClose">✕ Stop</button><span class="sub">🧠 ${z.i+1} / ${z.qs.length} · ${z.right} right</span></div>
+   <div class="bar"><i style="width:${Math.round(z.i/z.qs.length*100)}%"></i></div>
+   <p class="sub lpk">${q.ask}</p>
+   <div class="qcard"><div class="${jpPrompt?"wjp":"qen2"}">${esc(q.prompt)}</div>
+    ${p!=null?`<div class="qzrev">${esc(c.front)}${c.sub?` · ${esc(c.sub)}`:""} — ${esc(c.back)} <button class="mini" data-act="sayText" data-text="${esc(c.say)}" style="margin-left:6px">🔊</button></div>`:""}</div>
+   <div class="opts">${q.opts.map(o=>{const st=p==null?"":o===q.answer?" right":o===p?" wrong":" dim";return`<button class="opt${st}" data-act="qzPick" data-v="${esc(o)}"${p!=null?" disabled":""}><b>${esc(o)}</b></button>`;}).join("")}</div>
+   ${p!=null?`<div class="fb ${p===q.answer?"ok":"no"}">${p===q.answer?"✓ Correct!":"✗ It's <b>"+esc(q.answer)+"</b>"}</div><button class="btn" data-act="qzNext">${z.i<z.qs.length-1?"Next":"See my score"}</button>`:""}</div>`;
+}
 // Cards tab: every card you've learned (not the ones still to come), with practice buttons and a list
 const CARD_KIND={all:["All",()=>true],words:["Words",i=>/^[wv]:/.test(i)],kana:["Kana",i=>/^[hk]:/.test(i)],kanji:["Kanji",i=>i.startsWith("j:")]};
 function vCards(){
+  if(UI.qz)return vQuiz();
   if(UI.fc)return vCard();
   const f=UI.cardsF||"all",all=Object.keys(S.cards).filter(i=>CARDS[i]),ids=all.filter(CARD_KIND[f][1]).sort((a,b)=>S.cards[a].box-S.cards[b].box||CARDS[a].front.localeCompare(CARDS[b].front));
   const due=dueIds(all).length,strong=all.filter(i=>S.cards[i].box>=4).length,dots=b=>"●".repeat(Math.min(6,b))+"○".repeat(6-Math.min(6,b));
@@ -2211,6 +2259,8 @@ function vCards(){
   <div class="card"><div class="stat3"><div class="stat"><b style="color:var(--sakura)">${all.length}</b><span>learned</span></div><div class="stat"><b style="color:var(--gold)">${due}</b><span>due now</span></div><div class="stat"><b style="color:var(--matcha)">${strong}</b><span>know well</span></div></div></div>
   ${all.length?`<button class="btn" data-act="deck" data-d="mine">${due?`▶ Review ${Math.min(due,20)} due card${due===1?"":"s"}`:"▶ Practise my weakest cards"}</button>
   <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:8px">${["words","kana","kanji"].map(k=>{const n=all.filter(CARD_KIND[k][1]).length;return n?`<button class="btn sm ghost" data-act="deck" data-d="mine-${k}">▶ ${CARD_KIND[k][0]} ${n}</button>`:`<button class="btn sm ghost" disabled style="opacity:.4">${CARD_KIND[k][0]} 0</button>`;}).join("")}</div>
+  <div class="sec">🧠 Quiz yourself · multiple choice, no hints</div>
+  <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px">${Object.entries(CARD_KIND).map(([k,[t,fn]])=>{const n=all.filter(fn).length;return`<button class="btn sm${k==="all"?"":" ghost"}" data-act="qzStart" data-k="${k}"${n?"":` disabled style="opacity:.4"`}>🧠 ${k==="all"?"Quiz me":t}${n?` (${n})`:""}</button>`;}).join("")}</div>
   <div class="chips" style="margin:16px 0 8px">${Object.entries(CARD_KIND).map(([k,[t,fn]])=>`<button class="chip${f===k?" on":""}" data-act="cardsF" data-v="${k}">${t} · ${all.filter(fn).length}</button>`).join("")}</div>
   ${ids.length?`<div class="card" style="padding:2px 12px">${ids.map(i=>{const c=CARDS[i],sc=S.cards[i],isDue=sc.due<=Date.now();return`<button class="wbrow" data-act="sayText" data-text="${esc(c.say)}"><span class="wbj">${esc(c.front)}</span><span class="wbe">${esc(c.back)}${c.sub?`<small>${esc(c.sub)}</small>`:""}</span><span class="wbd">${isDue?`<em class="due">due</em>`:""}${dots(sc.box)}</span></button>`;}).join("")}</div>`:`<p class="sub">Nothing learned in this group yet.</p>`}
   <p class="sub" style="margin-top:8px">Tap a card to hear it. ●●●●●● = you know it well. Cards come back for review just before you'd forget them.</p>`
@@ -2218,6 +2268,7 @@ function vCards(){
   </div>`;
 }
 function vPractice(){
+  if(UI.qz)return vQuiz();
   if(UI.fc)return vCard();
   if(UI.chart)return vChart();
   const weak=S.profile.weak.slice(-6).reverse();
@@ -2228,7 +2279,8 @@ function vPractice(){
   <div class="grid2" style="margin:-2px 0 4px"><button class="btn sm ghost" data-act="wodAdd">${inDeck?"✓ In flashcards":"＋ Flashcards"}</button><button class="btn sm ghost" data-act="wodYuki">💬 Use it with Yuki</button></div>
   ${dueIds(Object.keys(S.cards)).length?`<button class="row" data-act="review" style="margin-top:12px;border-color:var(--sakura)"><span class="ri">🔁</span><span class="rt"><b>Review ${dueIds(Object.keys(S.cards)).length} due cards</b><span>All decks mixed · about ${Math.max(1,Math.round(Math.min(20,dueIds(Object.keys(S.cards)).length)/4))} min</span></span></button>`:""}
   ${weak.length?`<div class="sec">Yuki noticed you struggle with</div><div class="card"><div class="tags">${weak.map(w=>`<span class="tg w">${esc(w)}</span>`).join("")}</div><button class="btn sm ghost" style="margin-top:12px" data-act="quiz" data-q="weak">Drill these with Yuki</button></div>`:""}
-  <button class="row" data-act="allLessons" style="margin-top:12px"><span class="ri">📚</span><span class="rt"><b>All lessons</b><span>Pick any lesson, in any order</span></span></button>
+  <button class="row" data-act="qzStart" data-k="all" style="margin-top:12px"><span class="ri">🧠</span><span class="rt"><b>Multiple-choice quiz</b><span>Test the words you've learned · no audio or hints until you answer</span></span></button>
+  <button class="row" data-act="allLessons"><span class="ri">📚</span><span class="rt"><b>All lessons</b><span>Pick any lesson, in any order</span></span></button>
   <div class="sec">🃏 Flashcards · work offline</div>
   ${Object.entries(DECKS).map(([k,d])=>{const learned=d.ids.filter(i=>S.cards[i]).length,due=dueIds(d.ids).length;
     return`<button class="row" data-act="deck" data-d="${k}"><span class="ri">${d.icon}</span><span class="rt"><b>${d.name}</b><span>${learned}/${d.ids.length} learned${due?" · <b style='display:inline;color:var(--sakura)'>"+due+" due</b>":""}</span></span></button>`;}).join("")}
@@ -2260,7 +2312,6 @@ function startDeck(d){
   if(mine&&!q.length){toast("No learned cards here yet — do a lesson or a deck in Practice first");return;}
   if(!q.length){toast(d==="all"?"Nothing due right now — pick a deck":"All caught up here! 🎉");if(d==="all"){UI.tab="practice";render();}return;}
   UI.fc={deck:d,q,i:0,flip:false,right:0,wrong:0,missed:[],requeued:{}};UI.tab=mine||UI.tab==="cards"?"cards":"practice";render();
-  speakCard();
 }
 function speakCard(){const f=UI.fc;if(!f||f.i>=f.q.length)return;speak(CARDS[f.q[f.i]].say,{rate:0.85});}
 function vCard(){
@@ -2282,7 +2333,7 @@ function vCard(){
    <div class="fcf${c.front.length>2?" long":""}">${esc(c.front)}</div>
    ${f.flip?`${c.sub?`<div class="fcs">${esc(c.sub)}</div>`:""}<div class="fcb">${esc(c.back)}</div>`:`<div class="sub">Think of the answer, then tap to flip</div>`}
   </div></div>
-  <button class="btn ghost sm" data-act="sayCard" style="margin-bottom:10px">🔊 Hear it again</button>
+  <button class="btn ghost sm" data-act="sayCard" style="margin-bottom:10px">${f.flip?"🔊 Hear it again":"🔊 Hear it (a hint)"}</button>
   ${f.flip?`<div class="grid2"><button class="btn ghost" style="border-color:var(--red)" data-act="grade" data-ok="0">✗ Missed it</button><button class="btn" style="background:var(--matcha)" data-act="grade" data-ok="1">✓ Got it</button></div>`:`<button class="btn" data-act="flip">Show answer</button>`}
   </div>`;
 }
@@ -2294,7 +2345,7 @@ function grade(ok){
   else{c.box=0;c.due=Date.now();f.wrong++;f.missed.push(id);addUnique(S.profile.weak,[card.label],30);
     if(!f.requeued[id]){f.requeued[id]=1;f.q.push(id);}}
   S.cards[id]=c;S.stats.cards++;addXP(ok?2:1,"cards");save();
-  f.i++;f.flip=false;if(f.i>=f.q.length)planAuto("C",f.deck);render();speakCard();
+  f.i++;f.flip=false;if(f.i>=f.q.length)planAuto("C",f.deck);render();
 }
 
 function vMe(){
@@ -2508,8 +2559,14 @@ function startQuiz(q){
   send(`🧩 ${t?t[2]:"Quiz"}`,p);
 }
 const ACT={
-  tab:el=>{const t=el.dataset.tab;if(t!==UI.tab)stopSpeak();if(t!=="me"||UI.tab==="me")UI.me=null;if(t!==UI.tab)UI.fc=null;UI.tab=t;if(t!=="practice")UI.chart=null;render();},
+  tab:el=>{const t=el.dataset.tab;if(t!==UI.tab)stopSpeak();if(t!=="me"||UI.tab==="me")UI.me=null;if(t!==UI.tab){UI.fc=null;UI.qz=null;}UI.tab=t;if(t!=="practice")UI.chart=null;render();},
   cardsF:el=>{UI.cardsF=el.dataset.v;rerender();},
+  qzStart:el=>startQz(el.dataset.k),
+  qzPick:el=>{const z=UI.qz;if(!z||z.picked!=null)return;const q=z.qs[z.i],ok=el.dataset.v===q.answer;z.picked=el.dataset.v;
+    const c=S.cards[q.id]||{box:0,due:0};if(ok){z.right++;c.box=Math.min(c.box+1,6);c.due=Date.now()+INT[c.box];}else{c.box=Math.max(0,c.box-1);c.due=Date.now();z.missed.push(q.id);addUnique(S.profile.weak,[CARDS[q.id].label],30);}
+    S.cards[q.id]=c;S.stats.cards++;addXP(ok?2:1,"cards");save();render();speak(CARDS[q.id].say,{rate:0.85});},
+  qzNext:()=>{const z=UI.qz;if(!z)return;z.i++;z.picked=null;stopSpeak();render();},
+  qzClose:()=>{UI.qz=null;stopSpeak();render();},
   goalSet:el=>{S.daily.goal=+el.dataset.v;const d=S.days[isoDay()];if(d)d.goal=d.xp>=S.daily.goal;save();rerender();},
   calMove:el=>{const [y,m]=(UI.cal||isoDay().slice(0,7)).split("-").map(Number),d=new Date(y,m-1+(+el.dataset.n),1);UI.cal=isoDay(d).slice(0,7);rerender();},
   calDay:el=>daySheet(el.dataset.d),
@@ -2630,7 +2687,7 @@ const ACT={
   micLang:el=>{S.settings.micLang=el.dataset.v;save();toast(el.dataset.v==="ja-JP"?"🎤 Listening for Japanese — speak Japanese and it types in Japanese":"🎤 Listening for English",2200);if(UI.voice)renderVoice();else rerender();},
   review:()=>startDeck("mine"),
   deck:el=>startDeck(el.dataset.d),
-  flip:()=>{if(UI.fc&&!UI.fc.flip){UI.fc.flip=true;render();}},
+  flip:()=>{if(UI.fc&&!UI.fc.flip){UI.fc.flip=true;render();speakCard();}},
   sayCard:()=>speakCard(),
   grade:el=>grade(el.dataset.ok==="1"),
   closeDeck:()=>{UI.fc=null;render();},
@@ -2731,7 +2788,7 @@ function liveDiffers(html){
 // Safe moment = nothing in progress that a reload would interrupt
 function canReloadNow(){
   const a=document.activeElement,typing=a&&/INPUT|TEXTAREA/.test(a.tagName)&&a.value;
-  const midCards=UI.fc&&UI.fc.i<UI.fc.q.length,sheetOpen=!$("#sheet").classList.contains("hidden");
+  const midCards=UI.fc&&UI.fc.i<UI.fc.q.length||UI.qz&&UI.qz.i<UI.qz.qs.length,sheetOpen=!$("#sheet").classList.contains("hidden");
   return !UI.busy&&!UI.voice&&!UI.listening&&!UI.place&&!UI.lp&&!midCards&&!sheetOpen&&!typing;
 }
 function applyUpdate(){
