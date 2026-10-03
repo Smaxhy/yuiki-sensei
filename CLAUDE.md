@@ -45,7 +45,10 @@ Safari → Add to Home Screen.
   other levels are built from `CUR[level]` (lessons + a 🏆 unit review). `pathNodes()` /
   `pathUnits()`; custom ⭐ lessons in `S.plan.custom` ({id,title,before,level}) from the
   "⭐ Add a lesson" sheet or Yuki's `path` MEM field. Progress in `S.plan.done`.
-- **Tabs**: Path, Yuki (chat), Practice, Progress, Me. "All lessons" (`UI.tab="learn"`) opens from the
+- **Tabs**: Path, Yuki (chat), Practice, Cards, Progress, Me. Cards (`vCards`) lists only learned cards
+  (`S.cards`), weakest first, filter chips (`UI.cardsF`), and practises them with the "mine" decks
+  (`MINE`: mine / mine-words / mine-kana / mine-kanji = due first, then weakest, never new cards). Home's
+  "to review" and Practice's "Review due cards" open it. "All lessons" (`UI.tab="learn"`) opens from the
   path, the level sheet, or Practice.
 - **Progress system** (state v21): every study day has a record `S.days["YYYY-MM-DD"]` = {xp, sec, cards,
   words, msgs, calls, les[], goal?, frozen?}. `addXP(n, kind, label)` is the single entry point (flashcard
@@ -161,6 +164,8 @@ Safari → Add to Home Screen.
   the rest of that reply stays with the iPhone voice (`stay` in `speakQuest`) instead of switching back and
   forth. `resetAudio()` reuses the one shared player (a new player per repeat made iOS lower the volume),
   and the silent unlock sound never plays on a mic tap or while listening (it could block the mic).
+  A clip that hasn't started within 3.5 s (local/blob) or 9 s (remote) is given up (`t2` in `playUrl`; iPhone
+  sometimes accepts play() and stays silent); a failed recording is then said by the iPhone Japanese voice.
   A mic with no sign of life retries once by itself (`MIC.retried`) before pausing.
   Text for Ryusei goes through `vvText()`: spaces between Japanese characters removed (spaced
   beginner kana makes VOICEVOX pause after every word and stress oddly), Japanese punctuation.
