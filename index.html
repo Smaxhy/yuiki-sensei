@@ -34,7 +34,7 @@ input,textarea,select{font:inherit;font-size:16px;color:var(--text)}
 .pill{display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 16px;border-radius:999px;background:var(--ink2);border:1px solid var(--line);font-weight:800;font-size:16px}
 .pill.fire{background:#3a2a12;border-color:#6b4a1c;color:var(--gold)}
 .pathwrap{max-width:560px;margin:0 auto;padding:0 12px 40px}
-#unitHead{position:sticky;top:0;z-index:5;display:flex;align-items:center;gap:10px;width:100%;text-align:left;margin-top:6px;background:#1d2030ee;-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);border:1px solid var(--line);border-radius:22px;padding:14px 16px}
+#unitHead{position:sticky;top:6px;z-index:5;display:flex;align-items:center;gap:10px;width:100%;text-align:left;margin:6px 0 -76px;height:70px;transition:opacity .2s;background:#1d2030ee;-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);border:1px solid var(--line);border-radius:22px;padding:14px 16px}
 #unitHead .uh{flex:1;min-width:0}
 #unitHead small{display:block;color:var(--dim);font-weight:800;font-size:12.5px;letter-spacing:.03em}
 #unitHead b{display:block;font-size:18px;margin-top:2px}
@@ -51,6 +51,43 @@ input,textarea,select{font:inherit;font-size:16px;color:var(--text)}
 .nwrap.cur .nlab{color:var(--text);font-weight:700}
 .tip{background:var(--text);color:var(--ink);font-weight:900;font-size:13px;padding:6px 12px;border-radius:10px;margin-bottom:12px;position:relative;letter-spacing:.04em}
 .tip::after{content:"";position:absolute;left:50%;bottom:-6px;transform:translateX(-50%);border:6px solid transparent;border-bottom:0;border-top-color:var(--text)}
+#unitHead.ghost{opacity:0;pointer-events:none}
+.ubanner{display:flex;align-items:center;gap:12px;width:100%;text-align:left;margin:30px 0 14px;padding:14px 16px;border-radius:22px;background:linear-gradient(135deg,color-mix(in srgb,var(--uc) 22%,var(--ink2)),var(--ink2));border:1px solid color-mix(in srgb,var(--uc) 35%,var(--line))}
+.ube{font-size:30px;width:48px;height:48px;border-radius:16px;background:color-mix(in srgb,var(--uc) 25%,transparent);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.ubt{flex:1;min-width:0}.ubt small{display:block;font-size:12px;font-weight:800;color:var(--uc);letter-spacing:.05em;text-transform:uppercase}.ubt b{display:block;font-size:18px}
+.ubp{font-size:13px;font-weight:800;color:var(--dim)}
+.uhe{width:40px;height:40px;border-radius:13px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0}
+.node{--uc:#c9c2ff}
+.node:not(.cur):not(.star){background:radial-gradient(circle at 40% 30%,color-mix(in srgb,var(--uc) 30%,#262a48),#181a2e)}
+.node.cur{background:linear-gradient(140deg,color-mix(in srgb,var(--uc) 80%,#fff),var(--uc));box-shadow:0 0 0 7px color-mix(in srgb,var(--uc) 22%,transparent),0 0 50px color-mix(in srgb,var(--uc) 45%,transparent)}
+.node.kana{font-size:38px;color:#fff}
+.nlab small{display:block;font-weight:500;color:var(--dim);font-size:11.5px;margin-top:2px}
+.lp{padding-top:12px}
+.lphead{display:flex;align-items:center;gap:10px}
+.lpsteps{flex:1;display:flex;gap:6px;justify-content:center}
+.lpsteps span{font-size:12.5px;font-weight:800;color:var(--dim);padding:6px 10px;border-radius:999px;background:var(--ink2)}
+.lpsteps span.on{color:var(--ink);background:var(--text)}
+.lpsteps span.ok{color:var(--matcha)}
+.lpk{margin:18px 2px 10px;font-weight:700}
+.wcard{display:flex;flex-direction:column;align-items:center;gap:8px;width:100%;padding:34px 18px 22px;border-radius:28px;background:linear-gradient(160deg,color-mix(in srgb,var(--uc) 18%,var(--ink2)),var(--ink2));border:1px solid var(--line)}
+.wjp{font-size:44px;font-weight:800;line-height:1.25;text-align:center;word-break:keep-all}
+.wro{font-size:18px;color:var(--sky);font-weight:700}
+.wen{font-size:20px;font-weight:700;margin-top:4px;text-align:center}
+.whear{font-size:13px;color:var(--dim);margin-top:10px}
+.qcard{display:flex;flex-direction:column;align-items:center;padding:26px 16px;border-radius:24px;background:var(--ink2);margin-bottom:12px}
+.qen2{font-size:24px;font-weight:800;text-align:center}
+.opts{display:grid;gap:8px}
+.opt{display:flex;flex-direction:column;align-items:flex-start;gap:2px;width:100%;min-height:56px;padding:12px 16px;border-radius:16px;background:var(--ink2);border:2px solid var(--line);text-align:left}
+.opt b{font-size:18px}.opt span{font-size:13px;color:var(--dim)}
+.opt.right{border-color:var(--matcha);background:#24361d}
+.opt.wrong{border-color:var(--red);background:#3a2026}
+.opt.dim{opacity:.45}
+.fb{margin:12px 2px;font-weight:800}.fb.ok{color:var(--matcha)}.fb.no{color:var(--red)}
+.tbar{display:flex;align-items:center;gap:8px;padding:8px 12px;border-bottom:1px solid #ffffff0d;overflow-x:auto}
+.tbar>.sub{flex-shrink:0;font-size:12px;font-weight:700}
+.tchips{display:flex;gap:6px}
+.tchip{flex-shrink:0;font-size:14px;font-weight:700;padding:6px 10px;border-radius:999px;background:var(--ink3);border:1px solid var(--line)}
+.tchip.ok{background:#24361d;border-color:var(--matcha);color:var(--matcha)}
 .urow{display:flex;gap:10px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line);font-size:14.5px}
 .urow:last-child{border-bottom:none}
 .urow i{font-style:normal;width:24px;text-align:center;color:var(--matcha);font-weight:900}
@@ -124,8 +161,9 @@ input,textarea,select{font:inherit;font-size:16px;color:var(--text)}
 .m.u .bub{background:linear-gradient(140deg,#5a3247,#46283a);border-bottom-right-radius:6px}
 .bubwrap{display:flex;flex-direction:column;max-width:86%}
 .bubwrap .bub{max-width:100%;position:relative;padding-bottom:6px}
-.bubfoot{display:flex;justify-content:flex-end;margin:2px -6px -2px 0}
-.say{width:44px;height:36px;border-radius:12px;font-size:16px;color:var(--dim);display:inline-flex;align-items:center;justify-content:center}
+.bub.withsay{display:flex;align-items:flex-end;gap:2px;padding-right:4px;padding-bottom:4px}
+.bub.withsay>.bt{flex:1;min-width:0;padding-bottom:7px}
+.say{width:40px;height:40px;margin:-4px -2px -2px 0;border-radius:12px;font-size:15px;opacity:.7;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0}
 .say.on{color:var(--sakura)}
 .bub code{background:var(--ink3);padding:1px 5px;border-radius:5px}
 .listen{display:inline-flex;flex-direction:column;gap:4px;margin:4px 0}
@@ -231,7 +269,7 @@ input,textarea,select{font:inherit;font-size:16px;color:var(--text)}
 <script>
 "use strict";
 // Bump this on every change so phones can spot a new version and offer to update
-const APP_VERSION="2026.10.03-7";
+const APP_VERSION="2026.10.04-1";
 /* ============ DATA ============ */
 const LV = {
   n5:{label:"N5",name:"Beginner",color:"#9fd67c"},
@@ -310,12 +348,69 @@ const KANJI=[
 ["手","hand","しゅ・て"],["足","foot, leg","そく・あし"],["山","mountain","さん・やま"],["川","river","せん・かわ"],["上","up, above","じょう・うえ"],["下","down, below","か・した"],["左","left","さ・ひだり"],["右","right","う・みぎ"],["中","middle, inside","ちゅう・なか"],["大","big","だい・おお(きい)"],
 ["小","small","しょう・ちい(さい)"],["食","eat","しょく・た(べる)"],["飲","drink","いん・の(む)"],["見","see","けん・み(る)"],["行","go","こう・い(く)"],["来","come","らい・く(る)"],["話","talk","わ・はな(す)"],["読","read","どく・よ(む)"],["書","write","しょ・か(く)"],["学","study","がく・まな(ぶ)"]
 ];
+// Conversation course for beginners: 12 topic units. Each unit = 3 word lessons (max 5 words each,
+// [japanese, romaji, english]), a 5-kana bite, and a roleplay that uses the unit's words.
+const COURSE=[
+ {t:"Hello!",e:"👋",c:"#f4a3c0",kana:"あいうえお",rp:"You meet your friendly neighbour in the morning and again in the evening.",ls:[
+  {id:"c1a",t:"First hellos",g:"Greet people at any time of day",w:[["こんにちは","konnichiwa","hello"],["おはよう","ohayou","good morning"],["こんばんは","konbanwa","good evening"],["さようなら","sayounara","goodbye"],["またね","mata ne","see you"]]},
+  {id:"c1b",t:"Polite basics",g:"Say thanks, sorry, yes and no",w:[["ありがとう","arigatou","thank you"],["すみません","sumimasen","excuse me / sorry"],["はい","hai","yes"],["いいえ","iie","no"],["おねがいします","onegaishimasu","please"]]},
+  {id:"c1c",t:"How are you?",g:"Ask and answer how someone is",w:[["げんき","genki","well, energetic"],["げんきですか","genki desu ka","how are you?"],["げんきです","genki desu","I'm fine"],["まあまあ","maamaa","so-so"],["よかった","yokatta","glad to hear"]]}]},
+ {t:"About me",e:"🙋",c:"#7cb8f4",kana:"かきくけこ",rp:"You're at a party in Tokyo and meet someone new.",ls:[
+  {id:"c2a",t:"Nice to meet you",g:"Introduce yourself by name",w:[["はじめまして","hajimemashite","nice to meet you (first time)"],["わたし","watashi","I, me"],["なまえ","namae","name"],["～です","desu","I am / it is"],["よろしくおねがいします","yoroshiku onegaishimasu","nice to meet you (please be kind to me)"]]},
+  {id:"c2b",t:"Where are you from?",g:"Say where you're from",w:[["どこ","doko","where"],["～からきました","kara kimashita","I came from ~"],["くに","kuni","country"],["アメリカ","amerika","America"],["にほん","nihon","Japan"]]},
+  {id:"c2c",t:"Work and study",g:"Talk about your job or studies",w:[["しごと","shigoto","job, work"],["がくせい","gakusei","student"],["かいしゃいん","kaishain","office worker"],["なに","nani","what"],["～さん","san","Mr. / Ms. (after a name)"]]}]},
+ {t:"Numbers",e:"🔢",c:"#f2c36b",kana:"さしすせそ",rp:"You swap phone numbers and ages with a new friend.",ls:[
+  {id:"c3a",t:"One to five",g:"Count from 1 to 5",w:[["いち","ichi","one"],["に","ni","two"],["さん","san","three"],["よん","yon","four"],["ご","go","five"]]},
+  {id:"c3b",t:"Six to ten",g:"Count from 6 to 10",w:[["ろく","roku","six"],["なな","nana","seven"],["はち","hachi","eight"],["きゅう","kyuu","nine"],["じゅう","juu","ten"]]},
+  {id:"c3c",t:"Age and phone numbers",g:"Ask someone's age and number",w:[["なんさい","nansai","how old?"],["～さい","sai","~ years old"],["でんわばんごう","denwa bangou","phone number"],["なんばん","nanban","what number?"],["ゼロ","zero","zero"]]}]},
+ {t:"Food & drink",e:"🍜",c:"#9fd67c",kana:"たちつてと",rp:"You're ordering at a small café in Kyoto.",ls:[
+  {id:"c4a",t:"Things to eat and drink",g:"Name everyday food and drinks",w:[["みず","mizu","water"],["おちゃ","ocha","green tea"],["コーヒー","koohii","coffee"],["ごはん","gohan","rice, meal"],["パン","pan","bread"]]},
+  {id:"c4b",t:"Likes and dislikes",g:"Say what you like to eat and drink",w:[["たべます","tabemasu","eat"],["のみます","nomimasu","drink"],["すき","suki","like"],["きらい","kirai","dislike"],["おいしい","oishii","tasty"]]},
+  {id:"c4c",t:"Ordering",g:"Order and ask the price",w:[["～をください","o kudasai","~, please (give me)"],["これ","kore","this"],["それ","sore","that"],["いくら","ikura","how much?"],["えん","en","yen"]]}]},
+ {t:"Time & days",e:"⏰",c:"#c59cf4",kana:"なにぬねの",rp:"A friend asks about your daily routine and plans.",ls:[
+  {id:"c5a",t:"What time is it?",g:"Ask and tell the time",w:[["いま","ima","now"],["なんじ","nanji","what time?"],["～じ","ji","~ o'clock"],["はん","han","half past"],["ごご","gogo","p.m., afternoon"]]},
+  {id:"c5b",t:"Today and tomorrow",g:"Talk about days",w:[["きょう","kyou","today"],["あした","ashita","tomorrow"],["きのう","kinou","yesterday"],["まいにち","mainichi","every day"],["しゅうまつ","shuumatsu","weekend"]]},
+  {id:"c5c",t:"My day",g:"Describe your daily routine",w:[["おきます","okimasu","wake up"],["ねます","nemasu","sleep, go to bed"],["いきます","ikimasu","go"],["かえります","kaerimasu","go home"],["なんじに","nanji ni","at what time?"]]}]},
+ {t:"Hobbies",e:"🎮",c:"#f4a3c0",kana:"はひふへほ",rp:"You invite a classmate to do something fun this weekend.",ls:[
+  {id:"c6a",t:"My hobbies",g:"Name your hobbies",w:[["しゅみ","shumi","hobby"],["えいが","eiga","movie"],["おんがく","ongaku","music"],["ゲーム","geemu","games"],["どくしょ","dokusho","reading"]]},
+  {id:"c6b",t:"What I like doing",g:"Say what you like doing",w:[["みます","mimasu","watch, see"],["ききます","kikimasu","listen"],["します","shimasu","do"],["～がすきです","ga suki desu","I like ~"],["とても","totemo","very"]]},
+  {id:"c6c",t:"Let's do it together",g:"Invite someone out",w:[["スポーツ","supootsu","sports"],["りょうり","ryouri","cooking"],["いっしょに","issho ni","together"],["～ませんか","masen ka","won't you ~? (invitation)"],["いいですね","ii desu ne","sounds good!"]]}]},
+ {t:"Family & friends",e:"👪",c:"#7cb8f4",kana:"まみむめも",rp:"You show a friend a photo of your family.",ls:[
+  {id:"c7a",t:"My family",g:"Talk about your own family",w:[["かぞく","kazoku","family"],["ちち","chichi","my father"],["はは","haha","my mother"],["あに","ani","my older brother"],["あね","ane","my older sister"]]},
+  {id:"c7b",t:"Other people's family",g:"Ask about someone's family",w:[["おとうさん","otousan","(your) father"],["おかあさん","okaasan","(your) mother"],["きょうだい","kyoudai","siblings"],["ともだち","tomodachi","friend"],["なんにん","nannin","how many people?"]]},
+  {id:"c7c",t:"Describing people",g:"Describe what people are like",w:[["やさしい","yasashii","kind"],["おもしろい","omoshiroi","funny, interesting"],["せがたかい","se ga takai","tall"],["わかい","wakai","young"],["～と","to","and (between nouns)"]]}]},
+ {t:"Shopping",e:"🛍️",c:"#f2c36b",kana:"やゆよわを",rp:"You're buying clothes in a shop in Osaka.",ls:[
+  {id:"c8a",t:"At the shop",g:"Say something is cheap or expensive",w:[["みせ","mise","shop"],["かいます","kaimasu","buy"],["たかい","takai","expensive"],["やすい","yasui","cheap"],["ちょっと","chotto","a little"]]},
+  {id:"c8b",t:"Colours and clothes",g:"Ask for colours",w:[["あか","aka","red"],["あお","ao","blue"],["しろ","shiro","white"],["くろ","kuro","black"],["ふく","fuku","clothes"]]},
+  {id:"c8c",t:"Paying",g:"Talk about prices and paying",w:[["ひゃく","hyaku","hundred"],["せん","sen","thousand"],["カード","kaado","card"],["げんきん","genkin","cash"],["ふくろ","fukuro","bag"]]}]},
+ {t:"Getting around",e:"🚉",c:"#9fd67c",kana:"らりるれろ",rp:"You're lost and ask a local the way to the station.",ls:[
+  {id:"c9a",t:"Where is it?",g:"Ask where places are",w:[["えき","eki","station"],["トイレ","toire","toilet"],["どこですか","doko desu ka","where is it?"],["みぎ","migi","right"],["ひだり","hidari","left"]]},
+  {id:"c9b",t:"Near and far",g:"Understand simple directions",w:[["まっすぐ","massugu","straight ahead"],["ちかい","chikai","near"],["とおい","tooi","far"],["ここ","koko","here"],["そこ","soko","there"]]},
+  {id:"c9c",t:"Trains and buses",g:"Buy a ticket and find your train",w:[["でんしゃ","densha","train"],["バス","basu","bus"],["きっぷ","kippu","ticket"],["～まで","made","to, until (a place)"],["なんばんせん","nanbansen","which platform?"]]}]},
+ {t:"Weather & feelings",e:"☀️",c:"#c59cf4",kana:"んがざだば",rp:"You chat with a friend about the weather and how your week went.",ls:[
+  {id:"c10a",t:"The weather",g:"Talk about the weather",w:[["てんき","tenki","weather"],["はれ","hare","sunny"],["あめ","ame","rain"],["あつい","atsui","hot"],["さむい","samui","cold"]]},
+  {id:"c10b",t:"How I feel",g:"Say how you feel",w:[["うれしい","ureshii","happy"],["かなしい","kanashii","sad"],["つかれました","tsukaremashita","I'm tired"],["ねむい","nemui","sleepy"],["たのしい","tanoshii","fun"]]},
+  {id:"c10c",t:"Why? Because…",g:"Give reasons",w:[["どうして","doushite","why?"],["～から","kara","because ~"],["でも","demo","but"],["だいじょうぶ","daijoubu","okay, all right"],["ほんとう","hontou","really, true"]]}]},
+ {t:"Travel",e:"✈️",c:"#f4a3c0",kana:"アイウエオ",rp:"You check in at a hotel and ask for recommendations.",ls:[
+  {id:"c11a",t:"At the hotel",g:"Check in at a hotel",w:[["りょこう","ryokou","trip, travel"],["ホテル","hoteru","hotel"],["よやく","yoyaku","reservation"],["へや","heya","room"],["なんぱく","nanpaku","how many nights?"]]},
+  {id:"c11b",t:"What I want to do",g:"Say what you want to do",w:[["いきたい","ikitai","want to go"],["みたい","mitai","want to see"],["たべたい","tabetai","want to eat"],["おすすめ","osusume","recommendation"],["どこがいいですか","doko ga ii desu ka","where is good?"]]},
+  {id:"c11c",t:"Asking politely",g:"Ask for permission and help",w:[["しゃしん","shashin","photo"],["～てもいいですか","te mo ii desu ka","may I ~?"],["だめ","dame","not allowed, no good"],["わかりません","wakarimasen","I don't understand"],["たすけて","tasukete","help!"]]}]},
+ {t:"Real conversations",e:"💬",c:"#7cb8f4",kana:"カキクケコ",rp:"FINAL",ls:[
+  {id:"c12a",t:"Keeping a chat going",g:"React naturally in conversation",w:[["そうですね","sou desu ne","that's right / let me see"],["へえ","hee","oh really?"],["なるほど","naruhodo","I see"],["ちょっとまって","chotto matte","wait a moment"],["もういちど","mou ichido","once more"]]},
+  {id:"c12b",t:"When you don't understand",g:"Ask people to help you understand",w:[["ゆっくり","yukkuri","slowly"],["～てください","te kudasai","please ~"],["えいごで","eigo de","in English"],["にほんご","nihongo","Japanese (language)"],["すこし","sukoshi","a little"]]},
+  {id:"c12c",t:"Saying goodbye",g:"End a conversation and stay in touch",w:[["またあいましょう","mata aimashou","let's meet again"],["れんらく","renraku","contact"],["たのしかった","tanoshikatta","it was fun"],["がんばって","ganbatte","good luck!"],["きをつけて","ki o tsukete","take care"]]}]}
+];
+const CLESSONS=COURSE.flatMap((u,ui)=>u.ls.map(l=>({...l,unit:ui})));
+const clessonById=id=>CLESSONS.find(l=>l.id===id);
+const wordSay=jp=>jp.replace(/～/g,"");
 const CARDS={};
 HIRA.forEach(([c,r])=>CARDS['h:'+c]={deck:'hira',front:c,back:r,sub:'',say:c,label:c+' ('+r+')'});
 KATA.forEach(([c,r])=>CARDS['k:'+c]={deck:'kata',front:c,back:r,sub:'',say:c,label:c+' ('+r+')'});
 VOCAB.forEach(([w,r,e])=>CARDS['v:'+w]={deck:'vocab',front:w,back:e,sub:r!==w?r:'',say:r,label:w+' ('+e+')'});
 KANJI.forEach(([k,m,r])=>CARDS['j:'+k]={deck:'kanji',front:k,back:m,sub:r,say:r.split('・')[0].replace(/[()]/g,''),label:k+' ('+m+')'});
+CLESSONS.forEach(l=>l.w.forEach(([jp,ro,en])=>{CARDS["w:"+jp]={deck:"words",front:jp,back:en,sub:ro,say:wordSay(jp),label:jp+" ("+en+")"};}));
 const DECKS={
+  words:{name:"My words",icon:"💬",get ids(){return Object.keys(S.cards).filter(i=>i.startsWith("w:"));}},
   hira:{name:"Hiragana",icon:"あ",ids:Object.keys(CARDS).filter(i=>i.startsWith('h:'))},
   kata:{name:"Katakana",icon:"ア",ids:Object.keys(CARDS).filter(i=>i.startsWith('k:'))},
   vocab:{name:"Core words",icon:"言",ids:Object.keys(CARDS).filter(i=>i.startsWith('v:'))},
@@ -353,42 +448,6 @@ const PLACE=[
  ["n2","この店は日曜日＿営業しております。",["にわたって","を通じて","に伴い","に限り"],3,"This shop is open on Sundays only."]
 ];
 const BANDS=["kana","n5","n4","n3","n2"];
-// 12-week guided plan (~15-20 min a day): kana by week 3, basic conversation by the end.
-// Task codes: L=lesson id, C=flashcard deck (due = review what's due), K=kana chart, Q=quiz, T=talk with Yuki
-const PLAN=[
- ["Hiragana part 1 + how Japanese works",["L:intro|K:hira","L:sounds|C:hira","L:h1|C:hira","L:h2|C:hira","L:h3|C:hira","L:h4|C:hira","C:due|T:kana1"]],
- ["Hiragana part 2 + first greetings",["L:h5|C:hira","L:h6|C:hira","L:h7|C:hira","L:h8|C:hira","L:greet|C:hira","Q:kana|C:due","C:due|T:greet"]],
- ["Katakana + introducing yourself",["L:k1|C:kata","L:k2|C:kata","L:k3|C:kata","L:k4|C:kata","L:selfintro|C:kata","L:polite|C:due","T:selfintro|Q:kana"]],
- ["First grammar: です, this/that, questions",["L:desu|C:vocab","L:kosoado|C:vocab","L:no|C:vocab","L:ka|C:vocab","L:reacts|C:due","L:num|C:vocab","T:askme|C:due"]],
- ["Numbers, money, time & first kanji",["L:money|C:vocab","L:time|C:vocab","L:dates|C:due","L:kj1|C:kanji","L:kj2|C:kanji","Q:vocab|C:due","T:time|C:due"]],
- ["Verbs part 1: the ます form",["L:masu|C:vocab","L:masupast|C:vocab","L:parts|C:due","L:aru|C:vocab","L:invite|C:kanji","Q:grammar|C:due","T:weekend|C:due"]],
- ["Verbs part 2: the て form",["L:te|C:vocab","L:tekudasai|C:due","L:teiru|C:vocab","L:kj3|C:kanji","L:kj5|C:kanji","Q:grammar|C:due","T:daily|C:due"]],
- ["Describing things & people",["L:iadj|C:vocab","L:naadj|C:vocab","L:compare|C:due","L:family|C:vocab","L:wants|C:kanji","Q:mixed|C:due","T:family|C:due"]],
- ["Daily life: food & shopping",["L:food|C:vocab","L:shop|C:vocab","L:counters|C:due","L:kj4|C:kanji","T:cafe|C:due","Q:listen|C:due","T:shopping|C:due"]],
- ["Getting around",["L:places|C:vocab","L:trans|C:due","L:weather|C:vocab","T:directions|C:due","Q:translate|C:due","T:station|C:due","Q:weak|C:due"]],
- ["Real conversations",["T:intro2|C:due","T:smalltalk|C:due","Q:listen|C:due","T:hobbies|C:due","Q:translate|C:due","T:restaurant|C:due","Q:weak|C:due"]],
- ["Final review & your big conversation",["Q:mixed|C:due","T:smalltalk|C:due","Q:kana|C:due","T:restaurant|C:due","Q:weak|C:due","Q:listen|C:due","T:final"]]
-];
-const TALK={
- kana1:["Read hiragana out loud with Yuki","Show me 8 hiragana characters I've learned, one at a time, and I'll tell you how each one sounds. Correct me and give a memory trick when I miss one."],
- greet:["Practice greetings","Let's practice greetings. Greet me for different times of day and situations, and I'll answer. Greetings only, one at a time."],
- selfintro:["Introduce yourself in Japanese","Help me build a short self-introduction in Japanese (name, where I'm from, job or studies, a hobby). Then let me say it back to you and correct me."],
- askme:["Answer simple questions","Ask me simple questions using です, これ/それ and か (what is this, is it yours, where is it). One question at a time; correct my answers."],
- time:["Talk about times and dates","Ask me about times and dates (what time I wake up, my birthday, today's date), one question at a time, and correct me."],
- weekend:["Talk about your weekend","Let's chat about what I did last weekend and what I'll do next weekend using ます/ました. One question at a time."],
- daily:["Describe your day","Ask me about my daily routine using the て-form and ています. One question at a time; correct me kindly."],
- family:["Talk about family & friends","Let's chat about my family or friends and describe them with adjectives. One question at a time."],
- cafe:["Roleplay: order at a café","Roleplay: you're café staff in Japan and I'm a customer. Start in character in simple Japanese. Correct me gently after each line."],
- shopping:["Roleplay: shopping","Roleplay: you're a shop clerk and I want to buy something; include prices and counters. Start in character."],
- directions:["Ask for directions","Roleplay: I'm lost in Japan and ask you the way to the station, a toilet and a convenience store. Start in character."],
- station:["Roleplay: at the train station","Roleplay: you're station staff; I need to buy a ticket and find my platform. Start in character."],
- intro2:["Relaxed chat like new friends","Let's have a relaxed chat in simple Japanese like new friends: where I live, what I like, the weather. Ask one question at a time."],
- smalltalk:["Small talk with someone new","Pretend we just met at a party in Japan. Make friendly small talk in simple Japanese, one line at a time, and keep the conversation going."],
- hobbies:["Talk about hobbies & likes","Ask me about my hobbies, favourite food and what I want to do in Japan, using 好き and 〜たい. One question at a time."],
- restaurant:["Roleplay: a full restaurant visit","Roleplay a full restaurant visit: being seated, ordering, asking about the menu, and paying. You're the staff; start in character."],
- final:["🎓 Your big conversation","This is my end-of-plan conversation test. Have a 10-turn natural conversation with me in simple Japanese covering self-introduction, daily life, likes and plans. Don't correct me during it. At the end, give me a friendly score out of 10 for understanding, speaking, vocabulary and grammar, plus what to work on next."]
-};
-const PDAYS=PLAN.flatMap(([theme,days],w)=>days.map((d,i)=>({n:w*7+i+1,week:w+1,theme,tasks:d.split("|").map(x=>{const [t,k]=x.split(":");return{t,k};})})));
 const FOCUS=["Speaking","Listening","Reading","Kanji & writing","Grammar","Vocabulary","JLPT exam","Travel phrases","Anime & casual","Business Japanese"];
 const STYLE_OPTS={
   length:["Reply length",[["short","Short"],["normal","Normal"],["detailed","Detailed"]]],
@@ -400,9 +459,9 @@ const KANJI_LV={none:"none yet",few:"under 50",some:"50–300",many:"300+"};
 /* ============ STATE ============ */
 const KEY="yuki-sensei-v3";
 const DEFAULT={
-  v:8,onboarded:false,name:"",level:"n5",goal:"",
+  v:9,onboarded:false,name:"",level:"n5",goal:"",
   about:{done:false,focus:[],hira:"",kata:"",kanji:"",location:"",native:"English",minutes:15,notes:""},
-  placement:null,plan:null,
+  placement:null,plan:null,course:null,
   profile:{facts:[],weak:[],strong:[],learned:[]},
   stats:{msgs:0,quizRight:0,quizWrong:0,cards:0,streak:0,lastDay:""},
   done:[],cards:{},chat:[],currentLesson:null,
@@ -411,7 +470,7 @@ const DEFAULT={
     tts:"device",azKey:"",azRegion:"eastus",azEn:"en-US-AvaMultilingualNeural",azJa:"ja-JP-NanamiNeural",ttsChars:{month:"",n:0},captions:true}
 };
 let S=JSON.parse(JSON.stringify(DEFAULT));
-const UI={tab:"home",ob:0,obEdit:false,place:null,planCtx:null,fc:null,chart:null,voice:false,vstate:"idle",vyou:"",busy:false,listening:false};
+const UI={tab:"home",ob:0,obEdit:false,place:null,planCtx:null,lp:null,fc:null,chart:null,voice:false,vstate:"idle",vyou:"",busy:false,listening:false};
 
 function merge(base,saved){for(const k in saved){if(saved[k]&&typeof saved[k]==="object"&&!Array.isArray(saved[k])&&base[k]&&typeof base[k]==="object")merge(base[k],saved[k]);else base[k]=saved[k];}return base;}
 let lsOK=true;
@@ -456,6 +515,8 @@ function migrate(st){
   S2.captions=S2.captions!==false;
   // v7 → v8: free recorded Japanese voice for cards and kana
   if(!["himari","ryusei","off"].includes(S2.jaRec))S2.jaRec="himari";
+  // v8 → v9: conversation course (active talk is S.course)
+  if(st.course&&(typeof st.course!=="object"||!Array.isArray(st.course.targets)))st.course=null;
   if(![6,12,24].includes(+st.settings.history))st.settings.history=12;else st.settings.history=+st.settings.history;
   st.v=DEFAULT.v;
   return st;
@@ -734,7 +795,7 @@ ${styleRules()}
 - Use line breaks, not big headers or tables.
 ${mode==="voice"?`- VOICE CALL: they are talking to you out loud and hearing your reply through text-to-speech. Reply in 1-3 short spoken sentences. No lists, no markdown, no brackets, no romaji. Speak like a friend on a call. Keep the conversation going.\n`:""}
 MEMORY (very important)
-At the very end of EVERY reply, on its own line, write <<MEM>> followed by compact JSON with anything NEW from this turn. Fields (all optional): "facts" (things about the student's life, interests or preferences), "weak" (specific items they got wrong or struggle with), "strong" (things they clearly mastered), "learned" (new words or patterns taught, as "word = meaning"), "right" (number of quiz answers correct this turn), "wrong" (number incorrect this turn), "lessonDone" (true only when the current lesson's core is mastered), "path" (short lesson topics to add to their learning path, like ["Ordering ramen"], only when they ask you to add or change something in their path or plan, or when a clear gap needs its own lesson; at most 2). If nothing new: <<MEM>>{}. Never mention this line to the student.`;
+At the very end of EVERY reply, on its own line, write <<MEM>> followed by compact JSON with anything NEW from this turn. Fields (all optional): "facts" (things about the student's life, interests or preferences), "weak" (specific items they got wrong or struggle with), "strong" (things they clearly mastered), "learned" (new words or patterns taught, as "word = meaning"), "right" (number of quiz answers correct this turn), "wrong" (number incorrect this turn), "lessonDone" (true only when the current lesson's core is mastered), "used" (only during conversation practice: target words the student used correctly this turn), "path" (short lesson topics to add to their learning path, like ["Ordering ramen"], only when they ask you to add or change something in their path or plan, or when a clear gap needs its own lesson; at most 2). If nothing new: <<MEM>>{}. Never mention this line to the student.`;
 }
 function memoryPrompt(){
   const p=S.profile,les=S.currentLesson&&lessonById(S.currentLesson);
@@ -746,7 +807,7 @@ function memoryPrompt(){
 - Strong spots: ${p.strong.slice(-10).join("; ")||"none recorded"}
 - Recently learned: ${p.learned.slice(-25).join("; ")||"nothing yet"}
 - Quiz record: ${S.stats.quizRight} right, ${S.stats.quizWrong} wrong. Flashcards due: ${due}.
-${les?`\nCURRENT LESSON: "${les.title}" — ${les.desc} (${LV[les.level].label}, unit "${les.unit}"). Teach it in small steps: short explanation → 2-3 examples → a quick practice question, then wait for their answer. Never dump the whole lesson at once. When they've shown they understand the core of it, congratulate them and tell them they can tap "✓ Done".`:""}`;
+${coursePrompt()}${les?`\nCURRENT LESSON: "${les.title}" — ${les.desc} (${LV[les.level].label}, unit "${les.unit}"). Teach it in small steps: short explanation → 2-3 examples → a quick practice question, then wait for their answer. Never dump the whole lesson at once. When they've shown they understand the core of it, congratulate them and tell them they can tap "✓ Done".`:""}`;
 }
 function buildMessages(){
   const msgs=[];
@@ -807,6 +868,7 @@ function applyMem(mem){
   addUnique(p.weak,mem.weak,30);
   if(+mem.right)S.stats.quizRight+=+mem.right;
   if(+mem.wrong)S.stats.quizWrong+=+mem.wrong;
+  if(Array.isArray(mem.used))markUsed(mem.used.map(String));
   if(Array.isArray(mem.path)){const added=mem.path.slice(0,2).filter(t=>addCustom(t));if(added.length)toast("⭐ Yuki added to your path: "+added.join(", "),3500);}
   if(mem.lessonDone&&S.currentLesson&&!S.done.includes(S.currentLesson)){S.done.push(S.currentLesson);toast("✅ Lesson complete!");}
 }
@@ -814,6 +876,7 @@ async function send(display,apiText,mode){
   display=(display||"").trim();if(!display||UI.busy)return;
   UI.busy=true;touchDay();
   S.chat.push({role:"user",text:display,api:apiText||undefined});S.stats.msgs++;
+  if(S.course&&!apiText)markUsed(detectUsed(display));
   while(S.chat.length>200)S.chat.shift();
   save();
   if(!UI.voice&&UI.tab!=="chat"){UI.tab="chat";render();}else appendLast();
@@ -842,28 +905,30 @@ async function send(display,apiText,mode){
 }
 
 /* ============ PATH ============ */
-// N5 learners follow the 12-week plan (PLAN); other levels get a path built from that level's lessons.
+// N5 learners follow the conversation COURSE; other levels get a path built from that level's lessons.
 // Custom lessons (added by you or by Yuki) are slotted in as ⭐ nodes.
 const isoDay=d=>{d=d||new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");};
 function ensurePlan(){if(!S.plan){S.plan={start:isoDay(),done:{},custom:[]};save();}return S.plan;}
-function planDate(n){const [y,m,d]=(S.plan?S.plan.start:isoDay()).split("-").map(Number);return new Date(y,m-1,d+n-1);}
-const fmtDay=d=>d.toLocaleDateString("en-US",{weekday:"short",month:"short",day:"numeric"});
 const doneMap=()=>S.plan?S.plan.done:{};
 const isN5Path=()=>S.level==="n5";
+const UCOL=["#f4a3c0","#7cb8f4","#f2c36b","#9fd67c","#c59cf4"];
 function pathUnits(){
-  if(isN5Path())return PLAN.map(([theme],w)=>({title:"Week "+(w+1),sub:theme}));
-  return(CUR[S.level]||[]).map(([u],i)=>({title:LV[S.level].label+" · Unit "+(i+1),sub:u}));
+  if(isN5Path())return COURSE.map((u,i)=>({title:"Unit "+(i+1),sub:u.t,e:u.e,c:u.c}));
+  return(CUR[S.level]||[]).map(([u],i)=>({title:LV[S.level].label+" · Unit "+(i+1),sub:u,e:"📘",c:UCOL[i%5]}));
 }
 function pathNodes(){
   let nodes=[];
-  if(isN5Path())nodes=PDAYS.flatMap(d=>d.tasks.map((x,i)=>({key:d.n+":"+i,t:x.t,k:x.k,unit:d.week-1,day:d.n})));
+  if(isN5Path())COURSE.forEach((u,ui)=>{
+    const [a,b,c]=u.ls;
+    nodes.push({key:"cl:"+a.id,t:"CL",k:a.id,unit:ui},{key:"cl:"+b.id,t:"CL",k:b.id,unit:ui},{key:"ck:"+ui,t:"CK",k:u.kana,unit:ui},{key:"cl:"+c.id,t:"CL",k:c.id,unit:ui},{key:"cr:"+ui,t:"CR",k:ui,unit:ui});
+  });
   else(CUR[S.level]||[]).forEach(([u,ls],ui)=>{ls.forEach(l=>nodes.push({key:"L:"+l[0],t:"L",k:l[0],unit:ui}));nodes.push({key:S.level+":"+ui+":q",t:"Q",k:"unit",unit:ui});});
   const custom=S.plan?S.plan.custom.filter(c=>!c.level||c.level===S.level):[];
   if(custom.length){
-    const base=nodes.slice(),firstOpen=base.find(n=>!nodeDone(n));
+    const firstOpen=nodes.find(n=>!nodeDone(n));
     custom.forEach(c=>{
       let at=nodes.findIndex(n=>n.key===c.before);
-      if(at<0){const f=firstOpen&&nodes.findIndex(n=>n.key===firstOpen.key);at=f>=0?f:nodes.length;}
+      if(at<0){const f=firstOpen?nodes.findIndex(n=>n.key===firstOpen.key):-1;at=f>=0?f:nodes.length;}
       const unit=nodes[at]?nodes[at].unit:(nodes.length?nodes[nodes.length-1].unit:0);
       nodes.splice(at,0,{key:"c:"+c.id,t:"X",k:c.id,title:c.title,unit});
     });
@@ -872,62 +937,170 @@ function pathNodes(){
 }
 function nodeDone(n){return !!doneMap()[n.key]||(n.t==="L"&&S.done.includes(n.k));}
 const curNode=()=>pathNodes().find(n=>!nodeDone(n))||null;
-// Old 12-week plan helpers (used for N5 days and status)
-function taskDone(n,i){const x=PDAYS[n-1].tasks[i];return !!doneMap()[n+":"+i]||(x.t==="L"&&S.done.includes(x.k));}
-const dayDone=d=>d.tasks.every((x,i)=>taskDone(d.n,i));
-const curDay=()=>PDAYS.find(d=>!dayDone(d))||null;
-function expectedDay(){const t=new Date();t.setHours(0,0,0,0);return Math.max(1,Math.min(PDAYS.length,Math.floor((t-planDate(1))/864e5)+1));}
-function planStatus(){
-  if(!S.plan)return"Tap the glowing circle to start";
-  const d=curDay();if(!d)return"🎓 Plan complete!";
-  const e=expectedDay();
-  return d.n<e?`${e-d.n} day${e-d.n>1?"s":""} behind, no stress`:d.n>e?`${d.n-e} day${d.n-e>1?"s":""} ahead 🚀`:"On track ✅";
-}
 function markNode(key,quiet){
   ensurePlan();if(S.plan.done[key])return;
   S.plan.done[key]=true;save();
-  if(quiet)return;
-  const m=/^(\d+):\d+$/.exec(key);
-  if(m&&isN5Path()&&dayDone(PDAYS[+m[1]-1]))toast(+m[1]===PDAYS.length?"🎓 You finished the whole plan! すごい！":"🎉 Day "+m[1]+" complete!",3000);
-  else toast("✓ Done! Next step unlocked",1500);
+  if(!quiet)toast("✓ Done! Next step unlocked",1800);
 }
-// Something happened in the app: tick the matching node among the next few open ones
 function planAuto(t,k){
   if(!S.plan)return;
   const open=pathNodes().filter(n=>!nodeDone(n)).slice(0,3);
-  const hit=open.find(n=>n.t===t&&(n.k===k||(t==="C"&&n.k==="due"&&k==="all")));
+  const hit=open.find(n=>n.t===t&&n.k===k);
   if(hit)markNode(hit.key);
 }
-const DECK_NAME={hira:"Hiragana",kata:"Katakana",vocab:"Core words",kanji:"First kanji"};
 function nodeLabel(n){
+  if(n.t==="CL")return clessonById(n.k).t;
+  if(n.t==="CK")return"Kana: "+[...n.k].join(" ");
+  if(n.t==="CR")return COURSE[n.k].rp==="FINAL"?"Your big conversation":"Roleplay: "+COURSE[n.k].t;
   if(n.t==="L"){const l=lessonById(n.k);return l?l.title:n.k;}
-  if(n.t==="C")return n.k==="due"?"Review cards":DECK_NAME[n.k]+" cards";
-  if(n.t==="K")return"Kana chart";
-  if(n.t==="Q"){if(n.k==="unit")return"Unit review";const q=QUIZZES.find(z=>z[0]===n.k);return"Quiz: "+(q?q[2]:n.k);}
-  if(n.t==="T")return TALK[n.k][0].replace("🎓 ","");
+  if(n.t==="Q")return"Unit review";
   return n.title;
 }
 function nodeIcon(n){
+  if(n.t==="CL")return COURSE[n.unit].e;
+  if(n.t==="CK")return n.k[0];
+  if(n.t==="CR")return COURSE[n.k].rp==="FINAL"?"🎓":"🎭";
   if(n.t==="L")return"📖";
-  if(n.t==="C")return({hira:"あ",kata:"ア",vocab:"言",kanji:"字",due:"🔁"})[n.k];
-  if(n.t==="K")return"🔤";
-  if(n.t==="Q")return n.k==="unit"?"🏆":"🧩";
-  if(n.t==="T")return n.k==="final"?"🎓":"🗣️";
+  if(n.t==="Q")return"🏆";
   return"⭐";
 }
-function startNode(n){
+const nodeSub=n=>n.t==="CL"?"5 new words · learn, practise, talk":n.t==="CK"?"5 new characters":n.t==="CR"?"Use this unit's words in a real chat":"";
+
+/* ---- word memory (spaced repetition shared with flashcards) ---- */
+function bumpWord(id,ok){
+  const c=S.cards[id]||{box:0,due:0};
+  if(ok){c.box=Math.min(c.box+1,6);c.due=Date.now()+INT[c.box];}else{c.box=0;c.due=Date.now();}
+  S.cards[id]=c;
+}
+// Older course words that are due (or weakest), for review questions and for Yuki to ask about
+function reviewWords(exclude,n){
+  const now=Date.now(),ex=new Set(exclude||[]);
+  return Object.keys(S.cards).filter(i=>i.startsWith("w:")&&!ex.has(i.slice(2)))
+    .sort((a,b)=>((S.cards[a].due<=now?0:1)-(S.cards[b].due<=now?0:1))||(S.cards[a].box-S.cards[b].box))
+    .slice(0,n).map(i=>i.slice(2));
+}
+const wordInfo=jp=>{for(const l of CLESSONS)for(const w of l.w)if(w[0]===jp)return w;return null;};
+
+/* ---- lesson player: learn → practise → (talk) ---- */
+function startCourseNode(n){
   ensurePlan();UI.planCtx=null;
+  if(n.t==="CL"){const l=clessonById(n.k);UI.lp={node:n,kind:"words",items:l.w,step:"learn",i:0};render();return;}
+  if(n.t==="CK"){UI.lp={node:n,kind:"kana",items:[...n.k].map(ch=>{const id=(/[ァ-ン]/.test(ch)?"k:":"h:")+ch;return[ch,CARDS[id].back,"",id];}),step:"learn",i:0};render();return;}
+  if(n.t==="CR")startTalk(n);
+}
+const itemId=(lp,it)=>lp.kind==="kana"?it[3]:"w:"+it[0];
+function buildQuiz(lp){
+  const its=lp.items,qs=[],pool=lp.kind==="kana"?Object.values(KANA_POOL()):CLESSONS.flatMap(l=>l.w);
+  const others=(it,f)=>shuffle(pool.filter(x=>f(x)!==f(it))).slice(0,3).map(f);
+  its.forEach(it=>{const f=lp.kind==="kana"?(x=>x[1]):(x=>x[2]);qs.push({it,q:it[0],say:lp.kind==="kana"?it[0]:wordSay(it[0]),a:f(it),opts:shuffle([f(it),...others(it,f)]),dir:"jp"});});
+  shuffle(its.slice()).slice(0,3).forEach(it=>{const f=x=>x[0];const a=it[0],q=lp.kind==="kana"?it[1]:it[2];qs.push({it,q,a,opts:shuffle([a,...shuffle(pool.filter(x=>x[0]!==a)).slice(0,3).map(f)]),dir:"en"});});
+  if(lp.kind==="words")reviewWords(its.map(x=>x[0]),2).forEach(jp=>{const w=wordInfo(jp);if(w)qs.push({it:w,q:w[0],say:wordSay(w[0]),a:w[2],opts:shuffle([w[2],...shuffle(pool.filter(x=>x[2]!==w[2])).slice(0,3).map(x=>x[2])]),dir:"jp",review:true});});
+  return qs;
+}
+const KANA_POOL=()=>{const o={};COURSE.forEach(u=>[...u.kana].forEach(ch=>{const id=(/[ァ-ン]/.test(ch)?"k:":"h:")+ch;o[ch]=[ch,CARDS[id].back,"",id];}));return o;};
+function lpNext(){
+  const lp=UI.lp;
+  if(lp.step==="learn"){if(lp.i<lp.items.length-1){lp.i++;render();lpSay();}else{lp.step="quiz";lp.qs=buildQuiz(lp);lp.qi=0;lp.right=0;lp.picked=null;lp.requeued={};render();lpSay();}return;}
+  if(lp.step==="quiz"){lp.picked=null;lp.qi++;if(lp.qi>=lp.qs.length){lp.step="done";lp.items.forEach(it=>{if(!S.cards[itemId(lp,it)])bumpWord(itemId(lp,it),true);});save();
+    if(lp.kind==="kana")markNode(lp.node.key,true);render();}else{render();lpSay();}}
+}
+function lpSay(){const lp=UI.lp;if(!lp)return;
+  if(lp.step==="learn"){const it=lp.items[lp.i];setTimeout(()=>speak(lp.kind==="kana"?it[0]:wordSay(it[0]),{rate:0.85}),150);}
+  else if(lp.step==="quiz"){const q=lp.qs[lp.qi];if(q&&q.dir==="jp")setTimeout(()=>speak(q.say,{rate:0.85}),150);}}
+function vLesson(){
+  const lp=UI.lp,n=lp.node,u=COURSE[n.unit];
+  const steps=lp.kind==="words"?["Learn","Practise","Talk"]:["Learn","Practise"];
+  const si=lp.step==="learn"?0:lp.step==="quiz"?1:steps.length-1;
+  const prog=lp.step==="learn"?(lp.i+1)/lp.items.length:lp.step==="quiz"?(lp.qi)/lp.qs.length:1;
+  const head=`<div class="lphead"><button class="iconbtn" data-act="lpClose" aria-label="Close">✕</button><div class="lpsteps">${steps.map((t,i)=>`<span class="${i<si?"ok":i===si?"on":""}">${i<si?"✓ ":""}${t}</span>`).join("")}</div></div>
+    <div class="bar" style="margin:10px 0 0"><i style="width:${Math.round(prog*100)}%;background:${u.c}"></i></div>`;
+  if(lp.step==="learn"){
+    const it=lp.items[lp.i];
+    return`<div class="pad lp">${head}<p class="sub lpk">${lp.kind==="kana"?"New character":"New word"} ${lp.i+1} of ${lp.items.length} · ${esc(nodeLabel(n))}</p>
+     <button class="wcard" data-act="lpSay" style="--uc:${u.c}"><div class="wjp">${esc(it[0])}</div>${lp.kind==="words"?`<div class="wro">${esc(it[1])}</div><div class="wen">${esc(it[2])}</div>`:`<div class="wen">"${esc(it[1])}"</div>`}<div class="whear">🔊 Tap to hear again</div></button>
+     <button class="btn" style="margin-top:16px" data-act="lpNext">${lp.i<lp.items.length-1?"Next":"Let's practise →"}</button></div>`;
+  }
+  if(lp.step==="quiz"){
+    const q=lp.qs[lp.qi],picked=lp.picked;
+    const ask=q.dir==="jp"?(lp.kind==="kana"?"What sound is this?":"What does this mean?"):(lp.kind==="kana"?"Which one is this sound?":"How do you say this?");
+    return`<div class="pad lp">${head}<p class="sub lpk">${q.review?"🔁 From an earlier lesson":ask}</p>
+     <div class="qcard"><div class="${q.dir==="jp"?"wjp":"qen2"}">${esc(q.q)}</div>${q.dir==="jp"?`<button class="mini" data-act="lpQSay" style="margin-top:8px">🔊</button>`:""}</div>
+     <div class="opts">${q.opts.map(o=>{const st=picked==null?"":o===q.a?" right":o===picked?" wrong":" dim";const ro=q.dir==="en"&&lp.kind==="words"?((wordInfo(o)||[])[1]||""):"";
+       return`<button class="opt${st}" data-act="lpPick" data-v="${esc(o)}"${picked!=null?" disabled":""}><b>${esc(o)}</b>${ro?`<span>${esc(ro)}</span>`:""}</button>`;}).join("")}</div>
+     ${picked!=null?`<div class="fb ${picked===q.a?"ok":"no"}">${picked===q.a?"✓ Correct!":"✗ It's <b>"+esc(q.a)+"</b>"+(q.dir==="jp"&&lp.kind==="words"?"":"")}</div><button class="btn" data-act="lpNext">Continue</button>`:""}</div>`;
+  }
+  // done
+  if(lp.kind==="kana")return`<div class="pad lp" style="text-align:center">${head}<div style="font-size:64px;margin-top:40px">🎉</div><div class="h1">5 new characters!</div><p class="sub" style="margin:8px 0 20px">${lp.right}/${lp.qs.length} right. They're now in your Hiragana/Katakana flashcards.</p><button class="btn" data-act="lpClose">Back to path</button></div>`;
+  return`<div class="pad lp" style="text-align:center">${head}<div style="font-size:64px;margin-top:30px">${u.e}</div><div class="h1">Words learned!</div>
+   <p class="sub" style="margin:8px 0 6px">${lp.right}/${lp.qs.length} right in practice.</p>
+   <div class="tags" style="justify-content:center;margin:12px 0 18px">${lp.items.map(it=>`<span class="tg">${esc(it[0])} · ${esc(it[2])}</span>`).join("")}</div>
+   <div class="card" style="text-align:left"><b>💬 Last step: use them with Yuki</b><p class="sub" style="margin-top:6px">She'll start a short conversation where you need all 5 words. They tick off as you use them. You can type in Japanese or romaji.</p></div>
+   <button class="btn" data-act="lpTalk">Start the conversation</button><button class="btn ghost" style="margin-top:8px" data-act="lpClose">Later</button></div>`;
+}
+
+/* ---- conversation step: Yuki must get you to use the target words ---- */
+function startTalk(n){
+  let targets,kind,title,goal,scen="";
+  if(n.t==="CL"){const l=clessonById(n.k);targets=l.w.map(w=>w[0]);kind="lesson";title=l.t;goal=l.g;}
+  else{const u=COURSE[n.k],final=u.rp==="FINAL";
+    const pool=final?CLESSONS.flatMap(l=>l.w):u.ls.flatMap(l=>l.w);
+    targets=pool.map(w=>w[0]).sort((a,b)=>((S.cards["w:"+a]||{box:0}).box-(S.cards["w:"+b]||{box:0}).box)||Math.random()-0.5).slice(0,5);
+    kind=final?"final":"roleplay";title=final?"Your big conversation":"Roleplay: "+u.t;goal=final?"Hold a real conversation using everything you've learned":"Use this unit's words in a real situation";scen=final?"":u.rp;}
+  S.course={key:n.key,kind,title,goal,scen,targets,used:[],review:reviewWords(targets,kind==="lesson"?2:3)};
+  S.currentLesson=null;UI.lp=null;save();UI.tab="chat";render();
+  send(kind==="lesson"?"💬 Let's practise: "+title:kind==="final"?"🎓 Start my big conversation":"🎭 Start the roleplay",
+    kind==="final"?"Start my end-of-course conversation now.":kind==="roleplay"?"Start the roleplay now: set the scene in one short English line, then begin in character.":"I just learned these words. Start our practice conversation now.");
+}
+function coursePrompt(){
+  const c=S.course;if(!c)return"";
+  const wl=c.targets.map(jp=>{const w=wordInfo(jp);return w?`${w[0]} (${w[1]}) = ${w[2]}`:jp;}).join("; ");
+  const rv=c.review.map(jp=>{const w=wordInfo(jp);return w?`${w[0]} (${w[1]}) = ${w[2]}`:jp;}).join("; ");
+  const left=c.targets.filter(t=>!c.used.includes(t));
+  return`\nCONVERSATION PRACTICE: "${c.title}". Goal: ${c.goal}.${c.scen?" Scenario: "+c.scen+" You play the other person.":""}
+TARGET WORDS the student must use: ${wl}.
+Still not used: ${left.length?left.join(", "):"all used!"}.
+${rv?`OLDER WORDS to bring back (ask about them or work them in, early on): ${rv}.`:""}
+Rules: run a short, natural conversation built so the student HAS to say each target word (ask questions or set up moments that need it). One small step per message. If they're stuck, give a hint (the English meaning or the first sound), not the answer. Keep your Japanese very simple, using mostly the target and older words, with English help as their style needs. They may type romaji; that counts. When every target word has been used, congratulate them warmly and ask 2 quick recap questions (one about an older word).${c.kind==="final"?" This is the end-of-course test: about 10 turns, light corrections only, and at the end give friendly scores out of 10 for understanding, speaking, vocabulary and grammar plus what to work on next.":""}
+In the memory line, put target words they used correctly this turn in "used" (exact spelling from the list).`;
+}
+// Spot target words in what you typed (Japanese or romaji)
+const kataHira=t=>t.replace(/[ァ-ヶ]/g,c=>String.fromCharCode(c.charCodeAt(0)-0x60));
+const normJ=t=>kataHira(String(t)).replace(/[～~\s、。！？!?,.「」・ー-]/g,"").toLowerCase();
+const normR=t=>String(t).toLowerCase().replace(/[āâ]/g,"a").replace(/[ūû]/g,"u").replace(/[ōô]/g,"o").replace(/[ēê]/g,"e").replace(/[īî]/g,"i").replace(/[^a-z]/g,"").replace(/ou/g,"o").replace(/oo/g,"o").replace(/uu/g,"u").replace(/aa/g,"a").replace(/ee/g,"e").replace(/wa/g,"ha");
+function detectUsed(text){
+  const c=S.course;if(!c)return[];
+  const nj=normJ(text),nr=normR(text),toks=String(text).split(/[\s、。,.!?！？]+/).map(normJ).filter(Boolean);
+  return c.targets.filter(jp=>{
+    if(c.used.includes(jp))return false;
+    const w=wordInfo(jp),j=normJ(jp),r=w?normR(w[1]):"";
+    if(j.length<=2)return toks.includes(j)||(r.length>=2&&String(text).toLowerCase().split(/[^a-zāēīōū]+/).map(normR).includes(r));
+    return nj.includes(j)||(r.length>=4&&nr.includes(r));
+  });
+}
+function markUsed(list){
+  const c=S.course;if(!c||!list||!list.length)return;
+  let added=0;
+  list.forEach(jp=>{if(c.targets.includes(jp)&&!c.used.includes(jp)){c.used.push(jp);bumpWord("w:"+jp,true);added++;}});
+  if(!added)return;
+  save();
+  if(c.used.length>=c.targets.length&&!(S.plan&&S.plan.done[c.key])){markNode(c.key,true);toast("🎉 All 5 words used! Lesson complete",3000);}
+  else toast("✓ "+list.filter(x=>c.targets.includes(x)).join(", ")+" ("+c.used.length+"/"+c.targets.length+")",1600);
+  if(UI.tab==="chat"&&!UI.voice){const h=$("#tchips");if(h)h.outerHTML=talkChips();}
+}
+function talkChips(){
+  const c=S.course;if(!c)return"";
+  return`<div id="tchips" class="tchips">${c.targets.map(jp=>`<span class="tchip${c.used.includes(jp)?" ok":""}">${c.used.includes(jp)?"✓ ":""}${esc(jp)}</span>`).join("")}</div>`;
+}
+
+/* ---- other path nodes (higher levels, custom lessons) ---- */
+function startNode(n){
+  if(n.t==="CL"||n.t==="CK"||n.t==="CR"){startCourseNode(n);return;}
+  ensurePlan();UI.planCtx=null;S.course=null;
   if(n.t==="L"){startLesson(n.k,true);return;}
-  if(n.t==="C"){
-    if(n.k==="due"&&!dueIds(Object.keys(S.cards)).length){if(Object.keys(S.cards).length){markNode(n.key);toast("Nothing due today, marked done ✓");rerender();}else startDeck("hira");return;}
-    startDeck(n.k==="due"?"all":n.k);return;}
-  if(n.t==="K"){UI.tab="practice";UI.chart=n.k;markNode(n.key,true);render();return;}
   UI.planCtx={key:n.key,replies:0,label:nodeLabel(n)};
-  if(n.t==="Q"&&n.k!=="unit"){startQuiz(n.k);return;}
   S.currentLesson=null;save();UI.tab="chat";render();
   if(n.t==="Q"){const [u,ls]=CUR[S.level][n.unit];send("🏆 Unit review: "+u,`Give me a 10-question review quiz on the unit "${u}" (${ls.map(l=>l[1]).join(", ")}) at my level. One question at a time.`);}
-  else if(n.t==="T")send("🗣️ "+TALK[n.k][0],TALK[n.k][1]);
-  else send("⭐ "+n.title,`Teach me a short lesson about "${n.title}" at my level, step by step, using what you know about me. Short explanation, a few useful examples, then a quick 3-question check, one at a time.`);
+  else send("⭐ "+n.title,`Teach me a short lesson about "${n.title}" at my level, step by step, using what you know about me. At most 5 new words, then a short conversation where I have to use them.`);
 }
 function addCustom(title){
   title=String(title||"").trim().slice(0,60);if(!title)return false;
@@ -939,8 +1112,8 @@ function addCustom(title){
 }
 const SUGGEST={Speaking:"Everyday small talk","Travel phrases":"Hotel check-in","Anime & casual":"Phrases from anime","Business Japanese":"Introducing yourself at work","JLPT exam":"JLPT N5 practice questions","Kanji & writing":"10 useful kanji",Listening:"Listening: at a café",Reading:"Read a short story",Grammar:"は vs が",Vocabulary:"Food and drink words"};
 function addSheet(){
-  const ideas=[...new Set([...S.about.focus.map(f=>SUGGEST[f]).filter(Boolean),"Ordering ramen","Asking for help","Talking about my hobbies","Numbers & prices"])].slice(0,6);
-  sheet(`<div class="h2">⭐ Add a lesson to your path</div><p class="sub" style="margin:8px 0">What do you want to learn? It goes in as your very next step, and Yuki teaches it around you. You can also just ask Yuki in chat: "add a lesson about … to my path".</p>
+  const ideas=[...new Set([...S.about.focus.map(f=>SUGGEST[f]).filter(Boolean),"Ordering ramen","Asking for help","Talking about my hobbies","At the convenience store"])].slice(0,6);
+  sheet(`<div class="h2">⭐ Add a lesson to your path</div><p class="sub" style="margin:8px 0">What do you want to learn? It goes in as your very next step. You can also just ask Yuki in chat: "add a lesson about … to my path".</p>
    <input id="addT" class="field" placeholder="e.g. ordering at a convenience store" maxlength="60">
    <div class="tags" style="margin-bottom:12px">${ideas.map(t=>`<button class="chip" data-act="addSuggest" data-t="${esc(t)}">${esc(t)}</button>`).join("")}</div>
    <button class="btn" data-act="addLesson">Add to my path</button><button class="btn ghost" style="margin-top:8px" data-act="closeSheet">Cancel</button>`);
@@ -948,37 +1121,40 @@ function addSheet(){
 function unitSheet(u){
   const U=pathUnits()[u];if(!U)return;
   const ns=pathNodes().filter(n=>n.unit===u),dn=ns.filter(nodeDone).length;
-  sheet(`<div class="sub" style="font-weight:800">${esc(U.title)} · ${dn}/${ns.length} done</div><div class="h2" style="margin:4px 0 12px">${esc(U.sub)}</div>
-   <div class="card" style="padding:4px 14px">${ns.map(n=>`<div class="urow"><i>${nodeDone(n)?"✓":"○"}</i><span style="flex:1">${nodeIcon(n)} ${esc(nodeLabel(n))}</span>${n.day?`<span class="sub">Day ${n.day}${S.plan?" · "+fmtDay(planDate(n.day)):""}</span>`:""}</div>`).join("")}</div>
+  const words=isN5Path()?COURSE[u].ls.flatMap(l=>l.w):[];
+  sheet(`<div class="sub" style="font-weight:800">${esc(U.title)} · ${dn}/${ns.length} done</div><div class="h2" style="margin:4px 0 12px">${U.e} ${esc(U.sub)}</div>
+   <div class="card" style="padding:4px 14px">${ns.map(n=>`<div class="urow"><i>${nodeDone(n)?"✓":"○"}</i><span style="flex:1">${nodeIcon(n)} ${esc(nodeLabel(n))}</span></div>`).join("")}</div>
+   ${words.length?`<div class="sec" style="margin-top:6px">Words in this unit</div><div class="tags" style="margin-bottom:12px">${words.map(w=>`<button class="tg${S.cards["w:"+w[0]]?" s":""}" data-act="sayText" data-text="${esc(wordSay(w[0]))}">${esc(w[0])} · ${esc(w[2])}</button>`).join("")}</div>`:""}
    ${dn<ns.length?`<button class="btn ghost" data-act="unitSkip" data-u="${u}">I already know this, skip the unit</button>`:""}
    <button class="btn" style="margin-top:8px" data-act="closeSheet">Close</button>`);
 }
 function levelSheet(){
-  sheet(`<div class="h2" style="margin-bottom:6px">Your path follows your level</div><p class="sub" style="margin-bottom:12px">N5 is the 12-week beginner plan to December. Pick a higher level and the path rebuilds from that level's lessons. Progress on each path is kept.</p>
+  sheet(`<div class="h2" style="margin-bottom:6px">Your path follows your level</div><p class="sub" style="margin-bottom:12px">N5 is the beginner conversation course: 12 topic units, 5 words per lesson, and real chats with Yuki. Higher levels build the path from that level's lessons. Progress on each path is kept.</p>
    <div class="tags" style="margin-bottom:14px">${Object.entries(LV).map(([k,v])=>`<button class="chip${S.level===k?" on":""}" data-act="setLevel" data-v="${k}">${v.label} ${v.name}</button>`).join("")}</div>
    <button class="btn ghost" data-act="placeStart">🎯 Take the 3-minute level check</button>
    <button class="btn ghost" style="margin-top:8px" data-act="allLessons">📚 Browse all lessons</button>
    <button class="btn" style="margin-top:8px" data-act="closeSheet">Close</button>`);
 }
-// Keep the sticky header in sync with the unit you're scrolled to
 function pathScroll(){
-  const m=$("#main"),h=$("#unitHead");if(!h)return;
-  const lim=h.getBoundingClientRect().bottom+4;let u=0;
-  document.querySelectorAll(".unitpill").forEach(p=>{if(p.getBoundingClientRect().top<lim)u=+p.dataset.u;});
-  if(+h.dataset.u!==u){h.dataset.u=u;const U=pathUnits()[u];h.querySelector(".uh").innerHTML=unitHeadInner(u,U);}
+  const h=$("#unitHead");if(!h)return;
+  const lim=h.getBoundingClientRect().top+8;let u=0;
+  let any=false;
+  document.querySelectorAll(".ubanner").forEach(p=>{if(p.getBoundingClientRect().top<lim){u=+p.dataset.u;any=true;}});
+  h.classList.toggle("ghost",!any);
+  if(+h.dataset.u!==u){h.dataset.u=u;h.innerHTML=unitHeadInner(u);}
 }
-function unitHeadInner(u,U){
-  const c=curNode(),here=c&&c.unit===u;
-  const top=isN5Path()&&here&&c.day?`${U.title.toUpperCase()} · DAY ${c.day} · ${planStatus()}`:U.title.toUpperCase();
-  return`<small>${esc(top)}</small><b>${esc(U.sub)}</b>`;
+function unitHeadInner(u){
+  const U=pathUnits()[u]||{title:"",sub:"",e:"",c:"#888"},ns=pathNodes().filter(n=>n.unit===u),dn=ns.filter(nodeDone).length;
+  return`<span class="uhe" style="background:${U.c}22;color:${U.c}">${U.e}</span><span class="uh"><small>${esc(U.title.toUpperCase())} · ${dn}/${ns.length}</small><b>${esc(U.sub)}</b></span><span style="font-size:22px;color:var(--dim)">›</span>`;
 }
 
 /* ============ VIEWS ============ */
 function render(){
   document.querySelectorAll("#tabs button").forEach(b=>b.classList.toggle("on",b.dataset.tab===UI.tab));
-  $("#tabs").classList.toggle("hidden",!S.onboarded||UI.obEdit||!!UI.place);
+  $("#tabs").classList.toggle("hidden",!S.onboarded||UI.obEdit||!!UI.place||!!UI.lp);
   const main=$("#main");
   if(UI.place){main.innerHTML=vPlace();main.scrollTop=0;return;}
+  if(UI.lp){$("#tabs").classList.add("hidden");main.innerHTML=vLesson();main.onscroll=null;return;}
   if(!S.onboarded||UI.obEdit){main.innerHTML=vOnboard();main.scrollTop=0;return;}
   main.innerHTML=({home:vHome,chat:vChat,learn:vLearn,practice:vPractice,me:vMe}[UI.tab]||vHome)();
   main.scrollTop=0;
@@ -1066,23 +1242,26 @@ function vPlace(){
 
 function vHome(){
   const units=pathUnits(),nodes=pathNodes(),cur=nodes.find(n=>!nodeDone(n));
-  const OFF=[0,-62,-96,-62,0,62,96,62];
+  const OFF=[0,-58,-90,-58,0,58,90,58];
   let g=0,html="";
   units.forEach((U,u)=>{
     const ns=nodes.filter(n=>n.unit===u);if(!ns.length)return;
-    html+=`<button class="unitpill" data-u="${u}" data-act="unitSheet">${esc(U.title)} · ${esc(U.sub)}</button>`;
+    const dn=ns.filter(nodeDone).length;
+    html+=`<button class="ubanner" data-u="${u}" data-act="unitSheet" style="--uc:${U.c}"><span class="ube">${U.e}</span><span class="ubt"><small>${esc(U.title)}</small><b>${esc(U.sub)}</b></span><span class="ubp">${dn}/${ns.length}</span></button>`;
     ns.forEach(n=>{
       const done=nodeDone(n),isCur=cur&&cur.key===n.key;
-      html+=`<div class="nwrap${isCur?" cur":""}" style="transform:translateX(${OFF[g++%8]}px)">${isCur?`<div class="tip">${S.plan?"START":"START HERE"}</div>`:""}
-        <button class="node${done?" done":""}${isCur?" cur":""}${!done&&!isCur?" todo":""}${n.t==="X"?" star":""}" data-act="node" data-key="${esc(n.key)}" aria-label="${esc(nodeLabel(n))}">${nodeIcon(n)}${done?`<span class="bd">✓</span>`:""}</button>
-        <div class="nlab">${esc(nodeLabel(n))}</div></div>`;
+      html+=`<div class="nwrap${isCur?" cur":""}" style="transform:translateX(${OFF[g++%8]}px)">${isCur?`<div class="tip">START</div>`:""}
+        <button class="node${done?" done":""}${isCur?" cur":""}${!done&&!isCur?" todo":""}${n.t==="X"?" star":""}${n.t==="CK"?" kana":""}" style="--uc:${U.c}" data-act="node" data-key="${esc(n.key)}" aria-label="${esc(nodeLabel(n))}">${nodeIcon(n)}${done?`<span class="bd">✓</span>`:""}</button>
+        <div class="nlab">${esc(nodeLabel(n))}${isCur&&nodeSub(n)?`<small>${esc(nodeSub(n))}</small>`:""}</div></div>`;
     });
   });
   const cu=cur?cur.unit:units.length-1;
-  return`<div class="ptop"><button class="pill" data-act="levelSheet">🇯🇵 ${LV[S.level].label} · ${LV[S.level].name}</button><span class="pill fire">🔥 ${S.stats.streak||0}</span></div>
+  const learned=Object.keys(S.cards).filter(i=>i.startsWith("w:")).length;
+  return`<div class="ptop"><button class="pill" data-act="levelSheet">🇯🇵 ${LV[S.level].label}</button><span class="pill">💬 ${learned} words</span><span class="pill fire">🔥 ${S.stats.streak||0}</span></div>
   <div class="pathwrap">
-  ${!S.about.done?`<button class="row" data-act="aboutEdit" style="margin-top:8px;border-color:#3f5a46"><span class="ri">✍️</span><span class="rt"><b>Help Yuki get to know you</b><span>2 minutes · makes your path and lessons fit you</span></span></button>`:""}
-  <button id="unitHead" data-act="unitSheet" data-u="${cu}"><span class="uh">${unitHeadInner(cu,units[cu]||{title:"",sub:""})}</span><span style="font-size:22px;color:var(--dim)">›</span></button>
+  ${!S.about.done?`<button class="row" data-act="aboutEdit" style="margin-top:8px;border-color:#3f5a46"><span class="ri">✍️</span><span class="rt"><b>Help Yuki get to know you</b><span>2 minutes · makes your lessons fit you</span></span></button>`:""}
+  ${S.course&&!(S.plan&&S.plan.done[S.course.key])?`<button class="row" data-act="tab" data-tab="chat" style="margin-top:8px;border-color:var(--sakura)"><span class="ri">💬</span><span class="rt"><b>Continue: ${esc(S.course.title)}</b><span>${S.course.used.length}/${S.course.targets.length} words used with Yuki</span></span></button>`:""}
+  <button id="unitHead" data-act="unitSheet" data-u="${cu}">${unitHeadInner(cu)}</button>
   ${html}
   ${cur?"":`<div class="card" style="text-align:center;margin-top:20px"><div style="font-size:48px">🎓</div><b>Path complete!</b><p class="sub" style="margin-top:6px">Move up a level to get a new path.</p></div>`}
   <div style="display:flex;gap:8px;margin-top:28px"><button class="btn sm ghost" data-act="addSheet">⭐ Add a lesson</button><button class="btn sm ghost" data-act="allLessons">📚 All lessons</button></div>
@@ -1091,11 +1270,12 @@ function vHome(){
 
 function vChat(){
   const les=S.currentLesson&&lessonById(S.currentLesson);
-  const chips=les?["I don't get it","Give me an example","Quiz me on this","Next step","Say it slower 🔊"]:["Quiz me","Teach me something new","Let's practice talking","Explain simpler","Say it slower 🔊"];
+  const chips=S.course?["Give me a hint","What does that mean?","Say it slower 🔊","Can we do it in English first?"]:les?["I don't get it","Give me an example","Quiz me on this","Next step","Say it slower 🔊"]:["Quiz me","Teach me something new","Let's practice talking","Explain simpler","Say it slower 🔊"];
   return`<div class="chat">
-  <div class="chathead"><div class="av">ゆ</div><div class="ct"><b>Yuki</b><small>${les?esc(les.title):UI.planCtx?esc(UI.planCtx.label):"Online · "+LV[S.level].label}</small></div>
-   ${les?`${S.done.includes(les.id)?"":`<button class="mini ok" data-act="lessonDone">✓ Done</button>`}<button class="iconbtn" data-act="lessonExit" aria-label="Leave lesson">✕</button>`:UI.planCtx?`<button class="mini ok" data-act="ctxDone">✓ Done</button>`:""}
+  <div class="chathead"><div class="av">ゆ</div><div class="ct"><b>Yuki</b><small>${S.course?esc(S.course.title):les?esc(les.title):UI.planCtx?esc(UI.planCtx.label):"Online · "+LV[S.level].label}</small></div>
+   ${S.course?`<button class="mini ok" data-act="courseDone">${S.plan&&S.plan.done[S.course.key]?"Finish":"✓ Done"}</button><button class="iconbtn" data-act="courseExit" aria-label="Leave practice">✕</button>`:les?`${S.done.includes(les.id)?"":`<button class="mini ok" data-act="lessonDone">✓ Done</button>`}<button class="iconbtn" data-act="lessonExit" aria-label="Leave lesson">✕</button>`:UI.planCtx?`<button class="mini ok" data-act="ctxDone">✓ Done</button>`:""}
    <button class="iconbtn call" data-act="voice" aria-label="Voice call">📞</button></div>
+  ${S.course?`<div class="tbar"><span class="sub">Use these words:</span>${talkChips()}</div>`:""}
   <div id="msgs" class="msgs">${S.chat.length?S.chat.map(msgHTML).join(""):emptyChat()}</div>
   <div class="chatfoot"><div class="chips">${chips.map(c=>`<button class="chip" data-act="chip" data-t="${esc(c)}">${esc(c)}</button>`).join("")}</div>
   <div class="inputbar"><button id="micBtn" class="iconbtn${UI.listening?" live":""}" data-act="mic" aria-label="Speak">🎤</button>
@@ -1110,7 +1290,7 @@ function msgHTML(m,i){
   const prev=S.chat[i-1],cont=prev&&prev.role==="assistant";
   const av=cont?`<div style="width:30px;flex-shrink:0"></div>`:`<div class="av" style="width:30px;height:30px;font-size:14px;margin-top:2px">ゆ</div>`;
   if(m.err)return`<div class="m a${cont?" cont":""}">${av}<div class="err">${m.text}<br><button class="mini" style="margin-top:8px" data-act="tab" data-tab="me">Open setup</button></div></div>`;
-  return`<div class="m a${cont?" cont":""}">${av}<div class="bubwrap"><div class="bub">${md(m.text)}<div class="bubfoot"><button class="say" data-act="sayMsg" data-i="${i}" aria-label="Listen">🔊</button></div></div></div></div>`;
+  return`<div class="m a${cont?" cont":""}">${av}<div class="bubwrap"><div class="bub withsay"><div class="bt">${md(m.text)}</div><button class="say" data-act="sayMsg" data-i="${i}" aria-label="Listen">🔊</button></div></div></div>`;
 }
 function afterChat(){
   const box=$("#msgs");if(box)box.scrollTop=box.scrollHeight;
@@ -1436,8 +1616,19 @@ const ACT={
   chart:el=>{UI.chart=el.dataset.c;planAuto("K",UI.chart);render();},
   closeChart:()=>{UI.chart=null;render();},
   quiz:el=>{UI.planCtx=null;startQuiz(el.dataset.q);},
+  lpNext:()=>lpNext(),
+  lpSay:()=>lpSay(),
+  lpQSay:()=>{const q=UI.lp&&UI.lp.qs[UI.lp.qi];if(q)speak(q.say,{rate:0.85});},
+  lpPick:el=>{const lp=UI.lp,q=lp.qs[lp.qi];if(lp.picked!=null)return;lp.picked=el.dataset.v;const ok=lp.picked===q.a;
+    if(ok)lp.right++;bumpWord(lp.kind==="kana"?q.it[3]:"w:"+q.it[0],ok);
+    if(!ok&&!lp.requeued[lp.qi]){lp.requeued[lp.qi]=1;lp.qs.push({...q,opts:shuffle(q.opts.slice())});}
+    save();touchDay();render();},
+  lpTalk:()=>{const n=UI.lp.node;startTalk(n);},
+  lpClose:()=>{UI.lp=null;UI.tab="home";render();},
+  courseDone:()=>{const c=S.course;if(c)markNode(c.key,!!(S.plan&&S.plan.done[c.key]));S.course=null;save();UI.tab="home";render();},
+  courseExit:()=>{S.course=null;save();UI.tab="home";render();},
   node:el=>{const n=pathNodes().find(x=>x.key===el.dataset.key);if(n)startNode(n);},
-  ctxDone:()=>{if(UI.planCtx){markNode(UI.planCtx.key);UI.planCtx=null;}UI.tab="home";render();},
+  ctxDone:()=>{S.course=null;if(UI.planCtx){markNode(UI.planCtx.key);UI.planCtx=null;}UI.tab="home";render();},
   unitSheet:el=>unitSheet(+el.dataset.u),
   unitSkip:el=>{const u=+el.dataset.u;if(!confirm("Mark this whole unit as done?"))return;ensurePlan();
     pathNodes().filter(n=>n.unit===u).forEach(n=>{if(n.t==="L"){if(!S.done.includes(n.k))S.done.push(n.k);}else S.plan.done[n.key]=true;});save();toast("Unit skipped ✓");rerender();},

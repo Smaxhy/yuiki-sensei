@@ -14,21 +14,27 @@ Safari → Add to Home Screen.
   No AI, no credits. Result saved to `S.placement` and can set `S.level`.
 - **Learner card**: `learnerCard()` turns `S.about` + `S.placement` into one compact line
   sent with every request so Yuki always knows who the student is.
-- **Guided plan**: 12 weeks / 84 days in `PLAN` (flattened to `PDAYS`), aimed at kana +
-  basic conversation. Task codes: `L:` lesson, `C:` flashcard deck (`due` = review),
-  `K:` kana chart, `Q:` quiz, `T:` talk prompt in `TALK`. Progress in `S.plan` (`start`,
-  `done["day:task"]`). Tasks tick themselves (`planAuto`, lesson completion, 4 Yuki replies
-  via `UI.planCtx`) or via ✓ Done in chat. Shown as the Path (see below).
+- **Conversation course (N5 path)**: `COURSE` = 12 topic units (greetings, introductions,
+  numbers, food, time, hobbies, family, shopping, directions, weather & feelings, travel, real
+  conversations). Each unit: 3 lessons of max 5 words `[jp, romaji, en]`, a 5-kana bite
+  (`kana`), and a roleplay (`rp`; "FINAL" = end-of-course conversation). Path order per unit:
+  lesson, lesson, kana, lesson, roleplay. Node keys `cl:<id>`, `ck:<unit>`, `cr:<unit>`.
+  Lesson player (`UI.lp`, `vLesson`): Learn (one word per card, recorded audio) → Practise
+  (offline tap quiz incl. 2 review questions from older due words) → Talk. Talk = `S.course`
+  ({key, kind, title, goal, scen, targets, used, review}); `coursePrompt()` tells Yuki to make
+  the student use every target word and to bring back older words; words tick off via
+  `detectUsed()` on what the student types (kana or romaji) and the `used` MEM field; all used
+  → node done. Course words are flashcards `w:<jp>` ("My words" deck) and share spaced
+  repetition in `S.cards` (`bumpWord`, `reviewWords`).
 - **Auto-update**: on open, on returning to the app, and every 15 min, `checkUpdate` fetches
   the live page and compares its `<script>`/`<style>` with the running ones. If different it
   reloads right away when idle (`canReloadNow`), otherwise when the app is next hidden. Loop
   guard: at most one auto-reload per 2 min (`yuki-upd-at`). Still bump `APP_VERSION` (shown in Me).
-- **Path (home tab)**: Duolingo-style winding path of nodes. N5 uses the 12-week `PLAN`;
-  other levels get one built from `CUR[level]` (lessons + a 🏆 unit review per unit). Built by
-  `pathNodes()` / `pathUnits()`; node keys: `day:task` (N5), `L:id` (lessons), `lv:unit:q`,
-  `c:id` (custom ⭐). Sticky unit header (`pathScroll`), unit sheet with "skip unit",
-  level sheet. Custom lessons in `S.plan.custom` ({id,title,before,level}) are added from the
-  "⭐ Add a lesson" sheet or by Yuki via the `path` MEM field.
+- **Path (home tab)**: winding path of nodes with coloured unit banners and a sticky unit card
+  that appears once you scroll past a banner (`pathScroll`). N5 = the conversation course;
+  other levels are built from `CUR[level]` (lessons + a 🏆 unit review). `pathNodes()` /
+  `pathUnits()`; custom ⭐ lessons in `S.plan.custom` ({id,title,before,level}) from the
+  "⭐ Add a lesson" sheet or Yuki's `path` MEM field. Progress in `S.plan.done`.
 - **Tabs**: Path, Yuki (chat), Practice, Me. "All lessons" (`UI.tab="learn"`) opens from the
   path, the level sheet, or Practice.
 - **Yuki the AI tutor**: 26, from Kyoto, warm and playful, corrects mistakes clearly.
@@ -42,7 +48,7 @@ Safari → Add to Home Screen.
   English. Turned into prompt lines by `styleRules()`.
 - **Credit saver** (`S.settings.history`): 6/12/24 recent messages sent per request.
 - **Memory**: every AI reply ends with a hidden line `<<MEM>>{json}` containing facts,
-  weak, strong, learned, right, wrong, lessonDone, path. The app strips it (`parseMem`), saves it
+  weak, strong, learned, right, wrong, lessonDone, used, path. The app strips it (`parseMem`), saves it
   to the profile (`applyMem`), and feeds the profile back into `systemPrompt()`.
   Don't break this format.
 - **Lessons**: 100+ lessons in the `CUR` object, grouped by level (n5–n1) → unit →
@@ -58,7 +64,7 @@ Safari → Add to Home Screen.
   reply switching between `azEn`/`azJa` voices (`AZ_VOICES`), played with Web Audio, cached
   (`natCache`), monthly characters counted (`ttsChars`, free tier 500k). Falls back to iPhone
   voices on any error. `isSpeaking()` / `stopSpeak()` cover both engines.
-  Free recorded Japanese audio: every `CARDS[*].say` is pre-recorded with VOICEVOX in
+  Free recorded Japanese audio: every `CARDS[*].say` (incl. course words) is pre-recorded with VOICEVOX in
   `audio/himari/` and `audio/ryusei/` (file name = `recId(text)`), chosen with
   `S.settings.jaRec`; `speak()` plays these first for exact matches. New decks: re-run
   `tools/gen_audio.py`. Credits "VOICEVOX:冥鳴ひまり" / "VOICEVOX:青山龍星" must stay (Me + README).
@@ -74,7 +80,7 @@ Safari → Add to Home Screen.
   settings, what Yuki remembers, and backup/restore as JSON (key excluded).
 
 ## Technical notes
-- State object `S` (currently `v:8`) saved to localStorage key `yuki-sensei-v3`. Keep it backward
+- State object `S` (currently `v:9`) saved to localStorage key `yuki-sensei-v3`. Keep it backward
   compatible. Saved data (and restored backups) go through `migrate()`; if the shape
   changes, bump `DEFAULT.v` and add a step there instead of wiping progress.
 - Clicks route through `data-act` attributes to the `ACT` object.
