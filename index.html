@@ -296,7 +296,7 @@ input,textarea,select{font:inherit;font-size:16px;color:var(--text)}
 <script>
 "use strict";
 // Bump this on every change so phones can spot a new version and offer to update
-const APP_VERSION="2026.10.04-20";
+const APP_VERSION="2026.10.04-21";
 /* ============ DATA ============ */
 const LV = {
   n5:{label:"N5",name:"Beginner",color:"#9fd67c"},
@@ -489,7 +489,7 @@ const KANJI_LV={none:"none yet",few:"under 50",some:"50–300",many:"300+"};
 /* ============ STATE ============ */
 const KEY="yuki-sensei-v3";
 const DEFAULT={
-  v:18,onboarded:false,name:"",level:"n5",goal:"",
+  v:19,onboarded:false,name:"",level:"n5",goal:"",
   about:{done:false,focus:[],hira:"",kata:"",kanji:"",location:"",native:"English",minutes:15,notes:""},
   placement:null,plan:null,course:null,
   profile:{facts:[],weak:[],strong:[],learned:[]},
@@ -497,7 +497,7 @@ const DEFAULT={
   done:[],cards:{},chat:[],currentLesson:null,
   threads:{main:{title:"Chat with Yuki",kind:"free",msgs:[],at:0}},chatId:"main",
   settings:{apiKey:"",model:"claude-haiku-4-5-20251001",rate:0.9,autoSpeakChat:false,speakEnglish:true,micLang:"ja-JP",
-    style:{length:"short",english:"balanced",script:"auto",simple:false},history:12,voiceEn:"",voiceJa:"",handsFree:false,jaRec:"ryusei",vvUrl:"",enVoice:"ryusei",questKey:"",
+    style:{length:"short",english:"balanced",script:"auto",simple:false},history:12,voiceEn:"",voiceJa:"",handsFree:false,jaRec:"ryusei",vvUrl:"",enVoice:"iphone",questKey:"",
     tts:"quest",azKey:"",azRegion:"eastus",azEn:"en-US-AvaMultilingualNeural",azJa:"ja-JP-NanamiNeural",ttsChars:{month:"",n:0},captions:true}
 };
 let S=JSON.parse(JSON.stringify(DEFAULT));
@@ -575,6 +575,8 @@ function migrate(st){
   // v16 → v17: owner wants Ryusei for everything (undo any accidental switch)
   // v17 → v18: hands-free off (iPhone won't reliably start the mic without a tap)
   if((st.v||0)<18)S2.handsFree=false;
+  // v18 → v19: Ryusei for Japanese, a natural iPhone voice for English (owner's choice)
+  if((st.v||0)<19)S2.enVoice="iphone";
   if((st.v||0)<17){S2.tts="quest";S2.enVoice="ryusei";if(S2.jaRec==="off")S2.jaRec="ryusei";}
   if((st.v||0)<16){if(S2.style&&S2.style.length==="normal")S2.style.length="short";S2.handsFree=true;}
   S2.handsFree=S2.handsFree===true;
@@ -802,9 +804,24 @@ async function fetchVV(text,rate){
 }
 function playBuffer(audio,my){return new Promise(res=>{if(my!==natSeq)return res();const ctx=audioCtx(),src=ctx.createBufferSource();src.buffer=audio;src.connect(ctx.destination);
   src.onended=()=>{if(natSrc===src){natSrc=null;natPlaying=false;}res();};natSrc=src;natPlaying=true;src.start(0);});}
-function sayDevice(t,lang,rate){return new Promise(res=>{if(!synth){vlog("✗ iPhone voice: not available");return res();}const u=new SpeechSynthesisUtterance(t);let st=false;u.onstart=()=>{st=true;};
-  setTimeout(()=>{if(!st)vlog("✗ iPhone voice ("+lang+") didn't start: "+t.slice(0,30));},3000);u.lang=lang;const v=pickVoice(lang);if(v)u.voice=v;
-  u.rate=lang==="ja-JP"?rate:Math.max(0.85,Math.min(1.05,rate+0.1));u.pitch=1;u.onend=u.onerror=()=>res();synth.speak(u);});}
+// iPhone speech: short sentence chunks (long ones get cut off on iOS), resume if iOS paused the
+// synthesizer, a short gap after an audio clip, and a safety timer in case "end" never fires.
+function sayChunk(t,lang,rate){return new Promise(res=>{
+  const u=new SpeechSynthesisUtterance(t);let st=false,done=false;const fin=()=>{if(done)return;done=true;clearTimeout(guard);res();};
+  u.lang=lang;const v=pickVoice(lang);try{if(v)u.voice=v;}catch(e){}
+  u.rate=lang==="ja-JP"?rate:Math.max(0.85,Math.min(1.05,rate+0.1));u.pitch=1;
+  u.onstart=()=>{st=true;};u.onend=fin;u.onerror=e=>{vlog("✗ iPhone voice error: "+(e.error||"?"));fin();};
+  const guard=setTimeout(()=>{if(!st)vlog("✗ iPhone voice ("+lang+(v?", "+v.name:"")+") didn't start: "+t.slice(0,30));fin();},2500+t.length*120);
+  try{if(synth.paused)synth.resume();synth.speak(u);}catch(e){vlog("✗ iPhone voice: "+e.message);fin();}
+});}
+async function sayDevice(t,lang,rate){
+  if(!synth){vlog("✗ iPhone voice: not available");return;}
+  t=String(t).trim();if(!t)return;
+  await new Promise(r=>setTimeout(r,120));
+  const parts=t.match(/[^.!?。！？\n]+[.!?。！？]*\s*/g)||[t];
+  let buf="";const chunks=[];parts.forEach(p=>{if((buf+p).length>180&&buf){chunks.push(buf);buf="";}buf+=p;});if(buf.trim())chunks.push(buf);
+  for(const c of chunks)await sayChunk(c.trim(),lang,rate);
+}
 // Japanese parts in Himari/Ryusei from the server, English parts in the best iPhone voice, played in order
 async function speakVV(segs,rate,text,opts){
   const my=++natSeq;natBusy=true;
@@ -1873,6 +1890,7 @@ function vMe(){
     <p class="sub" style="margin:10px 0 6px">Voice</p>${chipRow("recSet","jaRec",st.jaRec==="off"?"ryusei":st.jaRec,Object.entries(REC_VOICES).map(([k,v])=>[k,v.name.split(" ")[0]]))}
     <p class="sub" style="margin:12px 0 6px">English parts</p>${chipRow("enVoiceSet","enVoice",st.enVoice,[["ryusei",(REC_VOICES[st.jaRec]||REC_VOICES.ryusei).name.split(" ")[0]+" (Japanese accent)"],["iphone","iPhone voice"]])}
     ${st.enVoice==="iphone"?voicePicker("en","English voice",st.voiceEn):""}
+    ${st.enVoice==="iphone"?`<div class="toggle" style="margin-top:6px"><span>English voice now: <b>${esc((voiceList("en-US")[0]||{name:"default"}).name)}</b>${voiceList("en-US")[0]&&isHQ(voiceList("en-US")[0])?" ★":""}</span><button class="mini" data-act="iphoneVoiceTest">🔊 Test</button></div>`:""}
     <button class="btn sm ghost" style="margin-top:12px" data-act="voiceLog">🧾 Voice log (send me a screenshot if voice is wrong)</button>
     <button class="btn sm" style="margin-top:8px" data-act="questTest">🔎 Test Ryusei's live voice</button>
     <details style="margin-top:10px"><summary class="sub" style="min-height:44px;display:flex;align-items:center">Optional: free tts.quest key (faster, fewer "busy")</summary>
@@ -2093,8 +2111,9 @@ const ACT={
   voiceLog:()=>sheet(`<div class="h2">🧾 Voice log</div><p class="sub" style="margin:6px 0 10px">Voice: <b>${esc(engineName())}</b> · app ${APP_VERSION}<br>Newest at the bottom. Take a screenshot right after the voice goes wrong.</p>
     <div class="card" style="font-family:ui-monospace,Menlo,monospace;font-size:12px;line-height:1.5;max-height:50vh;overflow:auto;white-space:pre-wrap">${VLOG.length?esc(VLOG.join("\n")):"Nothing yet — let Yuki speak first."}</div>
     <button class="btn" data-act="closeSheet">Close</button>`),
-  iphoneVoiceTest:()=>{if(!synth){toast("This browser has no built-in voice");return;}synth.cancel();const u=new SpeechSynthesisUtterance("Hello! This is the iPhone voice.");u.lang="en-US";const v=pickVoice("en-US");if(v)u.voice=v;
-    let started=false;u.onstart=()=>{started=true;};u.onend=()=>toast(started?"iPhone voice: worked ✓":"iPhone voice: no sound",2500);u.onerror=e=>toast("iPhone voice error: "+(e.error||"unknown"),3500);synth.speak(u);
+  iphoneVoiceTest:()=>{if(!synth){toast("This browser has no built-in voice");return;}synth.cancel();stopQuest();const u=new SpeechSynthesisUtterance("Hello! This is my English voice. Let's practise Japanese together.");u.lang="en-US";const v=pickVoice("en-US");if(v)u.voice=v;
+    vlog("▶ English voice test: "+(v?v.name+(isHQ(v)?" (premium/enhanced)":" (basic)"):"default"));
+    let started=false;u.onstart=()=>{started=true;};u.onend=()=>toast(started?"English voice ("+(v?v.name:"default")+") worked ✓"+(v&&isHQ(v)?"":" — download Ava (Premium) for a much nicer one"):"English voice: no sound",3500);u.onerror=e=>toast("iPhone voice error: "+(e.error||"unknown"),3500);synth.speak(u);
     setTimeout(()=>{if(!started)toast("iPhone voice didn't start — check Settings → Accessibility → Spoken Content",4000);},4000);},
   enVoiceSet:el=>{S.settings.enVoice=el.dataset.v;save();rerender();speak("Hi! This is how I sound in English.",{forceEnglish:true,say:"ハイ！ディス イズ ハウ アイ サウンド イン イングリッシュ。"});},
   ttsSet:el=>{S.settings.tts=el.dataset.v;natFailNote=false;vvNote=false;questNote=false;save();rerender();pingVV();},
