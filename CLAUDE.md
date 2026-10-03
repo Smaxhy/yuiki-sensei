@@ -111,6 +111,10 @@ Safari → Add to Home Screen.
   status URL until `isAudioReady`, then play the finished MP3 (iOS is unreliable with streams);
   if status can't be read, try the stream, then retry the finished files. The "Test Ryusei"
   sheet shows which of the 3 steps fails (`questFail`) and has an iPhone-voice test.
+  Voice log (`VLOG`, `vlog()`, Me → Voice → "🧾 Voice log", or tap the title on the call screen):
+  every speak attempt, tts.quest request/answer, audio play/refusal/error and iPhone voice that
+  didn't start, for diagnosing problems on the owner's phone. Recordings inside a mixed reply are
+  no longer played as fragments (only when the whole thing is one recorded word).
   `cleanSpeech()` drops romaji in brackets right after Japanese (「こんにちは」(konnichiwa)) so the
   English voice doesn't mangle it.
   `applyMem` coerces MEM fields with `asList()` and is wrapped in try/catch so an odd memory
@@ -142,7 +146,7 @@ Safari → Add to Home Screen.
   settings, what Yuki remembers, and backup/restore as JSON (key excluded).
 
 ## Technical notes
-- State object `S` (currently `v:16`) saved to localStorage key `yuki-sensei-v3`. Keep it backward
+- State object `S` (currently `v:17`) saved to localStorage key `yuki-sensei-v3`. Keep it backward
   compatible. Saved data (and restored backups) go through `migrate()`; if the shape
   changes, bump `DEFAULT.v` and add a step there instead of wiping progress.
 - Clicks route through `data-act` attributes to the `ACT` object.
