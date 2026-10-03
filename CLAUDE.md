@@ -89,8 +89,8 @@ Safari → Add to Home Screen.
   Japanese segments play from the recordings when they match, otherwise live from the free public
   VOICEVOX service tts.quest (`questUrl` → mp3StreamingUrl, played on one shared <audio> element
   unlocked on first tap; speaker id from `REC_VOICES`); English parts use Ryusei or the iPhone voice; any
-  failure (busy/unreachable) falls back to the iPhone voice for that segment. With
-  `enVoice="ryusei"` (opt-in; default "iphone" since VOICEVOX can't speak English well) English is sent to VOICEVOX too, lower-cased with contractions
+  failure (busy/unreachable) falls back to the iPhone voice for that segment; a "retryAfter ≤ 4 s" answer is retried once. With
+  `enVoice="ryusei"` (default again at the owner's request; "iphone" optional) English is sent to VOICEVOX too, lower-cased with contractions
   expanded (`englishForVV`), neighbouring live segments merged into one request.
   All recordings and tts.quest clips play through one shared <audio> element (`questPlayer`,
   `playUrl`, unlocked on first touch/pointer) rather than Web Audio, which iOS silently suspends
@@ -119,7 +119,7 @@ Safari → Add to Home Screen.
   settings, what Yuki remembers, and backup/restore as JSON (key excluded).
 
 ## Technical notes
-- State object `S` (currently `v:14`) saved to localStorage key `yuki-sensei-v3`. Keep it backward
+- State object `S` (currently `v:15`) saved to localStorage key `yuki-sensei-v3`. Keep it backward
   compatible. Saved data (and restored backups) go through `migrate()`; if the shape
   changes, bump `DEFAULT.v` and add a step there instead of wiping progress.
 - Clicks route through `data-act` attributes to the `ACT` object.
