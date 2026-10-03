@@ -86,8 +86,11 @@ Safari → Add to Home Screen.
   All recordings and tts.quest clips play through one shared <audio> element (`questPlayer`,
   `playUrl`, unlocked on first touch/pointer) rather than Web Audio, which iOS silently suspends
   after calls/mic use/app switches; the first clip starts synchronously inside the tap.
-  iPhone audio session: `setAudioMode("playback")` normally, "play-and-record" while the mic
-  listens or a call is open ("playback" alone blocks the microphone).
+  iPhone audio session: `setAudioMode("playback")` normally, "play-and-record" only while the
+  mic is actually listening ("playback" alone blocks the microphone; keeping "play-and-record"
+  for a whole call makes voices sound muffled/telephone-like).
+  `cleanSpeech()` drops romaji in brackets right after Japanese (「こんにちは」(konnichiwa)) so the
+  English voice doesn't mangle it.
   `applyMem` coerces MEM fields with `asList()` and is wrapped in try/catch so an odd memory
   line can never break a reply.
   The mic listens in Japanese by default (`micLang="ja-JP"`, forced when a course talk starts);

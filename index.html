@@ -269,7 +269,7 @@ input,textarea,select{font:inherit;font-size:16px;color:var(--text)}
 <script>
 "use strict";
 // Bump this on every change so phones can spot a new version and offer to update
-const APP_VERSION="2026.10.04-8";
+const APP_VERSION="2026.10.04-9";
 /* ============ DATA ============ */
 const LV = {
   n5:{label:"N5",name:"Beginner",color:"#9fd67c"},
@@ -592,6 +592,8 @@ function pickVoice(lang){
 const JP=/[\u3040-\u30ff\u3400-\u9fff\uff66-\uff9f\u3005]/;
 function cleanSpeech(t){
   return t.replace(/<<MEM>>[\s\S]*$/,"")
+   // 「こんにちは」(konnichiwa) → こんにちは: the romaji only repeats the Japanese, and an English voice mangles it
+   .replace(/([\u3040-\u30ff\u3400-\u9fff\u3005][」』]?)\s*[（(]\s*[A-Za-zāēīōūÂâÊêÎîÔôÛû'\- ]+\s*[)）]/g,"$1")
    .replace(/\[\[|\]\]/g,"")
    .replace(/([\u3400-\u9fff\u3005]+)[（(]([\u3040-\u30ff]+)[)）]/g,"$1")
    .replace(/[*_#`>|]/g," ")
@@ -881,7 +883,7 @@ function startMic(onText,onDone){
     if(e.error==="not-allowed"||e.error==="service-not-allowed"||e.error==="audio-capture")micHelp("blocked");
     else if(e.error==="no-speech")toast("I didn't hear anything — tap and try again");
     else if(e.error!=="aborted")toast("Mic problem: "+e.error);};
-  rec.onend=()=>{UI.listening=false;if(!UI.voice)setAudioMode("playback");refreshMic();if(!errored&&onDone)onDone(finalT.trim());};
+  rec.onend=()=>{UI.listening=false;setAudioMode("playback");refreshMic();if(!errored&&onDone)onDone(finalT.trim());};
   setAudioMode("play-and-record");
   try{rec.start();UI.listening=true;refreshMic();return true;}catch(e){UI.listening=false;micHelp("blocked");return false;}
 }
@@ -1684,7 +1686,7 @@ function voicePicker(lang,label,cur){
 }
 
 /* ============ VOICE CALL ============ */
-function openVoice(){setAudioMode("play-and-record");UI.voice=true;UI.vstate="idle";UI.vyou="";$("#voice").classList.remove("hidden");renderVoice();
+function openVoice(){UI.voice=true;UI.vstate="idle";UI.vyou="";$("#voice").classList.remove("hidden");renderVoice();
   if(!S.chat.length||S.chat[S.chat.length-1].role!=="assistant"){/* nothing */}}
 function closeVoice(){setAudioMode("playback");UI.voice=false;stopMic();stopSpeak();$("#voice").classList.add("hidden");if(UI.tab==="chat")render();}
 function renderVoice(){
