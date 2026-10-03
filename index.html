@@ -360,7 +360,7 @@ input,textarea,select{font:inherit;font-size:16px;color:var(--text)}
 <script>
 "use strict";
 // Bump this on every change so phones can spot a new version and offer to update
-const APP_VERSION="2026.10.05-2";
+const APP_VERSION="2026.10.05-3";
 /* ============ DATA ============ */
 const LV = {
   n5:{label:"N5",name:"Beginner",color:"#9fd67c"},
@@ -995,12 +995,15 @@ let qa=null,questNote=false;
 const questCache=new Map();
 // One shared <audio> player, unlocked on the first tap (iPhone rule), so later clips can play by themselves
 function questPlayer(){if(!qa){qa=new Audio();qa.preload="auto";qa.playsInline=true;}return qa;}
-function unlockPlayer(){const a=questPlayer();if(a.dataset.ok||natPlaying)return;a.src=SILENT_MP3;a.play().then(()=>{a.dataset.ok="1";}).catch(()=>{});}
+function unlockPlayer(e){if(UI.listening||(e&&e.target&&e.target.closest&&e.target.closest('[data-act="vMic"],[data-act="mic"]')))return;const a=questPlayer();if(a.dataset.ok||natPlaying)return;a.src=SILENT_MP3;a.play().then(()=>{a.dataset.ok="1";}).catch(()=>{});}
 document.addEventListener("touchend",unlockPlayer,{passive:true});
 document.addEventListener("pointerdown",unlockPlayer,{passive:true});
 // Japanese is written without spaces; beginner-style spaced kana makes the voice read は as "ha", へ as "he"
 function vvText(t){
   return String(t).trim()
+    .replace(/(^|[ \u3000])は(?=[ \u3000])/g,"$1わ").replace(/(^|[ \u3000])へ(?=[ \u3000])/g,"$1え")
+    .replace(/([\u3040-\u306e\u3070-\u30ff\u3400-\u9fff])は(?=[ \u3000、。！？!?,.]|$)/g,"$1わ")
+    .replace(/([\u3040-\u3077\u3079-\u30ff\u3400-\u9fff])へ(?=[ \u3000、。！？!?,.]|$)/g,"$1え")
     .replace(/([\u3040-\u30ff\u3400-\u9fff\u3005ー])[ \u3000]+(?=[\u3040-\u30ff\u3400-\u9fff\u3005ー])/g,"$1")
     .replace(/\.(\s|$)/g,"。$1").replace(/,\s*/g,"、").replace(/!/g,"！").replace(/\?/g,"？").replace(/\s+/g," ").trim();
 }
@@ -1055,7 +1058,7 @@ function playUrl(url,my,rate){return new Promise((res,rej)=>{
   a.ontimeupdate=()=>{if(a.currentTime>0.15)started=true;};
   a.onended=()=>fin(true);
   a.onerror=()=>{vlog((started?"… audio glitch after playing (not repeating): ":"✗ audio error "+(a.error?a.error.code:"?")+": ")+name);fin(false);};
-  a.src=url;a.playbackRate=rate&&rate<0.75?0.8:1;natPlaying=true;
+  a.src=url;a.volume=1;a.preservesPitch=a.webkitPreservesPitch=true;a.playbackRate=rate&&rate<0.75?0.85:1;natPlaying=true;
   a.play().then(()=>{a.dataset.ok="1";}).catch(e=>{vlog("✗ play() refused: "+(e&&e.name||"")+" "+(e&&e.message||"").slice(0,40));fin(false);});
 });}
 function stopQuest(){if(qa){try{qa.pause();}catch(e){}}}
@@ -1131,16 +1134,19 @@ async function speakQuest(segs,rate,text,opts){
   const recUrl=sg=>{const k=recKey(sg.t);return RECORDED.has(k)?recUrlFor(k):null;};
   const jobs=segs.map(sg=>sg.k!=="ja"?null:prepClip(recUrl(sg)||questUrl(vvText(sg.t)),my));
   jobs.forEach(j=>j&&j.catch(()=>{}));
-  const t0=Date.now(),LATE={};
+  // Once Ryusei falls behind in a reply, the rest of that reply stays with the iPhone voice:
+  // switching voices back and forth mid-reply sounded like his voice was breaking up.
+  const t0=Date.now(),LATE={};let stay=false;
   try{
     for(let i=0;i<segs.length;i++){
       if(my!==natSeq)return;
       if(!jobs[i]){await sayDevice(segs[i].t.trim(),"en-US",rate);continue;}
+      if(stay){if(segs[i].orig!==undefined)await speakPlainDevice(segs[i].orig,rate);else await sayDevice(segs[i].t.trim(),"ja-JP",rate);continue;}
       // (with enVoice "ryusei" every segment is sent as "ja", so it never reaches the iPhone English voice unless the service fails)
       natLoading=true;let clip=null;
-      const wait=Math.max(2500,(i?0:7000)-(Date.now()-t0));
+      const wait=Math.max(4000,(i?0:8000)-(Date.now()-t0));
       try{clip=await Promise.race([jobs[i],new Promise(r=>setTimeout(()=>r(LATE),wait))]);
-        if(clip===LATE){clip=null;vlog("… Ryusei not ready after "+(wait/1000).toFixed(1)+" s, iPhone voice says this part (tts.quest busy)");}}catch(e){
+        if(clip===LATE){clip=null;stay=true;vlog("… Ryusei not ready after "+(wait/1000).toFixed(1)+" s, iPhone voice says the rest of this reply (tts.quest busy)");}}catch(e){stay=true;
         if(!questNote){questNote=true;toast("Ryusei's voice didn't answer ("+e.message+"). Tap Me → Voice → Test Ryusei for details.",4500);}}
       natLoading=false;if(my!==natSeq)return;
       if(clip){await synthIdle(6000);
@@ -1196,8 +1202,9 @@ function stopSpeak(){spGen++;if(synth)synth.cancel();stopNatural();}
 // audio player stuck after many replies), done inside the tap so the fresh player is allowed to play.
 function resetAudio(){
   stopSpeak();try{if(synth){synth.cancel();if(synth.paused)synth.resume();}}catch(e){}
-  if(qa){try{qa.onended=qa.onerror=qa.onplaying=qa.ontimeupdate=null;qa.pause();qa.removeAttribute("src");qa.load();}catch(e){}}
-  qa=null;playId++;const a=questPlayer();a.src=SILENT_MP3;a.play().then(()=>{a.dataset.ok="1";}).catch(()=>{});
+  // Same player every time: iPhone turns the sound down a little for every extra player a page creates
+  playId++;const a=questPlayer();
+  try{a.onended=a.onerror=a.onplaying=a.ontimeupdate=null;a.pause();a.volume=1;a.playbackRate=1;a.src=SILENT_MP3;a.play().then(()=>{a.dataset.ok="1";}).catch(()=>{});}catch(e){}
   vlog("↺ voice reset");
 }
 function sayAgain(m,rate){if(!m)return;resetAudio();if(UI.voice){UI.vstate="speaking";renderVoice();}speak(m.text,{say:m.say,rate});}
@@ -1230,7 +1237,7 @@ function micRun(){
   rec=r;MIC.paused=false;MIC.sess="";MIC.audioOk=false;
   if(!first){const v=$(".vstat");if(v&&UI.voice)v.textContent="🎤 Still listening…";}
   r.lang=MIC.lang;r.interimResults=true;r.continuous=true;r.maxAlternatives=1;
-  const ok=ev=>{if(rec!==r)return;if(!MIC.audioOk)vlog("🎤 mic "+ev);MIC.audioOk=true;const v=$(".vstat");if(v&&UI.voice)v.textContent="🎤 Hearing you · tap ➤ Send when you're done";};
+  const ok=ev=>{if(rec!==r)return;if(!MIC.audioOk)vlog("🎤 mic "+ev);MIC.audioOk=true;MIC.retried=false;const v=$(".vstat");if(v&&UI.voice)v.textContent="🎤 Hearing you · tap ➤ Send when you're done";};
   r.onstart=()=>ok("started");r.onaudiostart=()=>ok("hearing audio");r.onspeechstart=()=>ok("hearing speech");
   r.onresult=e=>{if(rec!==r)return;let t="";for(let i=0;i<e.results.length;i++)t+=e.results[i][0].transcript;
     MIC.sess=MIC.lang==="ja-JP"?kanaize(jaDigits(t)):t;MIC.heardAt=Date.now();MIC.audioOk=true;if(MIC.onText)MIC.onText(micText());};
@@ -1245,13 +1252,17 @@ function micRun(){
   };
   try{r.start();vlog("🎤 mic start ("+MIC.lang+")");}catch(e){vlog("✗ mic start refused: "+e.message);micPause("start refused");return;}
   // no sign of life after 4 s → pause (don't fight iPhone with restarts)
-  setTimeout(()=>{if(rec===r&&MIC.on&&!MIC.stopReq&&!MIC.audioOk){vlog("✗ mic never started");try{r.onend=null;r.abort();}catch(e){}micPause("the mic didn't start");}},first?4000:2000);
+  // No sign of life: try once more by itself (iPhone sometimes refuses while Yuki's voice is still
+  // winding down), and only then pause and ask for a tap.
+  setTimeout(()=>{if(rec===r&&MIC.on&&!MIC.stopReq&&!MIC.audioOk){try{r.onend=null;r.abort();}catch(e){}
+    if(!MIC.retried){MIC.retried=true;vlog("↺ mic didn't start, trying again");try{if(synth)synth.cancel();}catch(e){}releasePlayer();setTimeout(()=>{if(MIC.on&&!MIC.stopReq)micRun();},250);return;}
+    vlog("✗ mic never started");micPause("the mic didn't start");}},first?3000:2000);
 }
 function startMic(onText,onDone,lang){
   const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
   if(!SR){micHelp("unsupported");return false;}
   stopSpeak();releasePlayer();
-  Object.assign(MIC,{on:true,paused:false,lang:lang||S.settings.micLang,base:"",sess:"",stopReq:false,cancel:false,onText,onDone,heardAt:Date.now(),audioOk:false});
+  Object.assign(MIC,{retried:false,on:true,paused:false,lang:lang||S.settings.micLang,base:"",sess:"",stopReq:false,cancel:false,onText,onDone,heardAt:Date.now(),audioOk:false});
   UI.micLang=MIC.lang;UI.listening=true;refreshMic();
   micRun();   // right here, inside the tap
   return true;
@@ -1261,7 +1272,7 @@ function resumeMic(lang){
   if(!MIC.on)return;
   if(lang&&lang!==MIC.lang){MIC.lang=lang;UI.micLang=lang;toast(lang==="ja-JP"?"🎤 Now listening in 日本語":"🎤 Now listening in English",1200);}
   if(rec){const old=rec;rec=null;try{old.onend=null;old.abort();}catch(e){}MIC.base=micText();MIC.sess="";}
-  MIC.heardAt=Date.now();micRun();refreshMic();
+  MIC.heardAt=Date.now();MIC.retried=false;micRun();refreshMic();
 }
 function switchMicLang(lang){resumeMic(lang);}
 function stopMic(cancel){
