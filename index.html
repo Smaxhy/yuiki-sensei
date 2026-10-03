@@ -296,7 +296,7 @@ input,textarea,select{font:inherit;font-size:16px;color:var(--text)}
 <script>
 "use strict";
 // Bump this on every change so phones can spot a new version and offer to update
-const APP_VERSION="2026.10.04-22";
+const APP_VERSION="2026.10.04-23";
 /* ============ DATA ============ */
 const LV = {
   n5:{label:"N5",name:"Beginner",color:"#9fd67c"},
@@ -918,13 +918,29 @@ async function questUrl(text){
   if(questCache.size>80)questCache.delete(questCache.keys().next().value);
   return p;
 }
+// Plays one clip on the shared player. Once sound has actually started, the clip counts as played no
+// matter what happens next (an iPhone glitch near the end must never make Ryusei say it again).
+// Stalls are treated as finished, and a newer clip or Stop ends the old one cleanly.
+let playId=0;
 function playUrl(url,my,rate){return new Promise((res,rej)=>{
   if(my!==natSeq)return res();
-  const a=questPlayer();let done=false;const fin=(ok)=>{if(done)return;done=true;clearTimeout(t);a.onended=a.onerror=null;natPlaying=false;ok?res():rej(new Error("play"));};
-  const t=setTimeout(()=>fin(false),45000);
-  a.onended=()=>fin(true);a.onerror=()=>{vlog("✗ audio error "+(a.error?a.error.code:"?")+": "+url.split("/").slice(-2).join("/"));fin(false);};
+  const a=questPlayer(),id=++playId,name=url.split("/").slice(-2).join("/");
+  let done=false,started=false,lastT=-1,lastMove=Date.now();
+  const fin=ok=>{if(done)return;done=true;clearInterval(iv);clearTimeout(t);
+    if(playId===id){a.onended=a.onerror=a.onplaying=a.ontimeupdate=null;natPlaying=false;}
+    (ok||started)?res():rej(new Error("play"));};
+  const t=setTimeout(()=>{vlog("… clip took too long, stopping it");try{if(playId===id)a.pause();}catch(e){}fin(false);},45000);
+  const iv=setInterval(()=>{
+    if(playId!==id||my!==natSeq){fin(true);return;}
+    if(started){if(a.currentTime!==lastT){lastT=a.currentTime;lastMove=Date.now();}
+      else if(Date.now()-lastMove>3000){vlog("… audio stalled, counting it as finished");try{a.pause();}catch(e){}fin(true);}}
+  },300);
+  a.onplaying=()=>{if(!started)vlog("✓ playing "+name);started=true;lastMove=Date.now();};
+  a.ontimeupdate=()=>{if(a.currentTime>0.15)started=true;};
+  a.onended=()=>fin(true);
+  a.onerror=()=>{vlog((started?"… audio glitch after playing (not repeating): ":"✗ audio error "+(a.error?a.error.code:"?")+": ")+name);fin(false);};
   a.src=url;a.playbackRate=rate&&rate<0.75?0.8:1;natPlaying=true;
-  a.play().then(()=>{a.dataset.ok="1";vlog("✓ playing "+url.split("/").slice(-2).join("/"));}).catch(e=>{vlog("✗ play() refused: "+(e&&e.name||"")+" "+(e&&e.message||"").slice(0,40));fin(false);});
+  a.play().then(()=>{a.dataset.ok="1";}).catch(e=>{vlog("✗ play() refused: "+(e&&e.name||"")+" "+(e&&e.message||"").slice(0,40));fin(false);});
 });}
 function stopQuest(){if(qa){try{qa.pause();}catch(e){}}}
 // iPhone Safari is unreliable with half-made streams, so wait until tts.quest says the file is ready and
@@ -947,7 +963,7 @@ async function playQuestAudio(o,my,rate){
   questStage="playing";
   if(ready&&o.mp3){try{return await playUrl(o.mp3,my,rate);}catch(e){}}
   if(o.stream){try{return await playUrl(o.stream,my,rate);}catch(e){}}
-  for(let i=0;i<8&&my===natSeq;i++){
+  for(let i=0;i<4&&my===natSeq;i++){
     await new Promise(r=>setTimeout(r,1500));
     for(const u of [o.mp3,o.wav]){if(!u)continue;try{return await playUrl(u,my,rate);}catch(e){}}
   }
