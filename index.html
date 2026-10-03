@@ -25,10 +25,35 @@ button:active{transform:scale(.97)}
 input,textarea,select{font:inherit;font-size:16px;color:var(--text)}
 #app{height:var(--vh);display:flex;flex-direction:column;padding-top:var(--safeT)}
 #main{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;position:relative}
-#tabs{display:flex;background:var(--ink2);border-top:1px solid var(--line);padding:6px 4px calc(6px + var(--safeB))}
-#tabs button{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;font-size:11px;color:var(--dim);padding:4px 0;border-radius:10px}
+#tabs{display:flex;gap:4px;background:var(--ink2);border:1px solid var(--line);border-radius:28px;margin:4px 10px calc(6px + var(--safeB));padding:6px}
+#tabs button{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-size:12px;font-weight:700;color:var(--dim);min-height:52px;border-radius:22px}
 #tabs button .ti{font-size:21px;line-height:1}
-#tabs button.on{color:var(--sakura)}
+#tabs button.on{color:var(--sakura);background:var(--ink3)}
+/* path */
+.ptop{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:12px 12px 4px;max-width:560px;margin:0 auto}
+.pill{display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 16px;border-radius:999px;background:var(--ink2);border:1px solid var(--line);font-weight:800;font-size:16px}
+.pill.fire{background:#3a2a12;border-color:#6b4a1c;color:var(--gold)}
+.pathwrap{max-width:560px;margin:0 auto;padding:0 12px 40px}
+#unitHead{position:sticky;top:0;z-index:5;display:flex;align-items:center;gap:10px;width:100%;text-align:left;margin-top:6px;background:#1d2030ee;-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);border:1px solid var(--line);border-radius:22px;padding:14px 16px}
+#unitHead .uh{flex:1;min-width:0}
+#unitHead small{display:block;color:var(--dim);font-weight:800;font-size:12.5px;letter-spacing:.03em}
+#unitHead b{display:block;font-size:18px;margin-top:2px}
+.unitpill{display:block;width:fit-content;max-width:92%;margin:34px auto 20px;padding:10px 18px;border-radius:999px;background:var(--ink2);color:var(--dim);font-weight:800;font-size:14px;text-align:center}
+.nwrap{display:flex;flex-direction:column;align-items:center;margin:12px auto;width:170px}
+.node{width:86px;height:86px;border-radius:32px;background:radial-gradient(circle at 40% 35%,#2e3160,#191b30);display:flex;align-items:center;justify-content:center;font-size:34px;font-weight:800;color:#c9c2ff;position:relative}
+.node.done{box-shadow:0 0 46px #9fd67c26}
+.node .bd{position:absolute;right:-8px;bottom:-8px;width:34px;height:34px;border-radius:50%;background:var(--matcha);color:#173012;font-size:17px;font-weight:900;display:flex;align-items:center;justify-content:center;border:3px solid var(--ink)}
+.node.cur{background:linear-gradient(140deg,var(--sakura),var(--sakura2));color:#2a1520;box-shadow:0 0 0 7px #f4a3c030,0 0 50px #f4a3c066;animation:throb 1.6s infinite}
+.node.todo{opacity:.5}
+.node.star{background:radial-gradient(circle at 40% 35%,#6a5520,#2a2312);color:var(--gold)}
+.node.star.cur{background:linear-gradient(140deg,#f6d27a,#d9a640);color:#2a1d05}
+.nlab{font-size:12.5px;color:var(--dim);margin-top:9px;text-align:center;line-height:1.3}
+.nwrap.cur .nlab{color:var(--text);font-weight:700}
+.tip{background:var(--text);color:var(--ink);font-weight:900;font-size:13px;padding:6px 12px;border-radius:10px;margin-bottom:12px;position:relative;letter-spacing:.04em}
+.tip::after{content:"";position:absolute;left:50%;bottom:-6px;transform:translateX(-50%);border:6px solid transparent;border-bottom:0;border-top-color:var(--text)}
+.urow{display:flex;gap:10px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line);font-size:14.5px}
+.urow:last-child{border-bottom:none}
+.urow i{font-style:normal;width:24px;text-align:center;color:var(--matcha);font-weight:900}
 .hidden{display:none!important}
 .pad{padding:18px 16px 28px;max-width:560px;margin:0 auto}
 .h1{font-size:24px;font-weight:800;letter-spacing:-.02em}
@@ -175,9 +200,8 @@ input,textarea,select{font:inherit;font-size:16px;color:var(--text)}
 <div id="app">
   <main id="main"></main>
   <nav id="tabs">
-    <button data-act="tab" data-tab="home"><span class="ti">🏠</span>Home</button>
+    <button data-act="tab" data-tab="home"><span class="ti">🗺️</span>Path</button>
     <button data-act="tab" data-tab="chat"><span class="ti">💬</span>Yuki</button>
-    <button data-act="tab" data-tab="learn"><span class="ti">📚</span>Learn</button>
     <button data-act="tab" data-tab="practice"><span class="ti">🃏</span>Practice</button>
     <button data-act="tab" data-tab="me"><span class="ti">👤</span>Me</button>
   </nav>
@@ -189,7 +213,7 @@ input,textarea,select{font:inherit;font-size:16px;color:var(--text)}
 <script>
 "use strict";
 // Bump this on every change so phones can spot a new version and offer to update
-const APP_VERSION="2026.10.03-4";
+const APP_VERSION="2026.10.03-5";
 /* ============ DATA ============ */
 const LV = {
   n5:{label:"N5",name:"Beginner",color:"#9fd67c"},
@@ -358,7 +382,7 @@ const KANJI_LV={none:"none yet",few:"under 50",some:"50–300",many:"300+"};
 /* ============ STATE ============ */
 const KEY="yuki-sensei-v3";
 const DEFAULT={
-  v:5,onboarded:false,name:"",level:"n5",goal:"",
+  v:6,onboarded:false,name:"",level:"n5",goal:"",
   about:{done:false,focus:[],hira:"",kata:"",kanji:"",location:"",native:"English",minutes:15,notes:""},
   placement:null,plan:null,
   profile:{facts:[],weak:[],strong:[],learned:[]},
@@ -368,7 +392,7 @@ const DEFAULT={
     style:{length:"normal",english:"balanced",script:"auto",simple:false},history:12,voiceEn:"",voiceJa:""}
 };
 let S=JSON.parse(JSON.stringify(DEFAULT));
-const UI={tab:"home",ob:0,obEdit:false,place:null,learnView:null,planWeek:null,planCtx:null,fc:null,chart:null,voice:false,vstate:"idle",vyou:"",busy:false,listening:false};
+const UI={tab:"home",ob:0,obEdit:false,place:null,planCtx:null,fc:null,chart:null,voice:false,vstate:"idle",vyou:"",busy:false,listening:false};
 
 function merge(base,saved){for(const k in saved){if(saved[k]&&typeof saved[k]==="object"&&!Array.isArray(saved[k])&&base[k]&&typeof base[k]==="object")merge(base[k],saved[k]);else base[k]=saved[k];}return base;}
 let lsOK=true;
@@ -401,7 +425,7 @@ function migrate(st){
   sty.simple=!!sty.simple;st.settings.style=sty;
   // v4 → v5: guided plan
   if(st.plan&&(typeof st.plan!=="object"||!/^\d{4}-\d{2}-\d{2}$/.test(st.plan.start||"")))st.plan=null;
-  if(st.plan)st.plan.done=obj(st.plan.done);
+  if(st.plan){st.plan.done=obj(st.plan.done);st.plan.custom=arr(st.plan.custom).filter(c=>c&&c.id&&c.title);}  // v6: custom path lessons
   if(![6,12,24].includes(+st.settings.history))st.settings.history=12;else st.settings.history=+st.settings.history;
   st.v=DEFAULT.v;
   return st;
@@ -573,6 +597,7 @@ ${styleRules()}
 - Real, useful example sentences. Explain why, not just what.
 - If they make a mistake, show: what they wrote → the correct version → a one-line reason.
 - If they seem frustrated or tired, ease off, encourage, or switch to something fun.
+- The app has a learning path (a step-by-step pathway of lessons). If they ask to add, change or focus their path on something, say you've added it and put the topic in the "path" memory field.
 - Follow their requests directly: if they ask for a quiz, give a quiz; a roleplay, play the role; flashcard-style drilling, do it.
 - QUIZZES: one question at a time, wait for the answer, say right or wrong with a short reason, keep a running score (e.g. 3/4), finish after 10 or when they say stop, then summarize what to review.
 - Make every question easy to understand: write the instruction in English, and put an English translation in brackets after any Japanese question sentence (never give away the answer itself). After they answer, translate the full correct sentence too.
@@ -580,7 +605,7 @@ ${styleRules()}
 - Use line breaks, not big headers or tables.
 ${mode==="voice"?`- VOICE CALL: they are talking to you out loud and hearing your reply through text-to-speech. Reply in 1-3 short spoken sentences. No lists, no markdown, no brackets, no romaji. Speak like a friend on a call. Keep the conversation going.\n`:""}
 MEMORY (very important)
-At the very end of EVERY reply, on its own line, write <<MEM>> followed by compact JSON with anything NEW from this turn. Fields (all optional): "facts" (things about the student's life, interests or preferences), "weak" (specific items they got wrong or struggle with), "strong" (things they clearly mastered), "learned" (new words or patterns taught, as "word = meaning"), "right" (number of quiz answers correct this turn), "wrong" (number incorrect this turn), "lessonDone" (true only when the current lesson's core is mastered). If nothing new: <<MEM>>{}. Never mention this line to the student.`;
+At the very end of EVERY reply, on its own line, write <<MEM>> followed by compact JSON with anything NEW from this turn. Fields (all optional): "facts" (things about the student's life, interests or preferences), "weak" (specific items they got wrong or struggle with), "strong" (things they clearly mastered), "learned" (new words or patterns taught, as "word = meaning"), "right" (number of quiz answers correct this turn), "wrong" (number incorrect this turn), "lessonDone" (true only when the current lesson's core is mastered), "path" (short lesson topics to add to their learning path, like ["Ordering ramen"], only when they ask you to add or change something in their path or plan, or when a clear gap needs its own lesson; at most 2). If nothing new: <<MEM>>{}. Never mention this line to the student.`;
 }
 function memoryPrompt(){
   const p=S.profile,les=S.currentLesson&&lessonById(S.currentLesson);
@@ -653,6 +678,7 @@ function applyMem(mem){
   addUnique(p.weak,mem.weak,30);
   if(+mem.right)S.stats.quizRight+=+mem.right;
   if(+mem.wrong)S.stats.quizWrong+=+mem.wrong;
+  if(Array.isArray(mem.path)){const added=mem.path.slice(0,2).filter(t=>addCustom(t));if(added.length)toast("⭐ Yuki added to your path: "+added.join(", "),3500);}
   if(mem.lessonDone&&S.currentLesson&&!S.done.includes(S.currentLesson)){S.done.push(S.currentLesson);toast("✅ Lesson complete!");}
 }
 async function send(display,apiText,mode){
@@ -670,7 +696,7 @@ async function send(display,apiText,mode){
     applyMem(mem);
     S.chat.push({role:"assistant",text:text||"…"});save();
     // A plan quiz or talk counts as done after a few back-and-forths with Yuki
-    if(UI.planCtx&&++UI.planCtx.replies>=4){markTask(UI.planCtx.n,UI.planCtx.i);UI.planCtx=null;}
+    if(UI.planCtx&&++UI.planCtx.replies>=4){markNode(UI.planCtx.key);UI.planCtx=null;if(UI.tab==="chat"&&!UI.voice)rerenderChatHead();}
     showTyping(false);appendLast();
     if(UI.voice){UI.vstate="speaking";renderVoice();speak(text);}
     else if(S.settings.autoSpeakChat)speak(text);
@@ -686,66 +712,136 @@ async function send(display,apiText,mode){
   if(UI.voice&&UI.vstate!=="speaking"){UI.vstate="idle";renderVoice();}
 }
 
-/* ============ GUIDED PLAN ============ */
+/* ============ PATH ============ */
+// N5 learners follow the 12-week plan (PLAN); other levels get a path built from that level's lessons.
+// Custom lessons (added by you or by Yuki) are slotted in as ⭐ nodes.
 const isoDay=d=>{d=d||new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");};
-function planDate(n){const [y,m,d]=S.plan.start.split("-").map(Number);return new Date(y,m-1,d+n-1);}
+function ensurePlan(){if(!S.plan){S.plan={start:isoDay(),done:{},custom:[]};save();}return S.plan;}
+function planDate(n){const [y,m,d]=(S.plan?S.plan.start:isoDay()).split("-").map(Number);return new Date(y,m-1,d+n-1);}
 const fmtDay=d=>d.toLocaleDateString("en-US",{weekday:"short",month:"short",day:"numeric"});
-function taskDone(n,i){const x=PDAYS[n-1].tasks[i];return !!S.plan.done[n+":"+i]||(x.t==="L"&&S.done.includes(x.k));}
+const doneMap=()=>S.plan?S.plan.done:{};
+const isN5Path=()=>S.level==="n5";
+function pathUnits(){
+  if(isN5Path())return PLAN.map(([theme],w)=>({title:"Week "+(w+1),sub:theme}));
+  return(CUR[S.level]||[]).map(([u],i)=>({title:LV[S.level].label+" · Unit "+(i+1),sub:u}));
+}
+function pathNodes(){
+  let nodes=[];
+  if(isN5Path())nodes=PDAYS.flatMap(d=>d.tasks.map((x,i)=>({key:d.n+":"+i,t:x.t,k:x.k,unit:d.week-1,day:d.n})));
+  else(CUR[S.level]||[]).forEach(([u,ls],ui)=>{ls.forEach(l=>nodes.push({key:"L:"+l[0],t:"L",k:l[0],unit:ui}));nodes.push({key:S.level+":"+ui+":q",t:"Q",k:"unit",unit:ui});});
+  const custom=S.plan?S.plan.custom.filter(c=>!c.level||c.level===S.level):[];
+  if(custom.length){
+    const base=nodes.slice(),firstOpen=base.find(n=>!nodeDone(n));
+    custom.forEach(c=>{
+      let at=nodes.findIndex(n=>n.key===c.before);
+      if(at<0){const f=firstOpen&&nodes.findIndex(n=>n.key===firstOpen.key);at=f>=0?f:nodes.length;}
+      const unit=nodes[at]?nodes[at].unit:(nodes.length?nodes[nodes.length-1].unit:0);
+      nodes.splice(at,0,{key:"c:"+c.id,t:"X",k:c.id,title:c.title,unit});
+    });
+  }
+  return nodes;
+}
+function nodeDone(n){return !!doneMap()[n.key]||(n.t==="L"&&S.done.includes(n.k));}
+const curNode=()=>pathNodes().find(n=>!nodeDone(n))||null;
+// Old 12-week plan helpers (used for N5 days and status)
+function taskDone(n,i){const x=PDAYS[n-1].tasks[i];return !!doneMap()[n+":"+i]||(x.t==="L"&&S.done.includes(x.k));}
 const dayDone=d=>d.tasks.every((x,i)=>taskDone(d.n,i));
 const curDay=()=>PDAYS.find(d=>!dayDone(d))||null;
 function expectedDay(){const t=new Date();t.setHours(0,0,0,0);return Math.max(1,Math.min(PDAYS.length,Math.floor((t-planDate(1))/864e5)+1));}
-function markTask(n,i){
-  if(!S.plan||taskDone(n,i))return;
-  S.plan.done[n+":"+i]=true;save();
-  const d=PDAYS[n-1];
-  if(dayDone(d))toast(n===PDAYS.length?"🎓 You finished the whole plan! すごい！":"🎉 Day "+n+" complete!",3000);
-  else toast("✓ Task done",1200);
-}
-// Called when something happens in the app, so today's matching task ticks itself off
-function planAuto(t,k){
-  if(!S.plan)return;const d=curDay();if(!d)return;
-  d.tasks.forEach((x,i)=>{if(x.t===t&&(x.k===k||(t==="C"&&x.k==="due"&&k==="all")))markTask(d.n,i);});
-}
-const DECK_NAME={hira:"Hiragana",kata:"Katakana",vocab:"Core words",kanji:"First kanji"};
-function taskInfo(x){
-  if(x.t==="L"){const l=lessonById(x.k);return["📖 "+(l?l.title:x.k),"Lesson with Yuki · about 10 min"];}
-  if(x.t==="C")return x.k==="due"?["🔁 Review your due flashcards","Whatever's due today · works offline"]:["🃏 "+DECK_NAME[x.k]+" flashcards","One round · about 5 min · works offline"];
-  if(x.t==="K")return["あ Look through the hiragana chart","Tap each character to hear it · works offline"];
-  if(x.t==="Q"){const q=QUIZZES.find(z=>z[0]===x.k);return["🧩 Quiz: "+(q?q[2]:x.k),"With Yuki · English translations included"];}
-  if(x.t==="T")return["🗣️ "+TALK[x.k][0],"Chat or 📞 call with Yuki · about 5 min"];
-  return[x.k,""];
-}
-function taskRow(n,i){
-  const x=PDAYS[n-1].tasks[i],ok=taskDone(n,i),[b,sub]=taskInfo(x);
-  return`<div class="prow${ok?" ok":""}"><button class="pchk" data-act="planCheck" data-n="${n}" data-i="${i}" aria-label="Mark done">${ok?"✓":""}</button><button class="ptxt" data-act="planTask" data-n="${n}" data-i="${i}"><b>${esc(b)}</b><span>${esc(sub)}</span></button></div>`;
-}
 function planStatus(){
+  if(!S.plan)return"Tap the glowing circle to start";
   const d=curDay();if(!d)return"🎓 Plan complete!";
   const e=expectedDay();
-  return d.n<e?`${e-d.n} day${e-d.n>1?"s":""} behind — no stress, just do today's tasks`:d.n>e?`${d.n-e} day${d.n-e>1?"s":""} ahead 🚀`:"Right on track ✅";
+  return d.n<e?`${e-d.n} day${e-d.n>1?"s":""} behind, no stress`:d.n>e?`${d.n-e} day${d.n-e>1?"s":""} ahead 🚀`:"On track ✅";
 }
-const PLAN_GOAL="Read all hiragana & katakana · know about 150 words and 40+ kanji · introduce yourself, order food, shop, ask directions and make small talk in Japanese.";
-function vPlan(){
-  if(!S.plan)return`<div class="card hero" style="cursor:default"><div class="tag">12 WEEKS · ABOUT 15–20 MIN A DAY</div><div class="h2">Your path to a basic conversation</div>
-    <p class="sub" style="margin-top:8px">If you start today, you finish on <b>${fmtDay(new Date(Date.now()+83*864e5))}</b>. By then you'll be able to:</p><p class="sub" style="margin-top:6px">${PLAN_GOAL}</p>
-    <button class="btn" style="margin-top:14px" data-act="planStart">Start my plan today</button></div>
-    <div class="sec">What's inside</div>${PLAN.map(([t],w)=>`<div class="row"><span class="ri">${w+1}</span><span class="rt"><b>Week ${w+1}</b><span>${esc(t)}</span></span></div>`).join("")}`;
-  const cd=curDay(),doneN=PDAYS.filter(dayDone).length,open=UI.planWeek||(cd?cd.week:PLAN.length);
-  return`<div class="card"><div style="display:flex;justify-content:space-between;align-items:baseline"><b>${doneN} of ${PDAYS.length} days done</b><span class="sub">ends ${fmtDay(planDate(PDAYS.length))}</span></div>
-    <div class="bar"><i style="width:${Math.round(doneN/PDAYS.length*100)}%"></i></div><p class="sub">${planStatus()}</p>
-    <p class="sub" style="margin-top:8px">🎯 Goal: ${PLAN_GOAL}</p></div>
-  ${PLAN.map(([theme],w)=>{const days=PDAYS.filter(d=>d.week===w+1),dn=days.filter(dayDone).length,isOpen=open===w+1;
-    return`<button class="row${dn===7?" done":""}" data-act="planWeek" data-w="${w+1}"><span class="ri">${dn===7?"✓":w+1}</span><span class="rt"><b>Week ${w+1}${cd&&cd.week===w+1?" · you're here":""}</b><span>${esc(theme)} · ${dn}/7 days</span></span><span class="sub">${isOpen?"▲":"▼"}</span></button>
-    ${isOpen?days.map(d=>`<div class="dayh${cd&&cd.n===d.n?" today":""}">${cd&&cd.n===d.n?"▶ ":""}Day ${d.n} · ${fmtDay(planDate(d.n))}${dayDone(d)?" ✓":""}</div>${d.tasks.map((x,i)=>taskRow(d.n,i)).join("")}`).join(""):""}`;}).join("")}
-  <button class="btn sm ghost" style="margin-top:14px;color:var(--red)" data-act="planReset">Restart plan from today</button>`;
+function markNode(key,quiet){
+  ensurePlan();if(S.plan.done[key])return;
+  S.plan.done[key]=true;save();
+  if(quiet)return;
+  const m=/^(\d+):\d+$/.exec(key);
+  if(m&&isN5Path()&&dayDone(PDAYS[+m[1]-1]))toast(+m[1]===PDAYS.length?"🎓 You finished the whole plan! すごい！":"🎉 Day "+m[1]+" complete!",3000);
+  else toast("✓ Done! Next step unlocked",1500);
 }
-function homePlanCard(){
-  if(!S.plan)return`<button class="card hero" data-act="planOpen"><div class="tag">NEW · 12-WEEK PLAN</div><div class="h2">Basic conversation by ${fmtDay(new Date(Date.now()+83*864e5)).split(", ").pop()}</div><div class="sub" style="margin-top:4px">A day-by-day path: what to do each day, about 15–20 minutes.</div><div class="go">See the plan →</div></button>`;
-  const d=curDay();
-  if(!d)return`<div class="card hero"><div class="tag">PLAN COMPLETE 🎓</div><div class="h2">You did all 84 days!</div><div class="sub">Ask Yuki for your next challenge, or move up to N4 in Learn.</div></div>`;
-  return`<div class="card hero" style="cursor:default"><div class="tag">TODAY · DAY ${d.n} OF ${PDAYS.length} · WEEK ${d.week}</div><div class="h2" style="margin-bottom:4px">${esc(d.theme)}</div>
-   <p class="sub" style="margin-bottom:10px">${planStatus()}</p>${d.tasks.map((x,i)=>taskRow(d.n,i)).join("")}
-   <button class="mini" style="margin-top:6px" data-act="planOpen">See full plan →</button></div>`;
+// Something happened in the app: tick the matching node among the next few open ones
+function planAuto(t,k){
+  if(!S.plan)return;
+  const open=pathNodes().filter(n=>!nodeDone(n)).slice(0,3);
+  const hit=open.find(n=>n.t===t&&(n.k===k||(t==="C"&&n.k==="due"&&k==="all")));
+  if(hit)markNode(hit.key);
+}
+const DECK_NAME={hira:"Hiragana",kata:"Katakana",vocab:"Core words",kanji:"First kanji"};
+function nodeLabel(n){
+  if(n.t==="L"){const l=lessonById(n.k);return l?l.title:n.k;}
+  if(n.t==="C")return n.k==="due"?"Review cards":DECK_NAME[n.k]+" cards";
+  if(n.t==="K")return"Kana chart";
+  if(n.t==="Q"){if(n.k==="unit")return"Unit review";const q=QUIZZES.find(z=>z[0]===n.k);return"Quiz: "+(q?q[2]:n.k);}
+  if(n.t==="T")return TALK[n.k][0].replace("🎓 ","");
+  return n.title;
+}
+function nodeIcon(n){
+  if(n.t==="L")return"📖";
+  if(n.t==="C")return({hira:"あ",kata:"ア",vocab:"言",kanji:"字",due:"🔁"})[n.k];
+  if(n.t==="K")return"🔤";
+  if(n.t==="Q")return n.k==="unit"?"🏆":"🧩";
+  if(n.t==="T")return n.k==="final"?"🎓":"🗣️";
+  return"⭐";
+}
+function startNode(n){
+  ensurePlan();UI.planCtx=null;
+  if(n.t==="L"){startLesson(n.k,true);return;}
+  if(n.t==="C"){
+    if(n.k==="due"&&!dueIds(Object.keys(S.cards)).length){if(Object.keys(S.cards).length){markNode(n.key);toast("Nothing due today, marked done ✓");rerender();}else startDeck("hira");return;}
+    startDeck(n.k==="due"?"all":n.k);return;}
+  if(n.t==="K"){UI.tab="practice";UI.chart=n.k;markNode(n.key,true);render();return;}
+  UI.planCtx={key:n.key,replies:0,label:nodeLabel(n)};
+  if(n.t==="Q"&&n.k!=="unit"){startQuiz(n.k);return;}
+  S.currentLesson=null;save();UI.tab="chat";render();
+  if(n.t==="Q"){const [u,ls]=CUR[S.level][n.unit];send("🏆 Unit review: "+u,`Give me a 10-question review quiz on the unit "${u}" (${ls.map(l=>l[1]).join(", ")}) at my level. One question at a time.`);}
+  else if(n.t==="T")send("🗣️ "+TALK[n.k][0],TALK[n.k][1]);
+  else send("⭐ "+n.title,`Teach me a short lesson about "${n.title}" at my level, step by step, using what you know about me. Short explanation, a few useful examples, then a quick 3-question check, one at a time.`);
+}
+function addCustom(title){
+  title=String(title||"").trim().slice(0,60);if(!title)return false;
+  const P=ensurePlan();
+  if(P.custom.some(c=>c.level===S.level&&c.title.toLowerCase()===title.toLowerCase()))return false;
+  const cur=curNode();
+  P.custom.push({id:Date.now().toString(36)+Math.random().toString(36).slice(2,5),title,before:cur?cur.key:null,level:S.level});
+  save();return true;
+}
+const SUGGEST={Speaking:"Everyday small talk","Travel phrases":"Hotel check-in","Anime & casual":"Phrases from anime","Business Japanese":"Introducing yourself at work","JLPT exam":"JLPT N5 practice questions","Kanji & writing":"10 useful kanji",Listening:"Listening: at a café",Reading:"Read a short story",Grammar:"は vs が",Vocabulary:"Food and drink words"};
+function addSheet(){
+  const ideas=[...new Set([...S.about.focus.map(f=>SUGGEST[f]).filter(Boolean),"Ordering ramen","Asking for help","Talking about my hobbies","Numbers & prices"])].slice(0,6);
+  sheet(`<div class="h2">⭐ Add a lesson to your path</div><p class="sub" style="margin:8px 0">What do you want to learn? It goes in as your very next step, and Yuki teaches it around you. You can also just ask Yuki in chat: "add a lesson about … to my path".</p>
+   <input id="addT" class="field" placeholder="e.g. ordering at a convenience store" maxlength="60">
+   <div class="tags" style="margin-bottom:12px">${ideas.map(t=>`<button class="chip" data-act="addSuggest" data-t="${esc(t)}">${esc(t)}</button>`).join("")}</div>
+   <button class="btn" data-act="addLesson">Add to my path</button><button class="btn ghost" style="margin-top:8px" data-act="closeSheet">Cancel</button>`);
+}
+function unitSheet(u){
+  const U=pathUnits()[u];if(!U)return;
+  const ns=pathNodes().filter(n=>n.unit===u),dn=ns.filter(nodeDone).length;
+  sheet(`<div class="sub" style="font-weight:800">${esc(U.title)} · ${dn}/${ns.length} done</div><div class="h2" style="margin:4px 0 12px">${esc(U.sub)}</div>
+   <div class="card" style="padding:4px 14px">${ns.map(n=>`<div class="urow"><i>${nodeDone(n)?"✓":"○"}</i><span style="flex:1">${nodeIcon(n)} ${esc(nodeLabel(n))}</span>${n.day?`<span class="sub">Day ${n.day}${S.plan?" · "+fmtDay(planDate(n.day)):""}</span>`:""}</div>`).join("")}</div>
+   ${dn<ns.length?`<button class="btn ghost" data-act="unitSkip" data-u="${u}">I already know this, skip the unit</button>`:""}
+   <button class="btn" style="margin-top:8px" data-act="closeSheet">Close</button>`);
+}
+function levelSheet(){
+  sheet(`<div class="h2" style="margin-bottom:6px">Your path follows your level</div><p class="sub" style="margin-bottom:12px">N5 is the 12-week beginner plan to December. Pick a higher level and the path rebuilds from that level's lessons. Progress on each path is kept.</p>
+   <div class="tags" style="margin-bottom:14px">${Object.entries(LV).map(([k,v])=>`<button class="chip${S.level===k?" on":""}" data-act="setLevel" data-v="${k}">${v.label} ${v.name}</button>`).join("")}</div>
+   <button class="btn ghost" data-act="placeStart">🎯 Take the 3-minute level check</button>
+   <button class="btn ghost" style="margin-top:8px" data-act="allLessons">📚 Browse all lessons</button>
+   <button class="btn" style="margin-top:8px" data-act="closeSheet">Close</button>`);
+}
+// Keep the sticky header in sync with the unit you're scrolled to
+function pathScroll(){
+  const m=$("#main"),h=$("#unitHead");if(!h)return;
+  const lim=h.getBoundingClientRect().bottom+4;let u=0;
+  document.querySelectorAll(".unitpill").forEach(p=>{if(p.getBoundingClientRect().top<lim)u=+p.dataset.u;});
+  if(+h.dataset.u!==u){h.dataset.u=u;const U=pathUnits()[u];h.querySelector(".uh").innerHTML=unitHeadInner(u,U);}
+}
+function unitHeadInner(u,U){
+  const c=curNode(),here=c&&c.unit===u;
+  const top=isN5Path()&&here&&c.day?`${U.title.toUpperCase()} · DAY ${c.day} · ${planStatus()}`:U.title.toUpperCase();
+  return`<small>${esc(top)}</small><b>${esc(U.sub)}</b>`;
 }
 
 /* ============ VIEWS ============ */
@@ -758,10 +854,12 @@ function render(){
   main.innerHTML=({home:vHome,chat:vChat,learn:vLearn,practice:vPractice,me:vMe}[UI.tab]||vHome)();
   main.scrollTop=0;
   if(UI.tab==="chat")afterChat();
+  main.onscroll=UI.tab==="home"?pathScroll:null;
+  if(UI.tab==="home"){const c=$(".node.cur");if(c)main.scrollTop+=c.getBoundingClientRect().top-main.getBoundingClientRect().top-main.clientHeight/2+60;pathScroll();}
 }
 
 // Re-render without jumping back to the top (for taps on chips and toggles)
-function rerender(){const m=$("#main"),y=m.scrollTop;render();m.scrollTop=y;}
+function rerender(){const m=$("#main"),y=m.scrollTop;render();m.scrollTop=y;if(UI.tab==="home")pathScroll();}
 const chipRow=(act,k,cur,opts)=>`<div class="chips">${opts.map(([v,t])=>`<button class="chip${cur===v?" on":""}" data-act="${act}" data-k="${k}" data-v="${v}">${t}</button>`).join("")}</div>`;
 function styleControls(){
   const st=S.settings.style;
@@ -838,36 +936,36 @@ function vPlace(){
 }
 
 function vHome(){
-  const next=nextLesson(), dueAll=dueIds(Object.keys(CARDS)).length, weak=S.profile.weak.slice(-6).reverse();
-  return`<div class="pad">
-  <div class="hello"><div class="av big">ゆ</div><div><div class="h1">${greeting()}${S.name?", "+esc(S.name):""}</div>
-  <div class="sub">🔥 ${S.stats.streak||0} day streak · ${LV[S.level].label} ${LV[S.level].name}</div></div></div>
-  ${S.currentLesson&&lessonById(S.currentLesson)&&!S.done.includes(S.currentLesson)?`<button class="card hero" data-act="tab" data-tab="chat"><div class="tag">IN PROGRESS</div><div class="h2">${esc(lessonById(S.currentLesson).title)}</div><div class="go">Continue with Yuki →</div></button>`:
-   S.plan?"":next?`<button class="card hero" data-act="lesson" data-id="${next.id}"><div class="tag">YOUR NEXT LESSON · ${esc(next.unit)}</div><div class="h2">${esc(next.title)}</div><div class="sub" style="margin-top:4px">${esc(next.desc)}</div><div class="go">Start with Yuki →</div></button>`:
-   `<div class="card"><b>You've finished every ${LV[S.level].label} lesson! 🎉</b><p class="sub" style="margin-top:6px">Move up a level in Me, or ask Yuki for a review session.</p></div>`}
-  ${homePlanCard()}
-  ${!S.about.done?`<button class="card hero" data-act="aboutEdit" style="background:linear-gradient(150deg,#243a2e,#22243a);border-color:#3f5a46"><div class="tag" style="color:var(--matcha)">2 MINUTES · NO CREDITS</div><div class="h2">Help Yuki get to know you</div><div class="sub" style="margin-top:4px">What you want to learn, where you're at, and how she should talk to you.</div><div class="go" style="color:var(--matcha)">Answer a few questions →</div></button>`:""}
-  <div class="grid2">
-    <button class="tile" data-act="voice"><span class="ico">🎙️</span>Talk out loud<small>Voice conversation</small></button>
-    <button class="tile" data-act="tab" data-tab="chat"><span class="ico">💬</span>Chat<small>Ask Yuki anything</small></button>
-    <button class="tile" data-act="review"><span class="ico">🃏</span>Review<small>${dueAll?dueAll+" cards due":"Flashcards"}</small></button>
-    <button class="tile" data-act="quiz" data-q="mixed"><span class="ico">🧩</span>Quick quiz<small>10 questions</small></button>
-  </div>
-  ${weak.length?`<div class="sec">Yuki noticed you struggle with</div><div class="card"><div class="tags">${weak.map(w=>`<span class="tg w">${esc(w)}</span>`).join("")}</div><button class="btn sm ghost" style="margin-top:12px" data-act="quiz" data-q="weak">Drill these with Yuki</button></div>`:""}
-  <div class="sec">Progress</div>
-  <div class="card"><div class="stat3">
-    <div class="stat"><b style="color:var(--matcha)">${S.done.length}</b><span>Lessons done</span></div>
-    <div class="stat"><b style="color:var(--sky)">${Object.keys(S.cards).length}</b><span>Cards learned</span></div>
-    <div class="stat"><b style="color:var(--sakura)">${S.stats.quizRight}</b><span>Quiz answers right</span></div>
-  </div></div></div>`;
+  const units=pathUnits(),nodes=pathNodes(),cur=nodes.find(n=>!nodeDone(n));
+  const OFF=[0,-62,-96,-62,0,62,96,62];
+  let g=0,html="";
+  units.forEach((U,u)=>{
+    const ns=nodes.filter(n=>n.unit===u);if(!ns.length)return;
+    html+=`<button class="unitpill" data-u="${u}" data-act="unitSheet">${esc(U.title)} · ${esc(U.sub)}</button>`;
+    ns.forEach(n=>{
+      const done=nodeDone(n),isCur=cur&&cur.key===n.key;
+      html+=`<div class="nwrap${isCur?" cur":""}" style="transform:translateX(${OFF[g++%8]}px)">${isCur?`<div class="tip">${S.plan?"START":"START HERE"}</div>`:""}
+        <button class="node${done?" done":""}${isCur?" cur":""}${!done&&!isCur?" todo":""}${n.t==="X"?" star":""}" data-act="node" data-key="${esc(n.key)}" aria-label="${esc(nodeLabel(n))}">${nodeIcon(n)}${done?`<span class="bd">✓</span>`:""}</button>
+        <div class="nlab">${esc(nodeLabel(n))}</div></div>`;
+    });
+  });
+  const cu=cur?cur.unit:units.length-1;
+  return`<div class="ptop"><button class="pill" data-act="levelSheet">🇯🇵 ${LV[S.level].label} · ${LV[S.level].name}</button><span class="pill fire">🔥 ${S.stats.streak||0}</span></div>
+  <div class="pathwrap">
+  ${!S.about.done?`<button class="row" data-act="aboutEdit" style="margin-top:8px;border-color:#3f5a46"><span class="ri">✍️</span><span class="rt"><b>Help Yuki get to know you</b><span>2 minutes · makes your path and lessons fit you</span></span></button>`:""}
+  <button id="unitHead" data-act="unitSheet" data-u="${cu}"><span class="uh">${unitHeadInner(cu,units[cu]||{title:"",sub:""})}</span><span style="font-size:22px;color:var(--dim)">›</span></button>
+  ${html}
+  ${cur?"":`<div class="card" style="text-align:center;margin-top:20px"><div style="font-size:48px">🎓</div><b>Path complete!</b><p class="sub" style="margin-top:6px">Move up a level to get a new path.</p></div>`}
+  <div style="display:flex;gap:8px;margin-top:28px"><button class="btn sm ghost" data-act="addSheet">⭐ Add a lesson</button><button class="btn sm ghost" data-act="allLessons">📚 All lessons</button></div>
+  </div>`;
 }
 
 function vChat(){
   const les=S.currentLesson&&lessonById(S.currentLesson);
   const chips=les?["I don't get it","Give me an example","Quiz me on this","Next step","Say it slower 🔊"]:["Quiz me","Teach me something new","Let's practice talking","Explain simpler","Say it slower 🔊"];
   return`<div class="chat">
-  <div class="chathead"><div class="av">ゆ</div><div class="ct"><b>Yuki</b><small>${les?"📖 "+esc(les.title):"Your tutor · "+LV[S.level].label}</small></div>
-   ${les?`${S.done.includes(les.id)?"":`<button class="mini ok" data-act="lessonDone">✓ Done</button>`}<button class="mini" data-act="lessonExit">✕</button>`:""}
+  <div class="chathead"><div class="av">ゆ</div><div class="ct"><b>Yuki</b><small>${les?"📖 "+esc(les.title):UI.planCtx?"🗺️ "+esc(UI.planCtx.label):"Your tutor · "+LV[S.level].label}</small></div>
+   ${les?`${S.done.includes(les.id)?"":`<button class="mini ok" data-act="lessonDone">✓ Done</button>`}<button class="mini" data-act="lessonExit">✕</button>`:UI.planCtx?`<button class="mini ok" data-act="ctxDone">✓ Done</button>`:""}
    <button class="iconbtn" data-act="voice" aria-label="Voice call">📞</button></div>
   <div id="msgs" class="msgs">${S.chat.length?S.chat.map(msgHTML).join(""):emptyChat()}</div>
   <div class="chatfoot"><div class="chips">${chips.map(c=>`<button class="chip" data-act="chip" data-t="${esc(c)}">${esc(c)}</button>`).join("")}</div>
@@ -875,6 +973,7 @@ function vChat(){
   <textarea id="inp" rows="1" placeholder="Type, or tap 🎤 to speak…" enterkeyhint="send"></textarea>
   <button class="send" data-act="send" aria-label="Send">↑</button></div></div></div>`;
 }
+function rerenderChatHead(){const box=$("#msgs");const y=box?box.scrollTop:0;render();const b=$("#msgs");if(b)b.scrollTop=y||b.scrollHeight;}
 function emptyChat(){return`<div style="text-align:center;padding:30px 10px" class="sub"><div class="av big" style="margin:0 auto 12px">ゆ</div>Ask me anything, or try one of the buttons below.</div>`;}
 function msgHTML(m,i){
   if(m.role==="user")return`<div class="m u"><div class="bub">${esc(m.text)}</div></div>`;
@@ -904,12 +1003,10 @@ function showTyping(on){
 }
 
 function vLearn(){
-  const view=UI.learnView||(S.plan?"plan":"all");
-  const sw=`<div class="chips" style="margin:12px 0 10px"><button class="chip${view==="plan"?" on":""}" data-act="learnView" data-v="plan">📅 My plan</button><button class="chip${view==="all"?" on":""}" data-act="learnView" data-v="all">📚 All lessons</button></div>`;
-  if(view==="plan")return`<div class="pad"><div class="h1">Lessons</div>${sw}${vPlan()}</div>`;
+  const sw=`<button class="mini" style="margin:4px 0 12px" data-act="tab" data-tab="home">← Back to path</button>`;
   const units=CUR[S.level]||[];
   const total=units.reduce((a,[,ls])=>a+ls.length,0), done=units.reduce((a,[,ls])=>a+ls.filter(l=>S.done.includes(l[0])).length,0);
-  return`<div class="pad"><div class="h1">Lessons</div>${sw}
+  return`<div class="pad">${sw}<div class="h1" style="margin-bottom:10px">All lessons</div>
   <div class="chips" style="margin:0 0 6px">${Object.entries(LV).map(([k,v])=>`<button class="chip${S.level===k?" on":""}" data-act="setLevel" data-v="${k}">${v.label} ${v.name}</button>`).join("")}</div>
   <div class="sub">${done} of ${total} done</div><div class="bar"><i style="width:${total?Math.round(done/total*100):0}%"></i></div>
   <p class="sub" style="margin:10px 0 4px">Tap any lesson and Yuki teaches it step by step. Go in any order.</p>
@@ -921,7 +1018,10 @@ function vLearn(){
 function vPractice(){
   if(UI.fc)return vCard();
   if(UI.chart)return vChart();
+  const weak=S.profile.weak.slice(-6).reverse();
   return`<div class="pad"><div class="h1">Practice</div>
+  ${weak.length?`<div class="sec">Yuki noticed you struggle with</div><div class="card"><div class="tags">${weak.map(w=>`<span class="tg w">${esc(w)}</span>`).join("")}</div><button class="btn sm ghost" style="margin-top:12px" data-act="quiz" data-q="weak">Drill these with Yuki</button></div>`:""}
+  <button class="row" data-act="allLessons" style="margin-top:12px"><span class="ri">📚</span><span class="rt"><b>All lessons</b><span>Pick any lesson, in any order</span></span></button>
   <div class="sec">Flashcards — work offline, remember what you miss</div>
   ${Object.entries(DECKS).map(([k,d])=>{const learned=d.ids.filter(i=>S.cards[i]).length,due=dueIds(d.ids).length;
     return`<button class="row" data-act="deck" data-d="${k}"><span class="ri">${d.icon}</span><span class="rt"><b>${d.name}</b><span>${learned}/${d.ids.length} learned${due?" · <b style='display:inline;color:var(--sakura)'>"+due+" due</b>":""}</span></span></button>`;}).join("")}
@@ -994,6 +1094,11 @@ function vMe(){
    <label class="sub">Level</label><div class="chips" style="margin:6px 0 10px">${Object.entries(LV).map(([k,v])=>`<button class="chip${S.level===k?" on":""}" data-act="setLevel" data-v="${k}">${v.label}</button>`).join("")}</div>
    <label class="sub">Goal</label><input class="field" data-set="goal" value="${esc(S.goal)}" placeholder="e.g. travel to Tokyo next spring">
   </div>
+  <div class="sec">Progress</div><div class="card"><div class="stat3">
+    <div class="stat"><b style="color:var(--matcha)">${S.done.length}</b><span>Lessons done</span></div>
+    <div class="stat"><b style="color:var(--sky)">${Object.keys(S.cards).length}</b><span>Cards learned</span></div>
+    <div class="stat"><b style="color:var(--gold)">${S.stats.streak||0}</b><span>Day streak</span></div>
+  </div></div>
   <div class="sec">📋 Your learner card</div><div class="card">
    <p class="sub" style="margin-bottom:10px">${esc(learnerCard())}</p>
    <div class="grid2"><button class="btn sm ghost" data-act="aboutEdit">Edit my answers</button><button class="btn sm ghost" data-act="placeStart">🎯 Level check</button></div>
@@ -1038,6 +1143,7 @@ function vMe(){
   <div class="sec">Data</div><div class="card">
    <div class="grid2"><button class="btn sm ghost" data-act="exportData">Back up</button><button class="btn sm ghost" data-act="importData">Restore</button></div>
    <button class="btn sm ghost" style="margin-top:8px" data-act="clearChat">Clear chat (keeps progress)</button>
+   <button class="btn sm ghost" style="margin-top:8px" data-act="planReset">Restart path dates from today</button>
    <button class="btn sm ghost" style="margin-top:8px;color:var(--red)" data-act="resetAll">Reset everything</button>
   </div></div>`;
 }
@@ -1133,8 +1239,7 @@ const ACT={
     if(S._kana){S.done.push("intro","sounds");}delete S._kana;
     touchDay();save();UI.tab="home";render();},
   lesson:el=>{UI.planCtx=null;startLesson(el.dataset.id);},
-  lessonDone:()=>{if(S.currentLesson&&!S.done.includes(S.currentLesson))S.done.push(S.currentLesson);const n=nextLesson();S.currentLesson=null;save();toast("✅ Lesson complete!");render();
-    if(n)setTimeout(()=>sheet(`<div class="h2">Nice work! 🎉</div><p class="sub" style="margin:8px 0 16px">Next up: <b>${esc(n.title)}</b></p><button class="btn" data-act="lesson" data-id="${n.id}">Start it now</button><button class="btn ghost" style="margin-top:8px" data-act="closeSheet">Later</button>`),300);},
+  lessonDone:()=>{if(S.currentLesson&&!S.done.includes(S.currentLesson))S.done.push(S.currentLesson);S.currentLesson=null;save();toast("✅ Lesson complete! Next step unlocked");UI.tab="home";render();},
   lessonExit:()=>{S.currentLesson=null;save();render();},
   setLevel:el=>{S.level=el.dataset.v;save();rerender();},
   send:()=>doSend(),
@@ -1167,22 +1272,18 @@ const ACT={
   chart:el=>{UI.chart=el.dataset.c;planAuto("K",UI.chart);render();},
   closeChart:()=>{UI.chart=null;render();},
   quiz:el=>{UI.planCtx=null;startQuiz(el.dataset.q);},
-  learnView:el=>{UI.learnView=el.dataset.v;render();},
-  planOpen:()=>{UI.tab="learn";UI.learnView="plan";UI.planWeek=null;render();},
-  planWeek:el=>{const w=+el.dataset.w,cd=curDay(),open=UI.planWeek||(cd?cd.week:PLAN.length);UI.planWeek=open===w?-1:w;rerender();},
-  planStart:()=>{S.plan={start:isoDay(),done:{}};save();toast("Plan started — here's Day 1 🌸");UI.planWeek=null;render();},
-  planReset:()=>{if(confirm("Restart the plan from today? Finished lessons stay finished.")){S.plan={start:isoDay(),done:{}};UI.planWeek=null;save();render();}},
-  planCheck:el=>{const n=+el.dataset.n,i=+el.dataset.i,k=n+":"+i,x=PDAYS[n-1].tasks[i];
-    if(x.t==="L"&&S.done.includes(x.k)){toast("Lesson already finished ✓");return;}
-    if(S.plan.done[k]){delete S.plan.done[k];save();}else markTask(n,i);rerender();},
-  planTask:el=>{const n=+el.dataset.n,i=+el.dataset.i,x=PDAYS[n-1].tasks[i];UI.planCtx=null;
-    if(x.t==="L")startLesson(x.k,true);
-    else if(x.t==="C"){
-      if(x.k==="due"&&!dueIds(Object.keys(S.cards)).length){if(Object.keys(S.cards).length){markTask(n,i);toast("Nothing due today — marked done ✓");rerender();}else startDeck("hira");return;}
-      startDeck(x.k==="due"?"all":x.k);}
-    else if(x.t==="K"){UI.tab="practice";UI.chart=x.k;markTask(n,i);render();}
-    else if(x.t==="Q"){UI.planCtx={n,i,replies:0};startQuiz(x.k);}
-    else if(x.t==="T"){UI.planCtx={n,i,replies:0};S.currentLesson=null;save();UI.tab="chat";render();send("🗣️ "+TALK[x.k][0],TALK[x.k][1]);}},
+  node:el=>{const n=pathNodes().find(x=>x.key===el.dataset.key);if(n)startNode(n);},
+  ctxDone:()=>{if(UI.planCtx){markNode(UI.planCtx.key);UI.planCtx=null;}UI.tab="home";render();},
+  unitSheet:el=>unitSheet(+el.dataset.u),
+  unitSkip:el=>{const u=+el.dataset.u;if(!confirm("Mark this whole unit as done?"))return;ensurePlan();
+    pathNodes().filter(n=>n.unit===u).forEach(n=>{if(n.t==="L"){if(!S.done.includes(n.k))S.done.push(n.k);}else S.plan.done[n.key]=true;});save();toast("Unit skipped ✓");rerender();},
+  addSheet:()=>addSheet(),
+  addSuggest:el=>{const i=$("#addT");if(i)i.value=el.dataset.t;},
+  addLesson:()=>{const i=$("#addT"),t=i?i.value:"";if(!t.trim()){toast("Type what you want to learn");return;}closeSheet();
+    if(addCustom(t)){toast("⭐ Added as your next step");UI.tab="home";render();}else toast("That's already on your path");},
+  levelSheet:()=>levelSheet(),
+  allLessons:()=>{UI.tab="learn";render();},
+  planReset:()=>{if(confirm("Restart your path from today? Finished lessons stay finished.")){S.plan={start:isoDay(),done:{},custom:S.plan?S.plan.custom:[]};save();toast("Path restarted");render();}},
   toggle:el=>{const k=el.dataset.k;S.settings[k]=!S.settings[k];save();el.classList.toggle("on",S.settings[k]);},
   saveKey:()=>{S.settings.apiKey=$("#keyIn").value.trim();save();toast(S.settings.apiKey?"Key saved on this phone 🔐":"Key removed");render();},
   testAI:async()=>{const v=$("#keyIn");if(v){S.settings.apiKey=v.value.trim();save();}toast("Calling Yuki…");
@@ -1209,7 +1310,7 @@ const ACT={
 document.addEventListener("click",e=>{
   const el=e.target.closest("[data-act]");if(!el)return;
   const fn=ACT[el.dataset.act];if(!fn)return;
-  if(el.closest("#sheet")&&el.dataset.act!=="closeSheet"&&el.dataset.act!=="copyBackup"&&el.dataset.act!=="doImport")closeSheet();
+  if(el.closest("#sheet")&&!["closeSheet","copyBackup","doImport","addSuggest","addLesson"].includes(el.dataset.act))closeSheet();
   fn(el,e);
 });
 document.addEventListener("change",e=>{
