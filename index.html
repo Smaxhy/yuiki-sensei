@@ -269,7 +269,7 @@ input,textarea,select{font:inherit;font-size:16px;color:var(--text)}
 <script>
 "use strict";
 // Bump this on every change so phones can spot a new version and offer to update
-const APP_VERSION="2026.10.04-1";
+const APP_VERSION="2026.10.04-2";
 /* ============ DATA ============ */
 const LV = {
   n5:{label:"N5",name:"Beginner",color:"#9fd67c"},
@@ -466,7 +466,7 @@ const DEFAULT={
   stats:{msgs:0,quizRight:0,quizWrong:0,cards:0,streak:0,lastDay:""},
   done:[],cards:{},chat:[],currentLesson:null,
   settings:{apiKey:"",model:"claude-haiku-4-5-20251001",rate:0.9,autoSpeakChat:false,speakEnglish:true,micLang:"ja-JP",
-    style:{length:"normal",english:"balanced",script:"auto",simple:false},history:12,voiceEn:"",voiceJa:"",jaRec:"himari",
+    style:{length:"normal",english:"balanced",script:"auto",simple:false},history:12,voiceEn:"",voiceJa:"",jaRec:"himari",vvUrl:"",
     tts:"device",azKey:"",azRegion:"eastus",azEn:"en-US-AvaMultilingualNeural",azJa:"ja-JP-NanamiNeural",ttsChars:{month:"",n:0},captions:true}
 };
 let S=JSON.parse(JSON.stringify(DEFAULT));
@@ -506,7 +506,8 @@ function migrate(st){
   if(st.plan){st.plan.done=obj(st.plan.done);st.plan.custom=arr(st.plan.custom).filter(c=>c&&c.id&&c.title);}  // v6: custom path lessons
   // v6 → v7: natural voices
   const S2=st.settings;
-  if(!["device","azure"].includes(S2.tts))S2.tts="device";
+  if(!["device","azure","voicevox"].includes(S2.tts))S2.tts="device";
+  if(typeof S2.vvUrl!=="string")S2.vvUrl="";
   if(typeof S2.azKey!=="string")S2.azKey="";
   if(!AZ_REGIONS.includes(S2.azRegion))S2.azRegion="eastus";
   if(!AZ_VOICES.en.some(v=>v[0]===S2.azEn))S2.azEn=DEFAULT.settings.azEn;
@@ -553,7 +554,7 @@ function loadVoices(){if(synth)voices=synth.getVoices()||[];}
 if(synth){loadVoices();synth.onvoiceschanged=()=>{const had=voices.length;loadVoices();if(!had&&voices.length&&UI.tab==="me"&&S.onboarded&&!UI.obEdit&&!UI.place)rerender();};}
 // Novelty voices that ship with iOS/macOS and sound robotic or silly
 const NOVELTY=/albert|bad news|bahh|bells|boing|bubbles|cellos|good news|jester|organ|superstar|trinoids|whisper|wobble|zarvox|deranged|hysterical|fred|junior|ralph|kathy|grandma|grandpa|eddy|flo\b|reed|rocko|sandy|shelley/i;
-const GOOD={en:/ava|zoe|samantha|allison|evan|nathan|noelle|susan|joelle|tom\b|serena|daniel|karen|moira|tessa|google us english/i,ja:/kyoko|o-ren|otoya|hattori|sakura|google 日本語/i};
+const GOOD={en:/ava|zoe|evan|nathan|noelle|joelle|allison|samantha|susan|tom\b|serena|daniel|karen|moira|tessa|jamie|matilda|isha|google us english|microsoft (aria|jenny|guy).*natural/i,ja:/kyoko|o-ren|otoya|hattori|sakura|google 日本語/i};
 const vlang=v=>v.lang.replace("_","-").toLowerCase();
 function voiceScore(v,L){
   let s=0;const n=v.name;
@@ -635,7 +636,7 @@ async function fetchNatural(ssml){
   natCache.set(ssml,buf);if(natCache.size>40)natCache.delete(natCache.keys().next().value);
   return buf;
 }
-function stopNatural(){natSeq++;natLoading=false;if(natSrc){try{natSrc.onended=null;natSrc.stop();}catch(e){}natSrc=null;}natPlaying=false;}
+function stopNatural(){natSeq++;natLoading=false;natBusy=false;if(natSrc){try{natSrc.onended=null;natSrc.stop();}catch(e){}natSrc=null;}natPlaying=false;}
 async function speakNatural(segs,rate,en,ja){
   const my=++natSeq;const ctx=audioCtx();if(!ctx)throw new Error("no audio");
   const ssml=buildSSML(segs,rate,en,ja);
@@ -653,7 +654,7 @@ async function speakNatural(segs,rate,en,ja){
 }
 /* ---- Free recorded Japanese voice (VOICEVOX, made ahead of time, served from this site) ---- */
 // Every flashcard/kana sound is recorded in two voices under audio/<voice>/. Credits required by the voice terms.
-const REC_VOICES={himari:{name:"Himari (冥鳴ひまり)",desc:"female · calm, natural",credit:"VOICEVOX:冥鳴ひまり"},ryusei:{name:"Ryusei (青山龍星)",desc:"male · deep, clear",credit:"VOICEVOX:青山龍星"}};
+const REC_VOICES={himari:{name:"Himari (冥鳴ひまり)",desc:"female · calm, natural",credit:"VOICEVOX:冥鳴ひまり",id:14},ryusei:{name:"Ryusei (青山龍星)",desc:"male · deep, clear",credit:"VOICEVOX:青山龍星",id:13}};
 const RECORDED=new Set(Object.values(CARDS).map(c=>c.say));
 const recId=t=>Array.from(t).map(c=>c.codePointAt(0).toString(16)).join("_");
 const recCache=new Map();
@@ -679,8 +680,64 @@ function speak(text,opts){
   }
   speakAI(text,opts);
 }
+/* ---- Himari & Ryusei for everything: your own free VOICEVOX server (e.g. a Hugging Face Space) ---- */
+const VV_DOCKERFILE=`FROM voicevox/voicevox_engine:cpu-latest
+ENV HOME=/tmp XDG_DATA_HOME=/tmp
+ENTRYPOINT []
+EXPOSE 7860
+CMD ["/opt/voicevox_engine/run","--host","0.0.0.0","--port","7860","--cors_policy_mode","all"]`;
+// Accepts "name/space" or a full address
+const hfHost=(user,space)=>"https://"+(user+"-"+space).toLowerCase().replace(/[._]/g,"-")+".hf.space";
+function vvBase(u){u=String(u||"").trim().replace(/\/+$/,"");if(!u)return"";
+  const hf=u.match(/^(?:https?:\/\/)?huggingface\.co\/spaces\/([^/]+)\/([^/?#]+)/);if(hf)return hfHost(hf[1],hf[2]);
+  if(!/^https?:\/\//.test(u)){const m=u.split("/");if(m.length===2&&!m[0].includes("."))return hfHost(m[0],m[1]);u="https://"+u;}
+  return u;}
+const useVV=()=>S.settings.tts==="voicevox"&&vvBase(S.settings.vvUrl);
+const vvSpeaker=()=>(REC_VOICES[S.settings.jaRec]||REC_VOICES.himari).id;
+let natBusy=false,vvNote=false;
+const vvCache=new Map();
+function withTimeout(p,ms){return Promise.race([p,new Promise((_,rej)=>setTimeout(()=>rej(new Error("timeout")),ms))]);}
+async function fetchVV(text,rate){
+  const base=vvBase(S.settings.vvUrl),sp=vvSpeaker(),speed=Math.max(0.6,Math.min(1.3,rate||1)),key=sp+"|"+speed+"|"+text;
+  if(vvCache.has(key))return vvCache.get(key);
+  const p=(async()=>{
+    const q=await withTimeout(fetch(`${base}/audio_query?speaker=${sp}&text=${encodeURIComponent(text)}`,{method:"POST"}),12000);
+    if(!q.ok)throw new Error("HTTP "+q.status);
+    const query=await q.json();query.speedScale=speed;query.outputSamplingRate=24000;query.prePhonemeLength=0.05;query.postPhonemeLength=0.1;
+    const r=await withTimeout(fetch(`${base}/synthesis?speaker=${sp}`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(query)}),20000);
+    if(!r.ok)throw new Error("HTTP "+r.status);
+    return audioCtx().decodeAudioData(await r.arrayBuffer());
+  })();
+  vvCache.set(key,p);p.catch(()=>vvCache.delete(key));
+  if(vvCache.size>60)vvCache.delete(vvCache.keys().next().value);
+  return p;
+}
+function playBuffer(audio,my){return new Promise(res=>{if(my!==natSeq)return res();const ctx=audioCtx(),src=ctx.createBufferSource();src.buffer=audio;src.connect(ctx.destination);
+  src.onended=()=>{if(natSrc===src){natSrc=null;natPlaying=false;}res();};natSrc=src;natPlaying=true;src.start(0);});}
+function sayDevice(t,lang,rate){return new Promise(res=>{if(!synth)return res();const u=new SpeechSynthesisUtterance(t);u.lang=lang;const v=pickVoice(lang);if(v)u.voice=v;
+  u.rate=lang==="ja-JP"?rate:Math.max(0.85,Math.min(1.05,rate+0.1));u.pitch=1;u.onend=u.onerror=()=>res();synth.speak(u);});}
+// Japanese parts in Himari/Ryusei from the server, English parts in the best iPhone voice, played in order
+async function speakVV(segs,rate,text,opts){
+  const my=++natSeq;natBusy=true;
+  const jobs=segs.map(sg=>sg.k==="ja"?fetchVV(sg.t.trim(),rate):null);
+  jobs.forEach(j=>j&&j.catch(()=>{}));
+  try{
+    for(let i=0;i<segs.length;i++){
+      if(my!==natSeq)return;
+      if(jobs[i]){natLoading=true;let audio;
+        try{audio=await jobs[i];}catch(e){
+          natLoading=false;if(!vvNote){vvNote=true;toast(e.message==="timeout"?"Voice server is waking up — using the iPhone voice for now":"Can't reach your voice server — using the iPhone voice",3500);}
+          pingVV();if(my===natSeq){natBusy=false;speakDevice(segs.slice(i).map(x=>x.t).join(" "),opts);}return;}
+        natLoading=false;await playBuffer(audio,my);}
+      else await sayDevice(segs[i].t.trim(),"en-US",rate);
+    }
+  }finally{if(my===natSeq){natBusy=false;natLoading=false;}}
+}
+// Free servers sleep when unused; poke it when the app opens so it's awake by the time Yuki talks
+function pingVV(){const b=useVV()?vvBase(S.settings.vvUrl):"";if(b)fetch(b+"/version").catch(()=>{});}
 function speakAI(text,opts){
   const segsN=segments(cleanSpeech(text)).filter(s=>s.k==="ja"||S.settings.speakEnglish||opts.forceEnglish);
+  if(useVV()&&segsN.length){if(synth)synth.cancel();speakVV(segsN,opts.rate||S.settings.rate,text,opts);return;}
   if(useNatural()&&segsN.length){
     if(synth)synth.cancel();
     const st=S.settings;
@@ -711,7 +768,7 @@ function speakDevice(text,opts){
 }
 function stopSpeak(){if(synth)synth.cancel();stopNatural();}
 // Is any voice (iPhone or natural) talking right now?
-function isSpeaking(){return natPlaying||natLoading||(synth&&(synth.speaking||synth.pending));}
+function isSpeaking(){return natBusy||natPlaying||natLoading||(synth&&(synth.speaking||synth.pending));}
 let unlocked=false;
 document.addEventListener("touchend",()=>{if(unlocked||!synth)return;unlocked=true;try{const u=new SpeechSynthesisUtterance(" ");u.volume=0;synth.speak(u);}catch(e){}},{once:false,passive:true});
 
@@ -1435,8 +1492,16 @@ function vMe(){
   </div>
   <div class="sec">🔊 Voice</div><div class="card">
    <p class="sub" style="margin-bottom:6px">Voice engine</p>
-   ${chipRow("ttsSet","tts",st.tts,[["device","iPhone voices"],["azure","✨ Natural voices"]])}
-   ${st.tts==="azure"?`
+   ${chipRow("ttsSet","tts",st.tts,[["voicevox","🎌 Himari & Ryusei"],["device","iPhone voices"],["azure","✨ Azure"]])}
+   ${st.tts==="voicevox"?`
+    <p class="sub" style="margin:12px 0 0">Yuki speaks <b>all</b> Japanese in Himari or Ryusei, using your own free voice server (a free Hugging Face Space, no API key, no cost). English parts use your best iPhone voice.</p>
+    <input class="field" id="vvIn" placeholder="yourname/yuki-voice  or  https://…hf.space" value="${esc(st.vvUrl)}" autocomplete="off" autocapitalize="off" spellcheck="false">
+    <div class="grid2"><button class="btn sm" data-act="saveVV">Save & test</button><button class="btn sm ghost" data-act="vvHelp">Set it up (5 min)</button></div>
+    <p class="sub" style="margin:10px 0 6px">Japanese voice</p>
+    ${chipRow("recSet","jaRec",st.jaRec==="off"?"himari":st.jaRec,Object.entries(REC_VOICES).map(([k,v])=>[k,v.name.split(" ")[0]]))}
+    <p class="sub" style="margin-top:6px">Voice: ${esc((REC_VOICES[st.jaRec]||REC_VOICES.himari).credit)}</p>
+    ${voicePicker("en","English voice (iPhone)",st.voiceEn)}${englishTip()}`
+   :st.tts==="azure"?`
     <p class="sub" style="margin:12px 0 0">Human-sounding Microsoft neural voices (the same ones as Edge "Read aloud"). Free for 500,000 characters a month with your own Azure key, stored only on this phone.</p>
     <input class="field" id="azKeyIn" type="password" placeholder="Azure Speech key" value="${esc(st.azKey)}" autocomplete="off" autocapitalize="off" spellcheck="false">
     <label class="sub">Region (must match your key)</label>
@@ -1447,7 +1512,7 @@ function vMe(){
     <label class="sub">Japanese voice</label>
     <select class="field" data-set="azJa">${AZ_VOICES.ja.map(([id,n,d])=>`<option value="${id}"${st.azJa===id?" selected":""}>${esc(n)} — ${esc(d)}</option>`).join("")}</select>
     <p class="sub">Used this month: ${(st.ttsChars.month===isoDay().slice(0,7)?st.ttsChars.n:0).toLocaleString()} / 500,000 free characters</p>`
-   :`${voicePicker("en","English voice",st.voiceEn)}${voicePicker("ja","Japanese voice",st.voiceJa)}`}
+   :`${voicePicker("en","English voice",st.voiceEn)}${englishTip()}${voicePicker("ja","Japanese voice",st.voiceJa)}`}
    <p class="sub" style="margin:14px 0 6px">Flashcard & kana audio (free, recorded, works offline once played)</p>
    ${chipRow("recSet","jaRec",st.jaRec,[...Object.entries(REC_VOICES).map(([k,v])=>[k,v.name.split(" ")[0]]),["off","Off"]])}
    ${st.jaRec!=="off"?`<p class="sub" style="margin-top:6px">${esc(REC_VOICES[st.jaRec].desc)} · Voice: ${esc(REC_VOICES[st.jaRec].credit)}</p>`:""}
@@ -1475,6 +1540,12 @@ function vMe(){
   </div></div>`;
 }
 
+// Nudge to download a Premium English voice if the phone doesn't have one yet
+function englishTip(){
+  const best=voiceList("en-US")[0];
+  if(!best||/premium|enhanced|siri/i.test(best.name))return"";
+  return`<button class="row" data-act="voiceHelp" style="margin-top:4px;border-color:var(--gold)"><span class="ri">💡</span><span class="rt"><b>Get a much better English voice (free)</b><span>Download "Ava (Premium)" on your iPhone in 1 minute</span></span></button>`;
+}
 function voicePicker(lang,label,cur){
   const list=voiceList(lang);
   if(!list.length)return"";
@@ -1497,7 +1568,7 @@ function renderVoice(){
   const cap=last&&!last.err?esc(cleanSpeech(last.text).replace(/\s+\n/g,"\n").trim()).replace(/\n+/g,"<br>"):last&&last.err?"Connection problem — check the chat.":"Say hi! Try 「こんにちは」 or ask me anything in English.";
   const cc=S.settings.captions;
   $("#voice").innerHTML=`<div class="vtop"><button class="iconbtn" data-act="closeVoice" aria-label="Close">✕</button>
-   <div class="vtitle"><b>Yuki</b><small>${useNatural()?"✨ natural voice":"voice call"}</small></div>
+   <div class="vtitle"><b>Yuki</b><small>${useVV()?"🎌 "+(REC_VOICES[S.settings.jaRec]||REC_VOICES.himari).name.split(" ")[0]+"'s voice":useNatural()?"✨ natural voice":"voice call"}</small></div>
    <div class="seg" aria-label="I'm speaking"><button class="${S.settings.micLang==="ja-JP"?"on":""}" data-act="micLang" data-v="ja-JP">あ</button><button class="${S.settings.micLang==="en-US"?"on":""}" data-act="micLang" data-v="en-US">A</button></div></div>
    <div class="orbwrap"><div class="orb ${st}">ゆ</div><div class="vstat">${label}</div>
     <div class="vcap"><div class="vtext${cc?"":" off"}">${cap}</div><div class="vyou">${UI.vyou?"You: "+esc(UI.vyou):""}</div></div></div>
@@ -1582,7 +1653,25 @@ const ACT={
   sayText:el=>speak(el.dataset.text,{rate:0.8}),
   reveal:el=>el.classList.toggle("show"),
   recSet:el=>{S.settings.jaRec=el.dataset.v;save();rerender();if(el.dataset.v!=="off")speak("ともだち",{});},
-  ttsSet:el=>{S.settings.tts=el.dataset.v;natFailNote=false;save();rerender();},
+  saveVV:async()=>{const v=$("#vvIn");S.settings.vvUrl=v?v.value.trim():"";vvCache.clear();vvNote=false;save();
+    const b=vvBase(S.settings.vvUrl);if(!b){toast("Address removed");rerender();return;}
+    toast("Connecting… (a sleeping server can take a minute)",4000);
+    try{const r=await withTimeout(fetch(b+"/version"),90000);if(!r.ok)throw new Error("HTTP "+r.status);const ver=await r.json();
+      toast("✓ Connected to VOICEVOX "+ver+" — saying hello",3000);rerender();speak("こんにちは！ゆきです。Nice to meet you!",{forceEnglish:true});}
+    catch(e){toast("Couldn't connect ("+e.message+"). Check the address and that the Space says Running.",5000);rerender();}},
+  vvHelp:()=>sheet(`<div class="h2" style="margin-bottom:10px">🎌 Your free voice server</div>
+    <p class="sub" style="margin-bottom:10px">This runs the free VOICEVOX engine (Himari & Ryusei) on Hugging Face's free servers. No API key, no card, no cost.</p><ol>
+    <li>Go to <b>huggingface.co</b> in Safari and sign up (free).</li>
+    <li>Open <b>huggingface.co/new-space</b>. Name it <b>yuki-voice</b>, choose <b>Docker</b> → <b>Blank</b>, hardware <b>CPU basic (free)</b>, then <b>Create Space</b>.</li>
+    <li>In your new Space tap <b>Files</b> → <b>+ Add file</b> → <b>Create a new file</b>. Name it <b>Dockerfile</b> and paste the text below (tap Copy). Tap <b>Commit</b>.</li>
+    <li>Wait 5–10 minutes until the Space says <b>Running</b>.</li>
+    <li>Back here, type <b>yourname/yuki-voice</b> (your Hugging Face username) and tap <b>Save & test</b>.</li></ol>
+    <textarea class="field" rows="6" readonly id="vvDock">${esc(VV_DOCKERFILE)}</textarea>
+    <button class="btn" data-act="copyDock">Copy Dockerfile</button>
+    <p class="sub" style="margin-top:10px">Free Spaces fall asleep after a couple of days unused. Yuki wakes yours when you open the app; the very first sentence after a long break may use the iPhone voice while it wakes (about a minute).</p>
+    <button class="btn ghost" style="margin-top:10px" data-act="closeSheet">Done</button>`),
+  copyDock:()=>{const t=$("#vvDock");if(navigator.clipboard)navigator.clipboard.writeText(t.value).then(()=>toast("Copied ✓"),()=>{t.select();toast("Select all and copy");});else{t.select();toast("Select all and copy");}},
+  ttsSet:el=>{S.settings.tts=el.dataset.v;natFailNote=false;vvNote=false;save();rerender();pingVV();},
   saveAz:()=>{const v=$("#azKeyIn");S.settings.azKey=v?v.value.trim():"";natCache.clear();natFailNote=false;save();toast(S.settings.azKey?"Key saved — tap Test voice 🔊":"Key removed");rerender();},
   azHelp:()=>sheet(`<div class="h2" style="margin-bottom:10px">✨ Getting natural voices (free)</div><ol>
     <li>In Safari go to <b>portal.azure.com</b> and sign up for a free Microsoft Azure account (it asks for a card to verify you, but the free tier costs nothing).</li>
@@ -1665,7 +1754,7 @@ const ACT={
 document.addEventListener("click",e=>{
   const el=e.target.closest("[data-act]");if(!el)return;
   const fn=ACT[el.dataset.act];if(!fn)return;
-  if(el.closest("#sheet")&&!["closeSheet","copyBackup","doImport","addSuggest","addLesson"].includes(el.dataset.act))closeSheet();
+  if(el.closest("#sheet")&&!["closeSheet","copyBackup","doImport","addSuggest","addLesson","copyDock"].includes(el.dataset.act))closeSheet();
   fn(el,e);
 });
 document.addEventListener("change",e=>{
@@ -1723,6 +1812,7 @@ function checkUpdate(manual){
   }).catch(()=>{if(manual)toast("Couldn't check — are you online?");});
 }
 document.addEventListener("visibilitychange",()=>{
+  if(document.visibilityState==="visible")pingVV();
   if(document.visibilityState==="hidden"){saveNow();if(updPending)applyUpdate();return;}
   if(updPending){if(applyUpdate())return;}
   if(Date.now()-lastCheck>60e3)checkUpdate(false);
@@ -1731,7 +1821,7 @@ document.addEventListener("visibilitychange",()=>{
 setInterval(()=>{if(document.visibilityState==="visible")checkUpdate(false);},15*60e3);
 
 /* ============ START ============ */
-loadState().then(()=>{fitViewport();render();setTimeout(()=>checkUpdate(false),1500);});
+loadState().then(()=>{fitViewport();render();pingVV();setTimeout(()=>checkUpdate(false),1500);});
 </script>
 </body>
 </html>
