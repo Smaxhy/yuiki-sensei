@@ -280,6 +280,10 @@ input,textarea,select{font:inherit;font-size:16px;color:var(--text)}
 .numgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:4px}
 .numtile{min-height:64px;flex-direction:row;align-items:center;gap:10px;font-size:14px}.numtile .ico{font-size:20px;min-width:34px}
 .typein{display:flex;gap:8px;align-items:center;margin-bottom:10px}.typein .field{margin:0;font-size:22px;text-align:center}.typein .btn{width:auto;padding:15px 20px}
+.trbar{margin-bottom:12px}.trbar .field{margin:0;border:none;background:transparent;flex:1;min-width:0}
+.trres{text-align:center;padding:20px 16px}.trja{font-size:30px;font-weight:800;line-height:1.35}.trro{color:var(--sky);font-weight:700;margin-top:6px}.tren{color:var(--dim);margin-top:4px}
+.trbig{font-size:40px;font-weight:800;line-height:1.35;word-break:break-word}.trrow .rt b{font-size:17px}
+.ptop{gap:6px}.ptop .pill{padding:0 12px}
 /* corrections under your messages */
 .ubw{display:flex;flex-direction:column;align-items:flex-end;max-width:86%}
 .ubw .bub{max-width:100%}
@@ -371,7 +375,7 @@ input,textarea,select{font:inherit;font-size:16px;color:var(--text)}
 <script>
 "use strict";
 // Bump this on every change so phones can spot a new version and offer to update
-const APP_VERSION="2026.10.06-5";
+const APP_VERSION="2026.10.06-6";
 /* ============ DATA ============ */
 const LV = {
   n5:{label:"N5",name:"Beginner",color:"#9fd67c"},
@@ -1880,7 +1884,8 @@ function unitHeadInner(u){
 /* ============ PROGRESS: daily goal, XP, streak, calendar, badges ============ */
 // Every day you study gets a record in S.days["YYYY-MM-DD"]: XP, seconds, cards, words, messages, calls and
 // what you finished. The streak, the calendar, the weekly chart and the badges are all worked out from it.
-const GOALS=[[20,"Casual","~5 min"],[50,"Regular","~15 min"],[100,"Serious","~30 min"],[150,"Intense","~1 hour"]];
+// XP isn't time: tests and quizzes give XP quickly, so goals are shown in XP only and real minutes are shown next to them
+const GOALS=[[20,"Casual","a light day"],[50,"Regular","a normal day"],[100,"Serious","a solid session"],[150,"Intense","a big session"]];
 const goalForMinutes=m=>m>=60?150:m>=30?100:m>=15?50:20;
 function dayRec(d){d=d||isoDay();if(!S.days[d])S.days[d]={xp:0,sec:0,cards:0,words:0,msgs:0,calls:0,les:[]};return S.days[d];}
 const dayActive=d=>{const r=S.days[d];return!!(r&&(r.xp>0||r.frozen));};
@@ -1905,7 +1910,7 @@ let lastAct=0;
 function track(){
   const now=Date.now();
   if(document.visibilityState!=="visible"||!S.onboarded){lastAct=0;return;}
-  if(lastAct&&now-lastAct<120000){dayRec().sec+=Math.round((now-lastAct)/1000);save();}
+  if(lastAct&&now-lastAct<90000){dayRec().sec+=Math.round((now-lastAct)/1000);save();}
   lastAct=now;
 }
 function addXP(n,kind,label){
@@ -1959,7 +1964,7 @@ function todayStrip(){
   const d=S.days[isoDay()]||{xp:0},g=S.daily.goal,st=streakInfo(),due=dueIds(Object.keys(S.cards)).length;
   const late=S.daily.remind&&d.xp<g&&new Date().toTimeString().slice(0,5)>=S.daily.remind;
   return`<div id="todayRing" class="today"><button class="tmain" data-act="tab" data-tab="progress"><span class="tring">${ring(d.xp,g,46,6)}<i>${d.xp>=g?"✓":"🎯"}</i></span>
-    <span class="tt"><b>${d.xp>=g?"Goal done today!":late?"⏰ Study time!":"Daily goal"}</b><span>${d.xp}/${g} XP · 🔥 ${st.n} day${st.n===1?"":"s"}${st.n&&!st.today?" · study today to keep it":""}</span></span></button>
+    <span class="tt"><b>${d.xp>=g?"Goal done today!":late?"⏰ Study time!":"Daily goal"}</b><span>${d.xp}/${g} XP · ⏱️ ${fmtMin(d.sec)} · 🔥 ${st.n}${st.n&&!st.today?" · study today to keep it":""}</span></span></button>
     ${due?`<button class="tdue" data-act="review"><b>${due}</b><span>to review</span></button>`:""}</div>`;
 }
 const fmtMin=s=>{const m=Math.round((s||0)/60);return m<60?m+" min":Math.floor(m/60)+" h "+(m%60)+" min";};
@@ -1994,7 +1999,7 @@ function vProgress(){
   <div class="card todaycard"><div class="tcring">${ring(d.xp,g,112,10)}<div class="tcin"><b>${d.xp}</b><span>of ${g} XP</span>${d.xp>=g?`<span class="ok">✓ goal</span>`:""}</div></div>
     <div class="tcside"><div><b>🔥 ${st.n}</b><span>day streak${st.n&&!st.today?" · study today!":""}</span></div><div><b>❄️ ${D.freeze}</b><span>streak freeze${D.freeze===1?"":"s"}</span></div><div><b>⏱️ ${fmtMin(d.sec)}</b><span>studied today</span></div></div></div>
   <p class="sub" style="margin:2px 2px 6px">Daily goal</p><div class="goalgrid">${GOALS.map(([v,t,m])=>`<button class="gopt${g===v?" on":""}" data-act="goalSet" data-v="${v}"><b>${t}</b><span>${v} XP · ${m}</span></button>`).join("")}</div>
-  <p class="sub" style="margin:6px 2px 0">XP: flashcard 1–2 · word used in a talk 5 · message 2 (spoken 3) · lesson 15. A freeze is earned every 7 streak days (max 2) and covers one missed day by itself.</p>
+  <p class="sub" style="margin:6px 2px 0">XP is points, not time: flashcard or quiz answer 1–2 · word used in a talk 5 · message 2 (spoken 3) · lesson 15. Your real study time is the ⏱️ number (counted from your taps). A freeze is earned every 7 streak days (max 2) and covers one missed day by itself.</p>
   <div class="sec">📅 Study calendar</div><div class="card">${calendarHTML()}</div>
   <div class="sec">📊 Last 7 days</div><div class="card">${weekHTML()}</div>
   <div class="sec">🎌 Countdown</div><div class="card">
@@ -2055,6 +2060,197 @@ function addReminder(){
     <p class="sub" style="margin-bottom:12px">Nothing showed up? Open Yuki in Safari (not from the home screen) and tap the button again: Safari always shows the Calendar prompt.</p><button class="btn" data-act="closeSheet">OK</button>`),600);
 }
 
+/* ============ TRAVEL TRANSLATOR (offline) ============ */
+// No AI and no internet needed: English is matched to a travel phrasebook. Things you name (food, places,
+// things) are slotted into sentence patterns, and every sentence below is pre-recorded in Ryusei's voice
+// (audio/ryusei/, louder than the lesson audio), so it plays offline once saved.
+// Words: [english names separated by |, kana, spoken form for the recording, type f=food/drink p=place i=thing]
+const TR_WORDS=[
+ ["water|waters|glass of water","おみず","お水","f"],["tea|green tea|teas","おちゃ","お茶","f"],["coffee|coffees|hot coffee","コーヒー","コーヒー","f"],["iced coffee|ice coffee","アイスコーヒー","アイスコーヒー","f"],
+ ["beer|beers","ビール","ビール","f"],["sake|rice wine","にほんしゅ","日本酒","f"],["wine","ワイン","ワイン","f"],["juice|orange juice","ジュース","ジュース","f"],["milk","ぎゅうにゅう","牛乳","f"],
+ ["cola|coke","コーラ","コーラ","f"],["matcha","まっちゃ","抹茶","f"],["ramen|noodle soup","ラーメン","ラーメン","f"],["sushi","すし","寿司","f"],["rice","ごはん","ご飯","f"],
+ ["udon","うどん","うどん","f"],["soba","そば","そば","f"],["tempura","てんぷら","天ぷら","f"],["curry|curry rice","カレー","カレー","f"],["gyoza|dumplings|dumpling","ぎょうざ","餃子","f"],
+ ["miso soup|miso","みそしる","味噌汁","f"],["bread","パン","パン","f"],["egg|eggs","たまご","卵","f"],["chicken","とりにく","鶏肉","f"],["beef","ぎゅうにく","牛肉","f"],
+ ["pork","ぶたにく","豚肉","f"],["fish","さかな","魚","f"],["meat","にく","肉","f"],["vegetables|vegetable|veggies","やさい","野菜","f"],["salad","サラダ","サラダ","f"],
+ ["fruit","くだもの","果物","f"],["ice cream","アイスクリーム","アイスクリーム","f"],["cake","ケーキ","ケーキ","f"],["rice ball|onigiri|rice balls","おにぎり","おにぎり","f"],
+ ["bento|lunch box|boxed lunch","おべんとう","お弁当","f"],["set meal|teishoku","ていしょく","定食","f"],["takoyaki","たこやき","たこ焼き","f"],["okonomiyaki","おこのみやき","お好み焼き","f"],
+ ["yakitori|chicken skewers","やきとり","焼き鳥","f"],["tofu","とうふ","豆腐","f"],["shrimp|prawn|prawns","えび","海老","f"],["peanuts|peanut","ピーナッツ","ピーナッツ","f"],
+ ["nuts|nut","ナッツ","ナッツ","f"],["wheat|gluten","こむぎ","小麦","f"],["soy|soybeans|soya","だいず","大豆","f"],["dairy","にゅうせいひん","乳製品","f"],["seafood","シーフード","シーフード","f"],
+ ["pizza","ピザ","ピザ","f"],["hamburger|burger","ハンバーガー","ハンバーガー","f"],["sandwich","サンドイッチ","サンドイッチ","f"],["steak","ステーキ","ステーキ","f"],["ice","こおり","氷","f"],
+ ["sugar","さとう","砂糖","f"],["onion|onions","たまねぎ","玉ねぎ","f"],["garlic","にんにく","にんにく","f"],
+ ["menu","メニュー","メニュー","i"],["chopsticks","おはし","お箸","i"],["fork","フォーク","フォーク","i"],["spoon","スプーン","スプーン","i"],["knife","ナイフ","ナイフ","i"],
+ ["napkin|tissue|tissues","ナプキン","ナプキン","i"],["ticket|tickets","きっぷ","切符","i"],["map","ちず","地図","i"],["bag|plastic bag","ふくろ","袋","i"],["umbrella","かさ","傘","i"],
+ ["charger|phone charger","じゅうでんき","充電器","i"],["sim card|sim","シムカード","シムカード","i"],["passport","パスポート","パスポート","i"],["wallet|purse","さいふ","財布","i"],
+ ["phone|mobile|smartphone","スマホ","スマホ","i"],["key|room key","かぎ","鍵","i"],["towel","タオル","タオル","i"],["medicine","くすり","薬","i"],["receipt","レシート","レシート","i"],["wifi|wi fi|wireless","ワイファイ","ワイファイ","i"],
+ ["station|train station","えき","駅","p"],["toilet|bathroom|restroom|washroom|loo|toilets","トイレ","トイレ","p"],["hotel","ホテル","ホテル","p"],["airport","くうこう","空港","p"],
+ ["hospital","びょういん","病院","p"],["pharmacy|drugstore|chemist","やっきょく","薬局","p"],["convenience store|konbini","コンビニ","コンビニ","p"],["supermarket","スーパー","スーパー","p"],
+ ["bank","ぎんこう","銀行","p"],["atm|cash machine","エーティーエム","エーティーエム","p"],["bus stop","バスてい","バス停","p"],["taxi stand|taxi rank","タクシーのりば","タクシー乗り場","p"],
+ ["exit","でぐち","出口","p"],["entrance","いりぐち","入口","p"],["subway|metro|underground","ちかてつ","地下鉄","p"],["police box|police station","こうばん","交番","p"],
+ ["restaurant","レストラン","レストラン","p"],["temple","おてら","お寺","p"],["shrine","じんじゃ","神社","p"],["castle","おしろ","お城","p"],["park","こうえん","公園","p"],
+ ["museum","はくぶつかん","博物館","p"],["beach","ビーチ","ビーチ","p"],["ticket office|ticket machine","きっぷうりば","切符売り場","p"],["elevator|lift","エレベーター","エレベーター","p"],
+ ["tokyo","とうきょう","東京","p"],["kyoto","きょうと","京都","p"],["osaka","おおさか","大阪","p"],["nara","なら","奈良","p"],["hiroshima","ひろしま","広島","p"],
+ ["shinjuku","しんじゅく","新宿","p"],["shibuya","しぶや","渋谷","p"],["asakusa","あさくさ","浅草","p"],["akihabara","あきはばら","秋葉原","p"],["mount fuji|mt fuji|fuji","ふじさん","富士山","p"]];
+// Sentence patterns: [id, kana with {w}, spoken form with {w}, English with {w}, which word types]
+const TR_PAT=[
+ ["please","{w}を ください。","{w}をください。","{w}, please.","fi"],["have","{w}は ありますか？","{w}はありますか？","Do you have {w}?","fi"],
+ ["allergy","{w}アレルギーです。","{w}アレルギーです。","I'm allergic to {w}.","f"],["noeat","{w}が たべられません。","{w}が食べられません。","I can't eat {w}.","f"],
+ ["without","{w}なしで おねがいします。","{w}なしでお願いします。","Without {w}, please.","f"],["lost","{w}を なくしました。","{w}を無くしました。","I lost my {w}.","i"],
+ ["where","{w}は どこですか？","{w}はどこですか？","Where is {w}?","pi"],["taxi","{w}まで おねがいします。","{w}までお願いします。","To {w}, please. (taxi)","p"],
+ ["wantgo","{w}に いきたいです。","{w}に行きたいです。","I want to go to {w}.","p"],["howget","{w}へは どうやって いきますか？","{w}へはどうやって行きますか？","How do I get to {w}?","p"],
+ ["train","この でんしゃは {w}に いきますか？","この電車は{w}に行きますか？","Does this train go to {w}?","p"]];
+// Fixed phrases: [category, english ways to say it separated by |, kana, spoken form]
+const TR_FIX=[
+ ["basics","hello|hi|good afternoon","こんにちは。","こんにちは。"],["basics","good morning","おはようございます。","おはようございます。"],["basics","good evening","こんばんは。","こんばんは。"],
+ ["basics","thank you|thanks|thank you very much","ありがとうございます。","ありがとうございます。"],["basics","excuse me|sorry|pardon me","すみません。","すみません。"],
+ ["basics","yes","はい。","はい。"],["basics","no","いいえ。","いいえ。"],["basics","i do not understand|i don't understand|i don't get it","わかりません。","分かりません。"],
+ ["basics","i do not speak japanese|i don't speak japanese|i can't speak japanese","にほんごが はなせません。","日本語が話せません。"],
+ ["basics","do you speak english|can you speak english|english please","えいごを はなせますか？","英語を話せますか？"],
+ ["basics","please speak slowly|slowly please|slower please","ゆっくり はなしてください。","ゆっくり話してください。"],
+ ["basics","one more time please|again please|can you repeat that|pardon","もういちど おねがいします。","もう一度お願いします。"],
+ ["basics","please write it down|can you write it","かいてください。","書いてください。"],["basics","it is okay|no problem|i am fine|it's ok","だいじょうぶです。","大丈夫です。"],
+ ["basics","goodbye|bye","さようなら。","さようなら。"],["basics","nice to meet you","はじめまして。","初めまして。"],["basics","please help me|can you help me","てつだって もらえますか？","手伝ってもらえますか？"],
+ ["food","what do you recommend|recommendation|what is good here","おすすめは なんですか？","おすすめは何ですか？"],["food","this please|this one please|i will have this|i'll have this","これを ください。","これをください。"],
+ ["food","the same please|same as that|the same thing","おなじものを ください。","同じものをください。"],["food","the bill please|check please|can i pay|bill please","おかいけい おねがいします。","お会計お願いします。"],
+ ["food","can i pay by card|do you take card|credit card","カードで はらえますか？","カードで払えますか？"],["food","cash only","げんきんだけですか？","現金だけですか？"],
+ ["food","it was delicious|that was delicious|it was good","おいしかったです。","美味しかったです。"],["food","delicious|tasty|yummy","おいしい！","美味しい！"],
+ ["food","i am vegetarian|i'm vegetarian|vegetarian","ベジタリアンです。","ベジタリアンです。"],["food","i am vegan|i'm vegan|vegan","ヴィーガンです。","ヴィーガンです。"],
+ ["food","not spicy please|no spice|mild please","からくしないで ください。","辛くしないでください。"],["food","is it spicy|is this spicy","からいですか？","辛いですか？"],
+ ["food","takeaway please|to go please|take out","もちかえりで おねがいします。","持ち帰りでお願いします。"],["food","eat here|for here","ここで たべます。","ここで食べます。"],
+ ["food","i am full|i'm full","おなかが いっぱいです。","お腹がいっぱいです。"],["food","thank you for the meal|that was a great meal","ごちそうさまでした。","ごちそうさまでした。"],
+ ["food","let us eat|let's eat|bon appetit","いただきます。","いただきます。"],["food","what is this|what's this","これは なんですか？","これは何ですか？"],
+ ["food","do you have an english menu|english menu|menu in english","えいごの メニューは ありますか？","英語のメニューはありますか？"],["food","is there a wait|how long is the wait","どのくらい まちますか？","どのくらい待ちますか？"],
+ ["food","one person|table for one|just me","ひとりです。","一人です。"],["food","two people|table for two|for two","ふたりです。","二人です。"],["food","three people|table for three|for three","さんにんです。","三人です。"],
+ ["food","four people|table for four|for four","よにんです。","四人です。"],["food","five people|table for five|for five","ごにんです。","五人です。"],
+ ["go","i am lost|i'm lost|i got lost","みちに まよいました。","道に迷いました。"],["go","is it far","とおいですか？","遠いですか？"],["go","is it near|is it close","ちかいですか？","近いですか？"],
+ ["go","stop here please|here is fine","ここで とめてください。","ここで止めてください。"],["go","which platform|what platform","なんばんせんですか？","何番線ですか？"],
+ ["go","how long does it take|how many minutes","どのくらい かかりますか？","どのくらいかかりますか？"],["go","right","みぎ","右"],["go","left","ひだり","左"],["go","straight|straight ahead","まっすぐ","まっすぐ"],
+ ["go","please show me on the map|show me on the map","ちずで おしえてください。","地図で教えてください。"],["go","where am i|where are we","ここは どこですか？","ここはどこですか？"],
+ ["stay","i have a reservation|i booked","よやくして います。","予約しています。"],["stay","check in please|check in","チェックイン おねがいします。","チェックインお願いします。"],
+ ["stay","check out please|check out","チェックアウト おねがいします。","チェックアウトお願いします。"],["stay","can i leave my luggage|can you keep my bags|luggage","にもつを あずけられますか？","荷物を預けられますか？"],
+ ["stay","what time is breakfast|breakfast time","ちょうしょくは なんじですか？","朝食は何時ですか？"],["stay","what is the wifi password|wifi password","ワイファイの パスワードは なんですか？","ワイファイのパスワードは何ですか？"],
+ ["shop","how much is this|how much|what does this cost","これは いくらですか？","これはいくらですか？"],["shop","too expensive|that is expensive","たかすぎます。","高すぎます。"],
+ ["shop","i will take it|i'll take it|i will take this","これに します。","これにします。"],["shop","just looking|i am just looking","みているだけです。","見ているだけです。"],
+ ["shop","do you have a bigger one|bigger size|larger size","もっと おおきいのは ありますか？","もっと大きいのはありますか？"],["shop","do you have a smaller one|smaller size","もっと ちいさいのは ありますか？","もっと小さいのはありますか？"],
+ ["shop","no bag please|i do not need a bag|i don't need a bag","ふくろは いりません。","袋はいりません。"],["shop","tax free|can i get tax free","めんぜいできますか？","免税できますか？"],
+ ["shop","can i try it on|try on","しちゃくしても いいですか？","試着してもいいですか？"],
+ ["help","help|help me","たすけて！","助けて！"],["help","call the police|police","けいさつを よんでください！","警察を呼んでください！"],
+ ["help","call an ambulance|ambulance","きゅうきゅうしゃを よんでください！","救急車を呼んでください！"],["help","i need a doctor|doctor","いしゃを よんでください。","医者を呼んでください。"],
+ ["help","i feel sick|i am sick|i'm sick|i don't feel well","きぶんが わるいです。","気分が悪いです。"],["help","it hurts here|hurts here|pain here","ここが いたいです。","ここが痛いです。"],
+ ["help","i have a fever|fever","ねつが あります。","熱があります。"],["help","please be careful|watch out|careful","きをつけて！","気をつけて！"]];
+const TR_CATS={basics:"👋 Basics",food:"🍜 Food & drink",go:"🧭 Getting around",stay:"🏨 Hotel",shop:"🛍️ Shopping",help:"🆘 Emergency"};
+const TR_COUNT={one:"ひとつ",two:"ふたつ",three:"みっつ",four:"よっつ",five:"いつつ","1":"ひとつ","2":"ふたつ","3":"みっつ","4":"よっつ","5":"いつつ",a:"",an:""};
+// Every sentence the translator can say with a recording: [kana shown, spoken form]
+function trRecList(){
+  const out=TR_FIX.map(f=>[f[2],f[3]]);
+  TR_WORDS.forEach(([,k,sp,t])=>{TR_PAT.forEach(([,pk,ps,,types])=>{if(types.includes(t))out.push([pk.replace("{w}",k),ps.replace("{w}",sp)]);});
+    if(t==="f")["ひとつ","ふたつ","みっつ"].forEach(c=>out.push([k+"を "+c+" ください。",sp+"を"+c+"ください。"]));});
+  return out;
+}
+const TR_REC=new Set(trRecList().map(x=>x[0]));
+// Kana → romaji (for showing how to say it)
+const KRO={きゃ:"kya",きゅ:"kyu",きょ:"kyo",しゃ:"sha",しゅ:"shu",しょ:"sho",ちゃ:"cha",ちゅ:"chu",ちょ:"cho",にゃ:"nya",にゅ:"nyu",にょ:"nyo",ひゃ:"hya",ひゅ:"hyu",ひょ:"hyo",みゃ:"mya",みゅ:"myu",みょ:"myo",りゃ:"rya",りゅ:"ryu",りょ:"ryo",ぎゃ:"gya",ぎゅ:"gyu",ぎょ:"gyo",じゃ:"ja",じゅ:"ju",じょ:"jo",びゃ:"bya",びゅ:"byu",びょ:"byo",ぴゃ:"pya",ぴゅ:"pyu",ぴょ:"pyo",
+ ふぁ:"fa",ふぃ:"fi",ふぇ:"fe",ふぉ:"fo",てぃ:"ti",でぃ:"di",ゔぃ:"vi",ゔぇ:"ve",ゔぁ:"va",しぇ:"she",じぇ:"je",ちぇ:"che",うぃ:"wi",うぇ:"we",
+ あ:"a",い:"i",う:"u",え:"e",お:"o",か:"ka",き:"ki",く:"ku",け:"ke",こ:"ko",さ:"sa",し:"shi",す:"su",せ:"se",そ:"so",た:"ta",ち:"chi",つ:"tsu",て:"te",と:"to",な:"na",に:"ni",ぬ:"nu",ね:"ne",の:"no",
+ は:"ha",ひ:"hi",ふ:"fu",へ:"he",ほ:"ho",ま:"ma",み:"mi",む:"mu",め:"me",も:"mo",や:"ya",ゆ:"yu",よ:"yo",ら:"ra",り:"ri",る:"ru",れ:"re",ろ:"ro",わ:"wa",を:"o",ん:"n",
+ が:"ga",ぎ:"gi",ぐ:"gu",げ:"ge",ご:"go",ざ:"za",じ:"ji",ず:"zu",ぜ:"ze",ぞ:"zo",だ:"da",ぢ:"ji",づ:"zu",で:"de",ど:"do",ば:"ba",び:"bi",ぶ:"bu",べ:"be",ぼ:"bo",ぱ:"pa",ぴ:"pi",ぷ:"pu",ぺ:"pe",ぽ:"po",ゔ:"vu",ぁ:"a",ぃ:"i",ぅ:"u",ぇ:"e",ぉ:"o"};
+function kanaRomaji(t){
+  // particles at the end of a word are their own word in romaji (おみずを → omizu o, えきへは → eki e wa)
+  const P=[["へは"," e wa"],["まで"," made"],["なしで"," nashi de"],["を"," o"],["は"," wa"],["が"," ga"],["に"," ni"],["へ"," e"],["で"," de"]];
+  return String(t).split(/(\s+)/).map(tok=>{if(/^\s+$/.test(tok))return" ";const end=tok.match(/[、。？！]+$/),core=end?tok.slice(0,-end[0].length):tok;
+    const p=core.length>1&&P.find(([k])=>core.endsWith(k)&&core.length>k.length);return p?kanaRomaji1(core.slice(0,-p[0].length))+p[1]+kanaRomaji1(end?end[0]:""):kanaRomaji1(tok);}).join("").replace(/\s+([,.?!])/g,"$1").replace(/\s+/g," ").trim();
+}
+function kanaRomaji1(t){
+  t=kataHira(String(t));let o="",i=0;
+  while(i<t.length){const two=t.slice(i,i+2),one=t[i];
+    if(one==="っ"){const nx=KRO[t.slice(i+1,i+3)]||KRO[t[i+1]]||"";o+=nx?nx[0]==="c"?"t":nx[0]:"";i++;continue;}
+    if(one==="ー"){o+=o.slice(-1);i++;continue;}
+    if(KRO[two]){o+=KRO[two];i+=2;continue;}
+    if(KRO[one]){o+=KRO[one];i++;continue;}
+    o+=one==="、"?", ":one==="。"?". ":one==="？"?"? ":one==="！"?"! ":one;i++;}
+  return o;
+}
+const trNorm=t=>" "+String(t).toLowerCase().replace(/[’‘]/g,"'").replace(/\bi'm\b/g,"i am").replace(/\bi'd\b/g,"i would").replace(/\bcan't\b/g,"cannot").replace(/\bdon't\b/g,"do not")
+  .replace(/\bwhere's\b/g,"where is").replace(/\bwhat's\b/g,"what is").replace(/\bit's\b/g,"it is").replace(/[^a-z0-9' ]+/g," ").replace(/\s+/g," ").trim()+" ";
+const trStem=w=>w.replace(/'s$/,"").replace(/(ies)$/,"y").replace(/(ing|ed|es|s)$/,"");
+// Find a thing/place/food the student named (longest name first), and the sentence pattern their words point to
+function trFindWord(n){
+  let best=null;
+  TR_WORDS.forEach(w=>w[0].split("|").forEach(name=>{const re=new RegExp(" "+name.replace(/ /g," ")+"(s|es)? ");if(re.test(n)&&(!best||name.length>best.len))best={w,len:name.length,name};}));
+  return best;
+}
+function trPattern(n,type){
+  const has=r=>r.test(n);
+  if(type==="f"&&has(/allerg/))return"allergy";
+  if(type==="f"&&has(/ (cannot|can not|do not|don't|not able to) eat |i do not eat /))return"noeat";
+  if(type!=="p"&&has(/ (no|without|hold the) /))return type==="f"?"without":null;
+  if(type==="i"&&has(/ (lost|lose|left my|forgot my|missing) /))return"lost";
+  if(has(/ where /))return type==="f"?"have":"where";
+  if(has(/ (do you have|is there|are there|have you got|do you sell|got any|any) /))return"have";
+  if(type==="p"){if(has(/ (train|bus) /)&&has(/ (go|going|stop) /))return"train";if(has(/ how (do|can|should) (i|we) (get|go) /))return"howget";
+    if(has(/ (take me|drive|taxi|to the .* please|please .* to) /)||has(/^ to /))return"taxi";if(has(/ (want|would like|wanna|like) to go /))return"wantgo";return"where";}
+  return"please";
+}
+function trCount(n,w){const m=n.match(new RegExp(" (one|two|three|four|five|1|2|3|4|5) (\\w+ )?"+w.name.split(" ")[0]));return m?TR_COUNT[m[1]]:"";}
+// Best answers for what was said: [{ja, en, rec, say, why}]
+function translateEn(text){
+  const n=trNorm(text);if(n.trim().length<1)return[];
+  const res=[],seen=new Set(),push=r=>{if(r&&!seen.has(r.ja)){seen.add(r.ja);res.push(r);}};
+  const fw=trFindWord(n);
+  if(fw){const [names,k,sp,t]=fw.w,pid=trPattern(n,t),P=TR_PAT.find(p=>p[0]===pid)||TR_PAT[0],cnt=pid==="please"?trCount(n,fw):"";
+    const enW=t==="p"?(/^[a-z]+$/.test(names.split("|")[0])&&k.length<=6&&!/[ァ-ン]/.test(k)&&!["えき","こうえん","くうこう","びょういん","やっきょく","ぎんこう","でぐち","いりぐち","ちかてつ","こうばん","おてら","じんじゃ","おしろ"].includes(k)?names.split("|")[0].replace(/^\w/,c=>c.toUpperCase()).replace(/ \w/g,c=>c.toUpperCase()):"the "+names.split("|")[0]):names.split("|")[0];
+    if(cnt)push({ja:k+"を "+cnt+" ください。",en:names.split("|")[0].replace(/^\w/,c=>c.toUpperCase())+" × "+({ひとつ:1,ふたつ:2,みっつ:3,よっつ:4,いつつ:5}[cnt])+", please.",say:sp+"を"+cnt+"ください。"});
+    if(P[4].includes(t))push({ja:P[1].replace("{w}",k),en:P[3].replace("{w}",enW).replace(/^\w/,c=>c.toUpperCase()),say:P[2].replace("{w}",sp)});
+    const ALT={f:["please","have"],i:["please","have","where"],p:["where","taxi","howget"]}[t];
+    TR_PAT.filter(p=>ALT.includes(p[0])&&p[0]!==P[0]).slice(0,2).forEach(p=>push({ja:p[1].replace("{w}",k),en:p[3].replace("{w}",enW).replace(/^\w/,c=>c.toUpperCase()),say:p[2].replace("{w}",sp)}));}
+  // fixed phrases, scored by shared words
+  const words=n.trim().split(" ").map(trStem).filter(w=>w&&!["a","the","please","pleas","i","is","it","to","you","can","do","my","me"].includes(w)||n.trim().split(" ").length<=2);
+  const scored=TR_FIX.map(f=>{let best=0;f[1].split("|").forEach(v=>{const vw=v.split(" ").map(trStem),hit=vw.filter(x=>words.includes(x)||n.includes(" "+x+" ")).length;
+    const sc=n.includes(" "+v+" ")?1+v.length/100:hit/Math.max(vw.length,words.length||1);if(sc>best)best=sc;});return[best,f];}).filter(x=>x[0]>=0.5).sort((a,b)=>b[0]-a[0]);
+  scored.slice(0,fw?2:3).forEach(([sc,f])=>{const r={ja:f[2],en:f[1].split("|")[0].replace(/^i /,"I ").replace(/^\w/,c=>c.toUpperCase())+(/[?]$/.test(f[2])||/？$/.test(f[2])?"?":"."),say:f[3]};if(sc>=1&&(!fw||f[1].split("|").some(v=>v.split(" ").length>=3&&n.includes(" "+v+" "))))res.unshift(r);else if(sc>=0.6)push(r);});
+  return res.slice(0,4).map(r=>({...r,rec:TR_REC.has(r.ja),ro:kanaRomaji(r.ja)}));
+}
+// Play a translator sentence: Ryusei's loud recording when there is one (works offline once saved), else the iPhone voice
+function trSay(ja){
+  stopSpeak();resetAudio();
+  if(TR_REC.has(ja)){const my=++natSeq;natBusy=true;playUrl("audio/ryusei/"+recId(ja)+".mp3",my,1).catch(()=>sayDevice(ja,"ja-JP",0.9)).finally(()=>{if(my===natSeq)natBusy=false;});}
+  else sayDevice(ja,"ja-JP",0.9);
+}
+function vTranslate(){
+  const T=UI.tr||(UI.tr={q:"",res:[],cat:null});
+  const r=T.res[0];
+  return`<div class="pad"><div style="display:flex;align-items:center;justify-content:space-between"><div class="h1">🗣️ Translator</div><span class="sub">✈️ works offline</span></div>
+   <p class="sub" style="margin:4px 0 10px">Say or type it in English, for example "two coffees please", "where is the toilet", "I'm allergic to shrimp", "take me to Shinjuku".</p>
+   <div class="inputbar trbar"><button class="iconbtn micen${UI.listening?" live":""}" data-act="trMic" aria-label="Speak English">🎤</button>
+    <input id="trIn" class="field" value="${esc(T.q)}" placeholder="Type in English…" enterkeyhint="go" autocomplete="off" autocapitalize="off"><button class="send" data-act="trGo" aria-label="Translate">→</button></div>
+   ${r?`<div class="card trres"><div class="trja">${esc(r.ja)}</div><div class="trro">${esc(r.ro)}</div><div class="tren">🇬🇧 ${esc(r.en)}</div>
+     <div class="grid2" style="margin-top:12px"><button class="btn" data-act="trPlay" data-ja="${esc(r.ja)}">🔊 Play${r.rec?" (Ryusei)":""}</button><button class="btn ghost" data-act="trShow" data-i="0">📱 Show staff</button></div></div>
+     ${T.res.length>1?`<div class="sec">Or did you mean</div>${T.res.slice(1).map((x,i)=>`<button class="row" data-act="trPick" data-i="${i+1}"><span class="rt"><b>${esc(x.ja)}</b><span>${esc(x.en)}</span></span><span class="chev">›</span></button>`).join("")}`:""}`
+    :T.q?`<div class="card"><b>No match yet</b><p class="sub" style="margin-top:6px">Try simpler words ("water please", "where station", "how much"), or pick a phrase below.</p></div>`:""}
+   <div class="sec">📖 Phrasebook</div>
+   <div class="chips">${Object.entries(TR_CATS).map(([k,t])=>`<button class="chip${T.cat===k?" on":""}" data-act="trCat" data-v="${k}">${t}</button>`).join("")}</div>
+   ${T.cat?TR_FIX.filter(f=>f[0]===T.cat).map(f=>`<button class="row trrow" data-act="trFix" data-ja="${esc(f[2])}"><span class="rt"><b>${esc(f[2])}</b><span>${esc(f[1].split("|")[0].replace(/^i /,"I ").replace(/^\w/,c=>c.toUpperCase()))}</span></span><span class="chev">🔊</span></button>`).join(""):""}
+   <div class="card" style="margin-top:14px"><b>✈️ Offline</b><p class="sub" style="margin:6px 0 10px">${navigator.serviceWorker?"Tap once while on Wi-Fi to save every recorded sentence to your phone. Then the translator and its voice work with no internet. (Speaking into the 🎤 may need internet on some iPhones; typing, or the keyboard's own mic button, always works.)":"Offline saving isn't available in this browser."}</p>
+    <button class="btn sm ghost" data-act="trSave">${T.saved?"✓ Saved for offline ("+T.saved+")":"⬇️ Save the voice for offline"}</button></div>
+  </div>`;
+}
+function trRun(q){
+  const T=UI.tr||(UI.tr={q:"",res:[],cat:null});T.q=q;T.res=translateEn(q);rerender();
+  if(T.res[0])trSay(T.res[0].ja);
+}
+function trShowSheet(r){
+  sheet(`<div style="text-align:center;padding:10px 0 4px"><p class="sub" style="margin-bottom:10px">Please read this · こちらをどうぞ</p><div class="trbig">${esc(r.ja)}</div><p class="sub" style="margin-top:12px">${esc(r.en)}</p>
+   <div class="grid2" style="margin-top:16px"><button class="btn" data-act="trPlay" data-ja="${esc(r.ja)}">🔊 Play</button><button class="btn ghost" data-act="closeSheet">Close</button></div></div>`);
+}
+async function trSaveOffline(){
+  if(!("caches" in window)){toast("Offline saving isn't available here");return;}
+  const files=[...new Set([...TR_REC].map(t=>"audio/ryusei/"+recId(t)+".mp3"))];let done=0;
+  toast("Saving "+files.length+" sentences… keep the app open",2500);
+  const c=await caches.open("yuki-audio");
+  for(let i=0;i<files.length;i+=8){await Promise.all(files.slice(i,i+8).map(async f=>{try{if(!(await c.match(f))){const r=await fetch(f);if(r.ok)await c.put(f,r);}done++;}catch(e){}}));}
+  try{const r=await fetch(location.pathname,{cache:"no-store"});if(r.ok)await (await caches.open("yuki-page")).put("./",r);}catch(e){}
+  UI.tr.saved=done;toast(done===files.length?"✓ Saved! The translator now works offline":"Saved "+done+" of "+files.length+" (try again on Wi-Fi for the rest)",3500);if(UI.tab==="translate")rerender();
+}
+
 /* ============ VIEWS ============ */
 function render(){
   document.querySelectorAll("#tabs button").forEach(b=>b.classList.toggle("on",b.dataset.tab===UI.tab));
@@ -2064,7 +2260,7 @@ function render(){
   if(UI.lp){$("#tabs").classList.add("hidden");main.innerHTML=vLesson();main.onscroll=null;return;}
   if(UI.qz&&UI.qz.test){$("#tabs").classList.add("hidden");main.innerHTML=vQuiz();main.onscroll=null;main.scrollTop=0;return;}
   if(!S.onboarded||UI.obEdit){main.innerHTML=vOnboard();main.scrollTop=0;return;}
-  main.innerHTML=({home:vHome,chat:vChat,learn:vLearn,practice:vPractice,cards:vCards,progress:vProgress,me:vMe}[UI.tab]||vHome)();
+  main.innerHTML=({home:vHome,chat:vChat,learn:vLearn,practice:vPractice,cards:vCards,progress:vProgress,me:vMe,translate:vTranslate}[UI.tab]||vHome)();
   main.scrollTop=0;
   if(UI.tab==="chat")afterChat();
   main.onscroll=UI.tab==="home"?pathScroll:null;
@@ -2166,7 +2362,7 @@ function vHome(){
   const cu=cur?cur.unit:units.length-1;
   const learned=Object.keys(S.cards).filter(i=>i.startsWith("w:")).length;
   const stI=streakInfo();
-  return`<div class="ptop"><button class="pill" data-act="levelSheet">🇯🇵 ${LV[S.level].label} <span class="caret">▾</span></button><button class="pill" data-act="tab" data-tab="cards">🃏 ${Object.keys(S.cards).length}</button><button class="pill${stI.n?" fire":""}" data-act="tab" data-tab="progress">🔥 ${stI.n}</button></div>
+  return`<div class="ptop"><button class="pill" data-act="levelSheet">🇯🇵 ${LV[S.level].label} <span class="caret">▾</span></button><button class="pill" data-act="tab" data-tab="cards">🃏 ${Object.keys(S.cards).length}</button><button class="pill${stI.n?" fire":""}" data-act="tab" data-tab="progress">🔥 ${stI.n}</button><button class="pill" data-act="translate" aria-label="Translator">🗣️</button></div>
   <div class="pathwrap">
   ${todayStrip()}
   ${!S.about.done?`<button class="row" data-act="aboutEdit" style="margin-top:8px;border-color:#3f5a46"><span class="ri">✍️</span><span class="rt"><b>Help Yuki get to know you</b><span>2 minutes · makes your lessons fit you</span></span></button>`:""}
@@ -2410,7 +2606,8 @@ function vPractice(){
    <button class="iconbtn" data-act="sayText" data-text="${esc(w[1])}" aria-label="Listen">🔊</button></div>
   <div class="grid2" style="margin:-2px 0 4px"><button class="btn sm ghost" data-act="wodAdd">${inDeck?"✓ In flashcards":"＋ Flashcards"}</button><button class="btn sm ghost" data-act="wodYuki">💬 Use it with Yuki</button></div>
   ${dueIds(Object.keys(S.cards)).length?`<button class="row" data-act="review" style="margin-top:12px;border-color:var(--sakura)"><span class="ri">🔁</span><span class="rt"><b>Review ${dueIds(Object.keys(S.cards)).length} due cards</b><span>All decks mixed · about ${Math.max(1,Math.round(Math.min(20,dueIds(Object.keys(S.cards)).length)/4))} min</span></span></button>`:""}
-  <button class="row" data-act="qzStart" data-k="all" style="margin-top:12px"><span class="ri">🧠</span><span class="rt"><b>Multiple-choice quiz</b><span>Test the words you've learned · no audio or hints until you answer</span></span></button>
+  <button class="row" data-act="translate" style="margin-top:12px;border-color:#3c4670"><span class="ri">🗣️</span><span class="rt"><b>Travel translator</b><span>English → Japanese in Ryusei's voice · works offline</span></span><span class="chev">›</span></button>
+  <button class="row" data-act="qzStart" data-k="all"><span class="ri">🧠</span><span class="rt"><b>Multiple-choice quiz</b><span>Test the words you've learned · no audio or hints until you answer</span></span></button>
   <button class="row" data-act="allLessons"><span class="ri">📚</span><span class="rt"><b>All lessons</b><span>Pick any lesson, in any order</span></span></button>
   <div class="sec">🃏 Kana flashcards · free, work offline</div>
   ${["hira","kata"].map(k=>{const d=DECKS[k],learned=d.ids.filter(i=>S.cards[i]).length,due=dueIds(d.ids).length;
@@ -2729,6 +2926,16 @@ function startQuiz(q){
 const ACT={
   tab:el=>{const t=el.dataset.tab;if(t!==UI.tab)stopSpeak();if(t!=="me"||UI.tab==="me")UI.me=null;if(t!==UI.tab){UI.fc=null;UI.qz=null;}UI.tab=t;if(t!=="practice")UI.chart=null;render();},
   cardsF:el=>{UI.cardsF=el.dataset.v;rerender();},
+  translate:()=>{stopSpeak();UI.tab="translate";render();},
+  trGo:()=>{const i=$("#trIn");if(i&&i.value.trim())trRun(i.value.trim());else toast("Type or say something in English");},
+  trMic:()=>{if(UI.listening){stopMic();return;}const i=$("#trIn");
+    startMic(t=>{if(i)i.value=t;},final=>{if(final)trRun(final);else rerender();},"en-US");},
+  trPlay:el=>trSay(el.dataset.ja),
+  trShow:el=>{const r=UI.tr&&UI.tr.res[+el.dataset.i];if(r)trShowSheet(r);},
+  trPick:el=>{const T=UI.tr,r=T&&T.res[+el.dataset.i];if(!r)return;T.res=[r,...T.res.filter(x=>x!==r)];rerender();trSay(r.ja);},
+  trCat:el=>{const T=UI.tr||(UI.tr={q:"",res:[],cat:null});T.cat=T.cat===el.dataset.v?null:el.dataset.v;rerender();},
+  trFix:el=>{const ja=el.dataset.ja,f=TR_FIX.find(x=>x[2]===ja),T=UI.tr;T.q=f?f[1].split("|")[0]:"";T.res=[{ja,en:T.q.replace(/^\w/,c=>c.toUpperCase()),rec:TR_REC.has(ja),ro:kanaRomaji(ja)}];rerender();$("#main").scrollTop=0;trSay(ja);},
+  trSave:()=>trSaveOffline(),
   learnNew:el=>learnNew(el.dataset.d),
   qzStart:el=>startQz(el.dataset.k),
   qzPick:el=>{const z=UI.qz;if(!z||z.picked!=null)return;const q=z.qs[z.i],ok=el.dataset.v===q.answer;z.picked=el.dataset.v;
@@ -2924,7 +3131,7 @@ document.addEventListener("click",e=>{
   track();
   const el=e.target.closest("[data-act]");if(!el)return;
   const fn=ACT[el.dataset.act];if(!fn)return;
-  if(el.closest("#sheet")&&!["closeSheet","copyBackup","doImport","addSuggest","addLesson","copyDock","questTest","iphoneVoiceTest"].includes(el.dataset.act))closeSheet();
+  if(el.closest("#sheet")&&!["closeSheet","copyBackup","doImport","addSuggest","addLesson","copyDock","questTest","iphoneVoiceTest","trPlay"].includes(el.dataset.act))closeSheet();
   fn(el,e);
 });
 document.addEventListener("change",e=>{
@@ -2941,7 +3148,8 @@ document.addEventListener("change",e=>{
 });
 
 // Save typed profile answers as you type, so a re-render never loses them
-document.addEventListener("keydown",e=>{if(e.key==="Enter"&&e.target&&e.target.id==="qzIn"){e.preventDefault();ACT.qzType();}});
+document.addEventListener("keydown",e=>{if(e.key==="Enter"&&e.target&&e.target.id==="qzIn"){e.preventDefault();ACT.qzType();}
+  if(e.key==="Enter"&&e.target&&e.target.id==="trIn"&&!e.isComposing){e.preventDefault();ACT.trGo();}});
 document.addEventListener("input",e=>{const k=e.target.dataset&&e.target.dataset.set;if(k&&k.startsWith("about.")){S.about[k.slice(6)]=e.target.value;save();}});
 
 /* ============ iPHONE LAYOUT ============ */
@@ -2993,6 +3201,7 @@ document.addEventListener("visibilitychange",()=>{
 setInterval(()=>{if(document.visibilityState==="visible")checkUpdate(false);},15*60e3);
 
 /* ============ START ============ */
+if("serviceWorker" in navigator&&location.protocol==="https:")navigator.serviceWorker.register("sw.js").catch(()=>{});
 loadState().then(()=>{if(S.onboarded){checkFreeze();if(!S.daily.init){checkBadges(true);S.daily.init=true;save();}}fitViewport();render();pingVV();setTimeout(()=>checkUpdate(false),1500);});
 </script>
 </body>

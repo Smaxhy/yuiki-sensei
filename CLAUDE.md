@@ -248,6 +248,21 @@ Safari → Add to Home Screen.
   number→Japanese, Japanese→number, listen, hear & type, kanji numbers, prices in yen) generate new numbers up to
   `numMax()` (grows with the number cards learned); typed answers via `qzType`. `NUM_REC` (0–100, hundreds,
   thousands, 10000) are recorded in Ryusei/Himari like the cards; `jaDigits` uses `jaNum`.
+- **Travel translator** (`UI.tab="translate"`, from the 🗣️ pill on Path and Practice; free, offline): English
+  (typed, or the 🎤 in English) → Japanese without AI. `translateEn()` finds a named thing in `TR_WORDS` (food,
+  places, things with English synonyms) and slots it into a sentence pattern from `TR_PAT` chosen by the
+  wording (`trPattern`: please / have / allergy / can't eat / without / lost / where / taxi / want to go /
+  how to get / does this train go), plus counts ("two coffees" → ふたつ); otherwise the best match from the
+  `TR_FIX` phrasebook (basics, food, getting around, hotel, shopping, emergency). Shows kana, romaji
+  (`kanaRomaji`), English, "Show staff" big-text sheet and alternatives. Every sentence from `trRecList()`
+  (~760) is recorded in Ryusei, louder (volumeScale 1.6, `tools/gen_translator.py`, file = `recId(kana)`), played
+  by `trSay` (iPhone Japanese voice when not recorded). "Save the voice for offline" (`trSaveOffline`) puts all
+  clips and the page in the cache.
+- **Offline helper** `sw.js` (service worker, registered on https): navigations are network-first with the
+  page cached for offline (auto-update unaffected); `/audio/` is served from the cache when saved (Range
+  requests answered with 206 for Safari), otherwise fetched and cached.
+- **Study time vs XP**: XP goals no longer claim minutes (tests give XP fast); real minutes (`sec`, gaps
+  between taps under 90 s) show next to XP on Home and Progress.
 - **Kana charts**: tap any character to hear it; ones missed get a red border.
 - **Quizzes**: mixed, weak spots, vocab, grammar, kanji, listening, translation, and
   roleplay, all run by Yuki in chat one question at a time.
