@@ -104,6 +104,9 @@ Safari → Add to Home Screen.
   All recordings and tts.quest clips play through one shared <audio> element (`questPlayer`,
   `playUrl`, unlocked on first touch/pointer) rather than Web Audio, which iOS silently suspends
   after calls/mic use/app switches; the first clip starts synchronously inside the tap.
+  A clip counts as played once it has started (`playUrl`, `playId`): an error after it started, or 3 s
+  without progress, ends it instead of retrying, so Ryusei never repeats a sentence. Retries (stream,
+  then a few tries of the finished file) only happen if no sound came out at all.
   iPhone audio session: left on "auto" (forcing "playback" could silence speechSynthesis);
   "play-and-record" only while the mic is actually listening, then back to "auto" (keeping
   "play-and-record" for a whole call makes voices sound muffled/telephone-like).
