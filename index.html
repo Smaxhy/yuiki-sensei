@@ -296,7 +296,7 @@ input,textarea,select{font:inherit;font-size:16px;color:var(--text)}
 <script>
 "use strict";
 // Bump this on every change so phones can spot a new version and offer to update
-const APP_VERSION="2026.10.04-15";
+const APP_VERSION="2026.10.04-16";
 /* ============ DATA ============ */
 const LV = {
   n5:{label:"N5",name:"Beginner",color:"#9fd67c"},
@@ -814,9 +814,21 @@ async function speakVV(segs,rate,text,opts){
 }
 // Free servers sleep when unused; poke it when the app opens so it's awake by the time Yuki talks
 function pingVV(){const b=useVV()?vvBase(S.settings.vvUrl):"";if(b)fetch(b+"/version").catch(()=>{});}
+// Turn whatever is left of English into something the Japanese voice can read: known words in katakana,
+// the rest dropped (so the service never fails on Latin letters and stays silent)
+const EN_KATA={hi:"ハイ",hello:"ハロー",good:"グッド",great:"グレート",job:"ジョブ",nice:"ナイス",yes:"イエス",no:"ノー",ok:"オーケー",okay:"オーケー",now:"ナウ",say:"セイ",again:"アゲイン",try:"トライ",perfect:"パーフェクト",next:"ネクスト",one:"ワン",word:"ワード",words:"ワーズ",means:"ミーンズ",mean:"ミーン",thank:"サンク",thanks:"サンクス",you:"ユー",correct:"コレクト",right:"ライト",wrong:"ロング",well:"ウェル",done:"ダン",lesson:"レッスン",let:"レット",lets:"レッツ",me:"ミー",i:"アイ",am:"アム",is:"イズ",are:"アー",the:"ザ",a:"ア",and:"アンド",to:"トゥー",in:"イン",it:"イット",this:"ディス",that:"ザット",what:"ワット",how:"ハウ",do:"ドゥー",please:"プリーズ",so:"ソー",very:"ベリー",english:"イングリッシュ",japanese:"ジャパニーズ",morning:"モーニング",evening:"イブニング",sorry:"ソーリー",excellent:"エクセレント",awesome:"オーサム",amazing:"アメージング",cool:"クール",wow:"ワオ"};
+function toSpeakable(t){
+  return String(t).replace(/[A-Za-z']+/g,w=>{const k=w.toLowerCase().replace(/'/g,"");return EN_KATA[k]?EN_KATA[k]+" ":"";}).replace(/\s+/g," ").trim();
+}
 function speakAI(text,opts){
   const segsN=segments(cleanSpeech(text)).filter(s=>s.k==="ja"||S.settings.speakEnglish||opts.forceEnglish);
-  if(useQuest()&&segsN.length){if(synth)synth.cancel();speakQuest(segsN,opts.rate||S.settings.rate,text,opts);return;}
+  if(useQuest()&&segsN.length){if(synth)synth.cancel();
+    if(enRyusei()){
+      // one request with the spoken version (English already in katakana); without it, speak what we safely can
+      const sayText=opts.say?cleanSpeech(opts.say).replace(/[A-Za-z']+/g,w=>toSpeakable(w)):toSpeakable(cleanSpeech(text));
+      if(sayText.trim()){speakQuest([{k:"ja",t:sayText}],opts.rate||S.settings.rate,text,{...opts,noSplit:true});return;}
+    }
+    speakQuest(segsN,opts.rate||S.settings.rate,text,opts);return;}
   if(!useVV()&&!useNatural()&&S.settings.jaRec!=="off"&&location.protocol!=="file:"&&segsN.some(sg=>sg.k==="ja"&&RECORDED.has(recKey(sg.t)))){if(synth)synth.cancel();speakWithRecordings(segsN,opts.rate||S.settings.rate,text,opts);return;}
   if(useVV()&&segsN.length){if(synth)synth.cancel();speakVV(segsN,opts.rate||S.settings.rate,text,opts);return;}
   if(useNatural()&&segsN.length){
@@ -882,7 +894,7 @@ const enRyusei=()=>S.settings.enVoice==="ryusei";
 // Japanese parts: Ryusei's recording if we have one (instant), otherwise live from tts.quest;
 // English parts: Ryusei too (live) when enVoice is "ryusei", else the iPhone voice
 async function speakQuest(segs,rate,text,opts){
-  if(enRyusei()){
+  if(enRyusei()&&!opts.noSplit){
     // the whole reply in ONE live request (a single word you've learned still plays from the recording)
     const whole=segs.map(sg=>sg.k==="en"?englishForVV(sg.t):sg.t).join(" ").replace(/\s+/g," ").trim();
     const single=segs.length===1&&segs[0].k==="ja"&&RECORDED.has(recKey(segs[0].t));
@@ -1060,7 +1072,10 @@ ${styleRules()}
 - LISTENING: when you want them to listen without reading, wrap the Japanese in double square brackets like [[きょうは いい てんき ですね]]. The app hides it behind a play button.
 - Use line breaks, not big headers or tables.
 ${mode==="voice"?`- VOICE CALL: they are talking to you out loud and hearing your reply through text-to-speech. Reply in 1-2 short spoken sentences (under 25 words), then hand the turn back to them. No lists, no markdown, no brackets, no romaji. Speak like a friend on a call. Keep the conversation going.\n`:""}
-MEMORY (very important)
+${sayWanted()?`SPOKEN VERSION (very important)
+Your reply is read aloud by a Japanese-only voice that cannot read English letters. Just before the memory line, add one line starting with <<SAY>> followed by the WHOLE reply rewritten for that voice: keep Japanese as it is, write every English word in katakana the way it sounds (e.g. "Great job! Now say hello." → グレート ジョブ！ ナウ セイ ハロー。), and drop emojis, romaji in brackets, markdown and symbols. Never mention this line.
+
+`:""}MEMORY (very important)
 At the very end of EVERY reply, on its own line, write <<MEM>> followed by compact JSON with anything NEW from this turn. Fields (all optional): "facts" (things about the student's life, interests or preferences), "weak" (specific items they got wrong or struggle with), "strong" (things they clearly mastered), "learned" (new words or patterns taught, as "word = meaning"), "right" (number of quiz answers correct this turn), "wrong" (number incorrect this turn), "lessonDone" (true only when the current lesson's core is mastered), "used" (only during conversation practice: target words the student used correctly this turn), "path" (short lesson topics to add to their learning path, like ["Ordering ramen"], only when they ask you to add or change something in their path or plan, or when a clear gap needs its own lesson; at most 2). If nothing new: <<MEM>>{}. Never mention this line to the student.`;
 }
 function memoryPrompt(){
@@ -1118,6 +1133,14 @@ function callAI(mode){
     system:[{type:"text",text:systemPrompt(mode),cache_control:{type:"ephemeral"}},{type:"text",text:memoryPrompt()}],
     messages:buildMessages()});
 }
+// The hidden <<SAY>> line (spoken version for Ryusei) is taken out of the reply and kept separately
+const sayWanted=()=>S.settings.tts==="quest"&&S.settings.enVoice==="ryusei";
+function takeSay(raw){
+  const i=raw.indexOf("<<SAY>>");if(i<0)return{raw,say:""};
+  const rest=raw.slice(i+7),m=rest.indexOf("<<MEM>>");
+  const say=(m<0?rest:rest.slice(0,m)).trim();
+  return{raw:raw.slice(0,i).trimEnd()+(m<0?"":"\n"+rest.slice(m)),say};
+}
 function parseMem(raw){
   const i=raw.lastIndexOf("<<MEM>>");
   if(i<0)return{text:raw,mem:{}};
@@ -1160,14 +1183,15 @@ async function send(display,apiText,mode){
   if(UI.voice){UI.vstate="thinking";renderVoice();}
   try{
     const raw=await callAI(UI.voice?"voice":mode);
-    const {text,mem}=parseMem(raw);
+    const t0=takeSay(raw),say=t0.say;
+    const {text,mem}=parseMem(t0.raw);
     try{applyMem(mem);}catch(e){console.warn("memory skipped",e);}
-    box.push({role:"assistant",text:text||"…"});save();
+    box.push({role:"assistant",text:text||"…",say:say||undefined});save();
     // A plan quiz or talk counts as done after a few back-and-forths with Yuki
     if(UI.planCtx&&++UI.planCtx.replies>=4){markNode(UI.planCtx.key);UI.planCtx=null;if(UI.tab==="chat"&&!UI.voice)rerenderChatHead();}
     showTyping(false);if(S.chat===box)appendLast();
-    if(UI.voice){UI.vstate="speaking";renderVoice();speak(text);}
-    else if(S.settings.autoSpeakChat)speak(text);
+    if(UI.voice){UI.vstate="speaking";renderVoice();speak(text,{say});}
+    else if(S.settings.autoSpeakChat)speak(text,{say});
   }catch(err){
     showTyping(false);
     const noKey=!S.settings.apiKey.trim();
@@ -1946,7 +1970,7 @@ const ACT={
     if(UI.listening){if(lang!==UI.micLang){switchMicLang(lang);return;}stopMic();return;}
     const inp=$("#inp");const before=inp?inp.value.trim():"";
     startMic(t=>{if(inp){inp.value=(before?before+" ":"")+t;inp.dispatchEvent(new Event("input"));}},()=>{const i=$("#inp");if(i)i.focus();},lang);},
-  sayMsg:el=>{const m=S.chat[+el.dataset.i];if(m)speak(m.text);},
+  sayMsg:el=>{const m=S.chat[+el.dataset.i];if(m)speak(m.text,{say:m.say});},
   sayText:el=>speak(el.dataset.text,{rate:0.8}),
   reveal:el=>el.classList.toggle("show"),
   recSet:el=>{S.settings.jaRec=el.dataset.v;save();rerender();if(el.dataset.v!=="off")speak("ともだち",{});},
@@ -1983,7 +2007,7 @@ const ACT={
        <p class="sub" style="margin-bottom:12px">${busy?"The free service is busy right now. Try again in a minute, or add a free tts.quest key (Me → Voice) so you get priority.":net?"Your phone couldn't reach tts.quest. Check your internet (Wi-Fi or mobile data), turn off any VPN / content blocker for this site, then try again.":"tts.quest refused the request. Try again later, or add a free tts.quest key in Me → Voice."}</p>
        <p class="sub" style="margin-bottom:14px">Meanwhile, words you've learned still play from Ryusei's recordings.</p>
        <button class="btn" data-act="questTest">Try again</button><button class="btn ghost" style="margin-top:8px" data-act="closeSheet">Close</button>`);}},
-  enVoiceSet:el=>{S.settings.enVoice=el.dataset.v;save();rerender();speak("Hi! This is how I sound in English.",{forceEnglish:true});},
+  enVoiceSet:el=>{S.settings.enVoice=el.dataset.v;save();rerender();speak("Hi! This is how I sound in English.",{forceEnglish:true,say:"ハイ！ディス イズ ハウ アイ サウンド イン イングリッシュ。"});},
   ttsSet:el=>{S.settings.tts=el.dataset.v;natFailNote=false;vvNote=false;questNote=false;save();rerender();pingVV();},
   saveAz:()=>{const v=$("#azKeyIn");S.settings.azKey=v?v.value.trim():"";natCache.clear();natFailNote=false;save();toast(S.settings.azKey?"Key saved — tap Test voice 🔊":"Key removed");rerender();},
   azHelp:()=>sheet(`<div class="h2" style="margin-bottom:10px">✨ Getting natural voices (free)</div><ol>
@@ -2010,8 +2034,8 @@ const ACT={
   vHands:()=>{S.settings.handsFree=!S.settings.handsFree;save();renderVoice();toast(S.settings.handsFree?"🙌 Yuki listens for your answer after she talks":"✋ Tap 🎤 yourself to answer",2000);},
   vLen:el=>{S.settings.style.length=el.dataset.v;save();renderVoice();},
   vCaptions:()=>{S.settings.captions=!S.settings.captions;save();renderVoice();},
-  vRepeat:()=>{const l=[...S.chat].reverse().find(m=>m.role==="assistant"&&!m.err);if(l){UI.vstate="speaking";renderVoice();speak(l.text);}},
-  vSlow:()=>{const l=[...S.chat].reverse().find(m=>m.role==="assistant"&&!m.err);if(l){UI.vstate="speaking";renderVoice();speak(l.text,{rate:0.6});}},
+  vRepeat:()=>{const l=[...S.chat].reverse().find(m=>m.role==="assistant"&&!m.err);if(l){UI.vstate="speaking";renderVoice();speak(l.text,{say:l.say});}},
+  vSlow:()=>{const l=[...S.chat].reverse().find(m=>m.role==="assistant"&&!m.err);if(l){UI.vstate="speaking";renderVoice();speak(l.text,{rate:0.6,say:l.say});}},
   micLang:el=>{S.settings.micLang=el.dataset.v;save();toast(el.dataset.v==="ja-JP"?"🎤 Listening for Japanese — speak Japanese and it types in Japanese":"🎤 Listening for English",2200);if(UI.voice)renderVoice();else rerender();},
   review:()=>startDeck("all"),
   deck:el=>startDeck(el.dataset.d),
@@ -2063,7 +2087,7 @@ const ACT={
     <li>Come back here, paste it in the box, tap <b>Save key</b>, then <b>Test Yuki</b>.</li></ol>
     <p class="sub" style="margin-top:10px">The key lives only on this phone. The app file itself has no key in it, so sharing the link doesn't share your key. Pick "Fast & cheap" if you want it to cost less.</p>
     <button class="btn" style="margin-top:14px" data-act="closeSheet">Got it</button>`),
-  testVoice:()=>{questNote=false;speak("こんにちは！ゆきです。きょうも いっしょに がんばりましょう。 Hi, this is how I sound.",{forceEnglish:true});},
+  testVoice:()=>{questNote=false;speak("こんにちは！ゆきです。きょうも いっしょに がんばりましょう。 Hi, this is how I sound.",{forceEnglish:true,say:"こんにちは！ゆきです。きょうも いっしょに がんばりましょう。ハイ、ディス イズ ハウ アイ サウンド。"});},
   exportData:()=>{const d=JSON.stringify({...S,settings:{...S.settings,apiKey:"",azKey:"",questKey:""}});sheet(`<div class="h2">Backup</div><p class="sub" style="margin:8px 0">Copy this and keep it somewhere safe (Notes works). Your API keys aren't included.</p><textarea class="field" rows="6" readonly>${esc(d)}</textarea><button class="btn" data-act="copyBackup">Copy</button><button class="btn ghost" style="margin-top:8px" data-act="closeSheet">Close</button>`);},
   copyBackup:()=>{const t=document.querySelector("#sheet textarea");if(navigator.clipboard)navigator.clipboard.writeText(t.value).then(()=>toast("Copied"),()=>{t.select();toast("Select all and copy");});else{t.select();toast("Select all and copy");}},
   importData:()=>sheet(`<div class="h2">Restore</div><p class="sub" style="margin:8px 0">Paste a backup below.</p><textarea id="impT" class="field" rows="6"></textarea><button class="btn" data-act="doImport">Restore</button><button class="btn ghost" style="margin-top:8px" data-act="closeSheet">Cancel</button>`),
