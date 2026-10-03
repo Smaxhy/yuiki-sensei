@@ -115,6 +115,12 @@ Safari → Add to Home Screen.
   English voice doesn't mangle it.
   `applyMem` coerces MEM fields with `asList()` and is wrapped in try/catch so an odd memory
   line can never break a reply.
+  Japanese-mic transcripts go through `jaDigits()` and `kanaize()` (course words via `KANJI_ALT` +
+  common beginner words in `KANA_EXTRA` back to kana; 今日は/今晩は only as standalone greetings);
+  if kanji is left, the API text gets a note that voice typing added it. Before listening the
+  shared player is released (`releasePlayer`) and the mic starts after 250 ms (hands-free waits
+  900 ms after Yuki); a watchdog restarts a recogniser that never fires start/audio/sound/speech
+  events within 3.5 s (gives up after 3 tries); early "audio-capture" errors are retried.
   Mic engine (`MIC`, `startMic`/`micRun`/`stopMic`/`switchMicLang`): continuous recognition that
   restarts itself when iPhone stops after a pause, until the user taps ➤ Send (or 25 s of
   silence). Two languages per message: tap the other language while listening to continue in it

@@ -296,7 +296,7 @@ input,textarea,select{font:inherit;font-size:16px;color:var(--text)}
 <script>
 "use strict";
 // Bump this on every change so phones can spot a new version and offer to update
-const APP_VERSION="2026.10.04-17";
+const APP_VERSION="2026.10.04-18";
 /* ============ DATA ============ */
 const LV = {
   n5:{label:"N5",name:"Beginner",color:"#9fd67c"},
@@ -1000,13 +1000,24 @@ function micSupported(){return !!(window.SpeechRecognition||window.webkitSpeechR
 // message can mix 日本語 and English.
 const MIC={on:false,lang:"ja-JP",base:"",sess:"",stopReq:false,cancel:false,onText:null,onDone:null,restarts:0,heardAt:0};
 function micText(){return(MIC.base+" "+MIC.sess).replace(/\s+/g," ").trim();}
+// Let go of Ryusei's audio completely before listening (iPhone can keep it and the mic then hears nothing)
+function releasePlayer(){if(qa){try{qa.pause();qa.removeAttribute("src");qa.load();}catch(e){}}natPlaying=false;}
 function micRun(){
   const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
   try{rec=new SR();}catch(e){micHelp("blocked");micFinish(true);return;}
   rec.lang=MIC.lang;rec.interimResults=true;rec.continuous=true;rec.maxAlternatives=1;
-  MIC.sess="";
-  rec.onresult=e=>{let t="";for(let i=0;i<e.results.length;i++)t+=e.results[i][0].transcript;MIC.sess=MIC.lang==="ja-JP"?jaDigits(t):t;MIC.heardAt=Date.now();if(MIC.onText)MIC.onText(micText());};
+  MIC.sess="";MIC.audioOk=false;
+  const me=rec;
+  const ok=()=>{if(MIC.audioOk)return;MIC.audioOk=true;MIC.fails=0;const v=$(".vstat");if(v&&UI.voice)v.textContent="🎤 Hearing you · tap ➤ Send when you're done";};
+  rec.onstart=rec.onaudiostart=rec.onsoundstart=rec.onspeechstart=ok;
+  // watchdog: if the mic never actually starts, restart it (iPhone sometimes starts "deaf")
+  setTimeout(()=>{if(rec===me&&MIC.on&&!MIC.stopReq&&!MIC.audioOk){MIC.fails=(MIC.fails||0)+1;
+    if(MIC.fails>3){toast("The mic didn't start — tap 🎤 again",3000);MIC.stopReq=true;MIC.cancel=!micText();try{me.abort();}catch(e){micFinish();}return;}
+    try{me.onend=()=>{if(MIC.on&&!MIC.stopReq)setTimeout(micRun,250);else micFinish();};me.abort();}catch(e){micRun();}}},3500);
+  rec.onresult=e=>{let t="";for(let i=0;i<e.results.length;i++)t+=e.results[i][0].transcript;MIC.sess=MIC.lang==="ja-JP"?kanaize(jaDigits(t)):t;MIC.heardAt=Date.now();MIC.audioOk=true;if(MIC.onText)MIC.onText(micText());};
   rec.onerror=e=>{
+    // "audio-capture" right after Ryusei talked usually just means the audio was still busy: retry a few times first
+    if(e.error==="audio-capture"&&(MIC.fails||0)<3&&MIC.on){MIC.fails=(MIC.fails||0)+1;return;}
     if(e.error==="not-allowed"||e.error==="service-not-allowed"||e.error==="audio-capture"){MIC.stopReq=true;MIC.cancel=true;micHelp("blocked");}
     else if(e.error!=="no-speech"&&e.error!=="aborted"&&e.error!=="network")toast("Mic problem: "+e.error);};
   rec.onend=()=>{
@@ -1022,9 +1033,10 @@ function startMic(onText,onDone,lang){
   const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
   if(!SR){micHelp("unsupported");return false;}
   stopSpeak();
-  Object.assign(MIC,{on:true,lang:lang||S.settings.micLang,base:"",sess:"",stopReq:false,cancel:false,onText,onDone,restarts:0,heardAt:Date.now()});
+  Object.assign(MIC,{on:true,lang:lang||S.settings.micLang,base:"",sess:"",stopReq:false,cancel:false,onText,onDone,restarts:0,heardAt:Date.now(),fails:0});
+  releasePlayer();
   UI.micLang=MIC.lang;UI.listening=true;setAudioMode("play-and-record");refreshMic();
-  micRun();return true;
+  setTimeout(()=>{if(MIC.on&&!MIC.stopReq)micRun();},250);return true;
 }
 // Switch language mid-message: what you said so far stays, listening continues in the other language
 function switchMicLang(lang){
@@ -1102,6 +1114,7 @@ ${styleRules()}
 - QUIZZES: one question at a time, wait for the answer, say right or wrong with a short reason, keep a running score (e.g. 3/4), finish after 10 or when they say stop, then summarize what to review.
 - BOTH LANGUAGES: the student may mix English and Japanese. When they use the Japanese mic, English they say often arrives as katakana (アイ ドント ノウ = "I don't know", オーケー = "okay"); read it as the English they meant and answer naturally.
 - The phone may also write Japanese they SAID as digits or kanji (1 = いち, 元気 = げんき, 今日は = こんにちは). That means they said it correctly: accept it, never ask them to "say the Japanese word" because of digits or kanji.
+- KANJI FROM VOICE TYPING: when the student speaks Japanese, the phone often writes it in kanji by itself. They are a beginner who said it out loud in kana-level Japanese: read the kanji as what they said, count it as correct, and always write Japanese back to them in hiragana/katakana (kanji only with the reading in brackets, if at all).
 - VOICE TYPING: the student often speaks and the phone types it. Japanese they say can arrive as English look-alikes ("Ohio" = おはよう, "arigato" = ありがとう, "cone itchy wa" = こんにちは). Treat these as the Japanese they meant (count them as used), and gently show the proper Japanese spelling.
 - Make every question easy to understand: write the instruction in English, and put an English translation in brackets after any Japanese question sentence (never give away the answer itself). After they answer, translate the full correct sentence too.
 - LISTENING: when you want them to listen without reading, wrap the Japanese in double square brackets like [[きょうは いい てんき ですね]]. The app hides it behind a play button.
@@ -1442,6 +1455,19 @@ const KANJI_ALT={"こんにちは":["今日は"],"こんばんは":["今晩は"]
  "てんき":["天気"],"はれ":["晴れ"],"あめ":["雨"],"あつい":["暑い"],"さむい":["寒い"],"うれしい":["嬉しい"],"かなしい":["悲しい"],"つかれました":["疲れました"],"ねむい":["眠い"],"たのしい":["楽しい"],"ほんとう":["本当"],"だいじょうぶ":["大丈夫"],
  "りょこう":["旅行"],"よやく":["予約"],"へや":["部屋"],"なんぱく":["何泊"],"いきたい":["行きたい"],"みたい":["見たい"],"たべたい":["食べたい"],"しゃしん":["写真"],"だめ":["駄目"],"わかりません":["分かりません","解りません"],"たすけて":["助けて"],
  "もういちど":["もう一度"],"ちょっとまって":["ちょっと待って"],"えいごで":["英語で"],"にほんご":["日本語"],"すこし":["少し"],"またあいましょう":["また会いましょう"],"れんらく":["連絡"],"たのしかった":["楽しかった"],"がんばって":["頑張って"],"きをつけて":["気をつけて","気を付けて"]};
+// iPhone's Japanese voice typing writes kanji the student can't read yet. Swap known words back to
+// kana (all course words + common beginner words), longest first. Whatever kanji is left is flagged.
+const KANA_EXTRA={"私":"わたし","僕":"ぼく","何":"なに","日本":"にほん","日本語":"にほんご","英語":"えいご","好き":"すき","大好き":"だいすき","食べ":"たべ","飲み":"のみ","行き":"いき","来":"き","見":"み","聞き":"きき","話し":"はなし","分かり":"わかり","分かる":"わかる","大丈夫":"だいじょうぶ","本当":"ほんとう","先生":"せんせい","学生":"がくせい","友達":"ともだち","今日":"きょう","明日":"あした","昨日":"きのう","今":"いま","毎日":"まいにち","名前":"なまえ","元気":"げんき","水":"みず","お茶":"おちゃ","ご飯":"ごはん","美味しい":"おいしい","高い":"たかい","安い":"やすい","駅":"えき","電車":"でんしゃ","天気":"てんき","雨":"あめ","暑い":"あつい","寒い":"さむい","楽しい":"たのしい","嬉しい":"うれしい","疲れ":"つかれ","時":"じ","分":"ふん","円":"えん","人":"ひと","国":"くに","仕事":"しごと","家族":"かぞく","映画":"えいが","音楽":"おんがく","趣味":"しゅみ","旅行":"りょこう","写真":"しゃしん","一緒":"いっしょ","少し":"すこし","頑張":"がんば","宜しく":"よろしく","御願い":"おねがい","お願い":"おねがい","有難う":"ありがとう","有り難う":"ありがとう","今日は":"こんにちは","今晩は":"こんばんは","お早う":"おはよう","左様なら":"さようなら","済みません":"すみません","又":"また"};
+let KANA_PAIRS=null;
+function kanaize(t){
+  if(!KANA_PAIRS){const m={...KANA_EXTRA};Object.entries(KANJI_ALT).forEach(([kana,alts])=>alts.forEach(a=>{if(/[\u4e00-\u9fff]/.test(a))m[a]=kana;}));
+    delete m["今日は"];delete m["今晩は"];
+    KANA_PAIRS=Object.entries(m).sort((a,b)=>b[0].length-a[0].length);}
+  // 今日は / 今晩は are greetings only when they stand alone ("今日は！"); otherwise 今日 = きょう
+  let out=String(t).replace(/(^|[\s、。！？!?])今日は(?=$|[\s、。！？!?])/g,"$1こんにちは").replace(/(^|[\s、。！？!?])今晩は(?=$|[\s、。！？!?])/g,"$1こんばんは");KANA_PAIRS.forEach(([k,v])=>{if(out.includes(k))out=out.split(k).join(v);});
+  return out;
+}
+const hasKanji=t=>/[\u4e00-\u9fff]/.test(t);
 function detectUsed(text){
   text=jaDigits(text);
   const c=activeCourse();if(!c)return[];
@@ -1935,10 +1961,10 @@ function voiceMic(lang){
   if(UI.busy)return;
   stopSpeak();UI.vyou="";S.settings.micLang=lang;
   startMic(t=>{UI.vyou=t;const y=document.querySelector(".vlive");if(y)y.textContent=t||"…";},
-    final=>{if(final){UI.vyou=final;send(final,null,"voice");}else{UI.vstate="idle";renderVoice();}},lang);
+    final=>{if(final){UI.vyou=final;send(final,hasKanji(final)?final+"\n(said out loud; the phone's voice typing added the kanji automatically — I can't read kanji yet, please reply in kana)":null,"voice");}else{UI.vstate="idle";renderVoice();}},lang);
 }
 // Hands-free: when Yuki finishes talking, start listening for your answer (you still tap Send)
-function afterYukiSpoke(){const c=activeCourse();if(c&&c.used.length>=c.targets.length&&!c.keep)return;if(UI.voice&&S.settings.handsFree&&!UI.listening&&!UI.busy)setTimeout(()=>{if(UI.voice&&!UI.listening&&!UI.busy&&!isSpeaking())voiceMic(S.settings.micLang);},500);}
+function afterYukiSpoke(){const c=activeCourse();if(c&&c.used.length>=c.targets.length&&!c.keep)return;if(UI.voice&&S.settings.handsFree&&!UI.listening&&!UI.busy)setTimeout(()=>{if(UI.voice&&!UI.listening&&!UI.busy&&!isSpeaking())voiceMic(S.settings.micLang);},900);}
 
 /* ============ SHEET ============ */
 function sheet(html){const s=$("#sheet");s.innerHTML=`<div class="sh">${html}</div>`;s.classList.remove("hidden");}
