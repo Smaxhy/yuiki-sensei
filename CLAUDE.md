@@ -242,6 +242,12 @@ Safari → Add to Home Screen.
   first), 4 options from the same kind (kana: sound↔character; words: meaning↔Japanese; kanji: meaning or
   reading). No audio and no reading until you answer; then the answer, reading and audio show. Updates
   spaced repetition and XP. Started from the Cards tab (all/words/kana/kanji) or Practice.
+- **Numbers**: deck "num" (`NUMS`: 0–10, 11, tens, 100, 300/600/800, 1000/3000/8000, 10000; cards `n:<n>`,
+  learned 5 at a time with ＋ 5 new, in the Cards tab as "Numbers"). `jaNum(n)` reads any number to 99,999
+  (さんびゃく, ろっぴゃく, はっせん…), `kanjiNum`, `numRomaji`. Free exercises (`numQuiz(mode)`, `NUM_MODES`: mixed,
+  number→Japanese, Japanese→number, listen, hear & type, kanji numbers, prices in yen) generate new numbers up to
+  `numMax()` (grows with the number cards learned); typed answers via `qzType`. `NUM_REC` (0–100, hundreds,
+  thousands, 10000) are recorded in Ryusei/Himari like the cards; `jaDigits` uses `jaNum`.
 - **Kana charts**: tap any character to hear it; ones missed get a red border.
 - **Quizzes**: mixed, weak spots, vocab, grammar, kanji, listening, translation, and
   roleplay, all run by Yuki in chat one question at a time.
