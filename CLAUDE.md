@@ -156,6 +156,12 @@ Safari → Add to Home Screen.
   status URL until `isAudioReady`, then play the finished MP3 (iOS is unreliable with streams);
   if status can't be read, try the stream, then retry the finished files. The "Test Ryusei"
   sheet shows which of the 3 steps fails (`questFail`) and has an iPhone-voice test.
+  Particles は/へ before a space or punctuation (or standing alone) are sent as わ/え so Ryusei says "wa"/"e".
+  Once Ryusei falls behind in a reply (clip not ready 4 s after its turn, 8 s for the first, or an error),
+  the rest of that reply stays with the iPhone voice (`stay` in `speakQuest`) instead of switching back and
+  forth. `resetAudio()` reuses the one shared player (a new player per repeat made iOS lower the volume),
+  and the silent unlock sound never plays on a mic tap or while listening (it could block the mic).
+  A mic with no sign of life retries once by itself (`MIC.retried`) before pausing.
   Text for Ryusei goes through `vvText()`: spaces between Japanese characters removed (spaced
   beginner kana makes VOICEVOX pause after every word and stress oddly), Japanese punctuation.
   `cleanSpeech()` speaks the reading for 漢字(かな) instead of the kanji. Ryusei never starts while
