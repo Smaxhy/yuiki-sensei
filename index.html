@@ -287,7 +287,7 @@ input,textarea,select{font:inherit;font-size:16px;color:var(--text)}
 .fxs{width:44px;height:36px;margin:-6px -6px -6px 0;font-size:15px}
 .fj{font-size:16px;font-weight:700}.fe{color:var(--dim);margin-top:2px}.fw{color:var(--gold);font-size:13px;margin-top:3px}
 .vfix{margin:12px auto 0;max-width:420px;text-align:center;font-size:16px;font-weight:700;background:#ffffff10;border-radius:14px;padding:10px 14px}
-.vfix b{color:var(--sakura);font-size:13px}.vfix.ok b{color:var(--matcha)}.vfix small{display:block;font-size:13.5px;color:var(--dim);font-weight:600;margin-top:4px}
+.vfix b{color:var(--sakura);font-size:13px}.vsaid{font-size:13px;color:var(--dim);font-weight:600;text-decoration:line-through;text-decoration-color:#f27c7c88;margin-bottom:4px}.vfix.ok b{color:var(--matcha)}.vfix small{display:block;font-size:13.5px;color:var(--dim);font-weight:600;margin-top:4px}
 /* progress, calendar, badges */
 .today{display:flex;gap:8px;margin:10px 0 2px}
 .tmain{flex:1;min-width:0;display:flex;align-items:center;gap:12px;text-align:left;background:var(--ink2);border:1px solid var(--line);border-radius:20px;padding:10px 14px;min-height:66px}
@@ -368,7 +368,7 @@ input,textarea,select{font:inherit;font-size:16px;color:var(--text)}
 <script>
 "use strict";
 // Bump this on every change so phones can spot a new version and offer to update
-const APP_VERSION="2026.10.06-2";
+const APP_VERSION="2026.10.06-3";
 /* ============ DATA ============ */
 const LV = {
   n5:{label:"N5",name:"Beginner",color:"#9fd67c"},
@@ -777,7 +777,7 @@ function cleanSpeech(t){
 }
 // Voice typing gives text without punctuation or capitals. Tidy it: 、 between spoken Japanese phrases,
 // 。/？ (or ./?) at the end, capital first letters and "I". Free, on the phone, no AI.
-const JA_PAUSE=/(^|[、。])(こんにちは|こんばんは|おはよう|おはようございます|はい|いいえ|ええ|うん|ありがとう|ありがとうございます|すみません|あの|えっと|じゃあ|でも|そして)$/;
+const JA_PAUSE=/(^|[、。])(こんにちは|こんばんは|おはよう|おはようございます|はい|いいえ|ええ|うん|よろしく|ありがとう|ありがとうございます|すみません|あの|えっと|じゃあ|でも|そして)$/;
 const QWORD=/^(what|where|when|why|who|whom|which|how|do|does|did|is|are|am|was|were|can|could|would|will|should|shall|may|have|has)\b/i;
 function tidySpeech(t){
   t=String(t||"").replace(/\s+/g," ").trim();if(!t)return t;
@@ -1369,7 +1369,7 @@ ${styleRules()}
 - Do what they ask (quiz, roleplay, drill). Quizzes: one question at a time, right/wrong + short reason, keep score, stop after 10 and sum up.
 - If they ask to add a topic to their path, say so and put it in "path".
 - VOICE TYPING: they often speak and the phone types. Their Japanese may arrive as digits (1=いち), kanji (元気=げんき) or English look-alikes ("Ohio"=おはよう); English said into the Japanese mic arrives as katakana (アイ ドント ノウ). Treat it as what they meant, count it as correct, and write Japanese back in kana.
-${voice?`- CALL: they hear you via text-to-speech. 1-2 short spoken sentences (under 25 words), then hand the turn back. No lists, markdown, brackets or romaji.`:`- Instructions in English; after a Japanese question add its English in brackets (never the answer). [[double brackets]] hide Japanese for listening practice. Line breaks, no headers or tables.`}
+${voice?`- CALL: they hear you via text-to-speech. 1-2 short spoken sentences (under 25 words), then hand the turn back. No lists, markdown, brackets or romaji. Still always add the hidden FIX line for what they said.`:`- Instructions in English; after a Japanese question add its English in brackets (never the answer). [[double brackets]] hide Japanese for listening practice. Line breaks, no headers or tables.`}
 ${sayWanted()?`- SPOKEN VERSION: a Japanese-only voice reads your reply. Before the memory line add <<SAY>> + the whole reply with English words in katakana (Great job! → グレート ジョブ！), no emojis, romaji or symbols.
 `:""}HIDDEN LINES at the very end, each on its own line, never mentioned:
 <<FIX>>{"ja":"","en":"","ok":true,"why":""} when their latest message is their own sentence (not a command like "quiz me"). Japanese: ja = correct natural Japanese with 、。？ at their level, en = English translation, properly punctuated. English: en = their English fixed, ja = how to say it in Japanese. ok = already correct (voice-typing punctuation doesn't count); why = main fix, a few words. The app shows it under their message, so mention the fix only briefly${voice?" (say it in a few words)":""}.
@@ -2582,9 +2582,9 @@ function renderVoice(){
    <button class="iconbtn" data-act="vCaptions" aria-label="Captions" style="font-size:15px;font-weight:800">${cc?"CC":"🙈"}</button></div>
    <div class="vopts"><button class="vopt${S.settings.tts==="device"?" on":""}" data-act="vFast">${S.settings.tts==="device"?"⚡ Fast voice":"🎌 Ryusei"}</button><button class="vopt${S.settings.handsFree?" on":""}" data-act="vHands">${S.settings.handsFree?"🙌 Hands-free":"✋ Tap to talk"}</button>
     <span class="vlen">${[["tiny","Very short"],["short","Short"],["normal","Normal"]].map(([v,t])=>`<button class="vopt${len===v?" on":""}" data-act="vLen" data-v="${v}">${t}</button>`).join("")}</span></div>
-   <div class="orbwrap${activeCourse()?" compact":""}"><div class="orb ${st}">ゆ</div><div class="vstat">${label}</div>
+   <div class="orbwrap${activeCourse()||(!UI.listening&&(()=>{const lu=[...S.chat].reverse().find(m=>m.role==="user");return lu&&lu.fix;})())?" compact":""}"><div class="orb ${st}">ゆ</div><div class="vstat">${label}</div>
     ${activeCourse()?`<div class="vchips">${talkChips()}</div>${courseDoneCard(true)}${activeCourse().keep?`<button class="vopt on" data-act="courseDone" style="margin-top:6px">✓ Finish lesson</button>`:""}`:""}
-    <div class="vcap">${UI.listening?`<div class="vtext vlive">${UI.vyou?esc(UI.vyou):"…"}</div>`:`<div class="vtext${cc?"":" off"}">${cap}</div>${last&&!last.err?`<button class="vopt again" data-act="vRepeat">🔁 Say it again</button>`:""}${(()=>{const lu=[...S.chat].reverse().find(m=>m.role==="user");return lu&&lu.fix&&UI.vstate!=="thinking"?`<div class="vfix${lu.fix.ok?" ok":""}"><b>${lu.fix.ok?"✓ You said it right":"✏️ Better"}</b> ${esc(lu.fix.ja)}<small>🇬🇧 ${esc(lu.fix.en)}${!lu.fix.ok&&lu.fix.why?" · 💡 "+esc(lu.fix.why):""}</small></div>`:`<div class="vyou">${UI.vyou?"You: "+esc(UI.vyou):""}</div>`;})()}`}</div></div>
+    <div class="vcap">${UI.listening?`<div class="vtext vlive">${UI.vyou?esc(tidySpeech(UI.vyou)):"…"}</div>`:`<div class="vtext${cc?"":" off"}">${cap}</div>${last&&!last.err?`<button class="vopt again" data-act="vRepeat">🔁 Say it again</button>`:""}${(()=>{const lu=[...S.chat].reverse().find(m=>m.role==="user");return lu&&lu.fix&&UI.vstate!=="thinking"?(()=>{const f=lu.fix,en=!JP.test(lu.text);return`<div class="vfix${f.ok?" ok":""}">${f.ok?"":`<div class="vsaid">You said: ${esc(lu.text)}</div>`}<b>${f.ok?"✓ You said it right":en?"✏️ Better English":"✏️ Better"}</b> ${esc(en?f.en:f.ja)}<small>${en?"🇯🇵 "+esc(f.ja):"🇬🇧 "+esc(f.en)}${!f.ok&&f.why?" · 💡 "+esc(f.why):""}</small></div>`;})():`<div class="vyou">${UI.vyou?"You: "+esc(UI.vyou):""}</div>`;})()}`}</div></div>
    ${UI.listening?`<div class="vctrl">
     <button class="vbtn" data-act="vCancel"><i>✕</i>Cancel</button>
     ${MIC.paused?`<button class="micbtn ${UI.micLang==="ja-JP"?"ja":"en"}" data-act="vMic" data-v="${UI.micLang}" aria-label="Keep talking"><span>🎤</span>Continue</button>`:`<button class="micbtn ${other==="ja-JP"?"ja":"en"} alt" data-act="vMic" data-v="${other}" aria-label="Continue in ${other==="ja-JP"?"Japanese":"English"}"><span>⇄</span>${other==="ja-JP"?"+ 日本語":"+ English"}</button>`}
@@ -2603,7 +2603,7 @@ function voiceMic(lang){
   if(UI.listening){if(MIC.paused||lang!==UI.micLang){resumeMic(lang);return;}stopMic();return;}
   if(UI.busy){toast("Yuki is still thinking — one moment",1500);return;}
   stopSpeak();UI.vyou="";S.settings.micLang=lang;
-  startMic(t=>{UI.vyou=t;const y=document.querySelector(".vlive");if(y)y.textContent=t||"…";},
+  startMic(t=>{UI.vyou=t;const y=document.querySelector(".vlive");if(y)y.textContent=t?tidySpeech(t):"…";},
     final=>{if(final){const raw=final;final=tidySpeech(final);UI.spoken={tidy:final,raw};UI.vyou=final;send(final,hasKanji(final)?final+"\n(said out loud; the phone's voice typing added the kanji automatically — I can't read kanji yet, please reply in kana)":null,"voice");}else{UI.vstate="idle";renderVoice();}},lang);
 }
 // Hands-free: when Yuki finishes talking, start listening for your answer (you still tap Send)

@@ -95,7 +95,9 @@ Safari → Add to Home Screen.
   `<<FIX>>{"ja","en","ok","why"}` line before `<<MEM>>` (rule in `systemPrompt`). `takeFix()` strips it (before
   `takeSay`), it's stored as `msg.fix` on the user message and shown under it (`fixHTML`: correct Japanese
   with 🔊, punctuated English translation, 💡 reason) and on the call screen (`.vfix`). Skipped for app
-  commands (messages with `api` text, except voice). English sentences get one too ("✏️ Better English" =
+  commands (messages with `api` text, except voice). On calls the live transcript is shown tidied
+  (`tidySpeech`), Yuki is told to always add FIX, and the call card shows "You said" (struck through) above
+  the correction; the orb shrinks while a correction is shown. English sentences get one too ("✏️ Better English" =
   their English fixed, plus "🇯🇵 In Japanese"), so spoken English is corrected as well.
   Yuki sometimes writes markers slightly wrong ("FIX>>"): `normMarkers()` restores `<<FIX>>`/`<<MEM>>`/
   `<<SAY>>` before parsing, and `stripHidden()` removes any leftover hidden line from what is shown
