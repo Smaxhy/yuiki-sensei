@@ -79,8 +79,10 @@ Safari → Add to Home Screen.
   Default engine "Ryusei everywhere" (`S.settings.tts="quest"`, default voice `jaRec="ryusei"`):
   Japanese segments play from the recordings when they match, otherwise live from the free public
   VOICEVOX service tts.quest (`questUrl` → mp3StreamingUrl, played on one shared <audio> element
-  unlocked on first tap; speaker id from `REC_VOICES`); English parts use the iPhone voice; any
-  failure (busy/unreachable) falls back to the iPhone voice for that segment.
+  unlocked on first tap; speaker id from `REC_VOICES`); English parts use Ryusei or the iPhone voice; any
+  failure (busy/unreachable) falls back to the iPhone voice for that segment. With
+  `enVoice="ryusei"` (default) English is sent to VOICEVOX too, lower-cased with contractions
+  expanded (`englishForVV`), neighbouring live segments merged into one request.
   iPhone audio session: `setAudioMode("playback")` normally, "play-and-record" while the mic
   listens or a call is open ("playback" alone blocks the microphone).
   `applyMem` coerces MEM fields with `asList()` and is wrapped in try/catch so an odd memory
@@ -97,7 +99,7 @@ Safari → Add to Home Screen.
   settings, what Yuki remembers, and backup/restore as JSON (key excluded).
 
 ## Technical notes
-- State object `S` (currently `v:10`) saved to localStorage key `yuki-sensei-v3`. Keep it backward
+- State object `S` (currently `v:11`) saved to localStorage key `yuki-sensei-v3`. Keep it backward
   compatible. Saved data (and restored backups) go through `migrate()`; if the shape
   changes, bump `DEFAULT.v` and add a step there instead of wiping progress.
 - Clicks route through `data-act` attributes to the `ACT` object.

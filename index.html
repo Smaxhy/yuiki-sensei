@@ -269,7 +269,7 @@ input,textarea,select{font:inherit;font-size:16px;color:var(--text)}
 <script>
 "use strict";
 // Bump this on every change so phones can spot a new version and offer to update
-const APP_VERSION="2026.10.04-4";
+const APP_VERSION="2026.10.04-5";
 /* ============ DATA ============ */
 const LV = {
   n5:{label:"N5",name:"Beginner",color:"#9fd67c"},
@@ -459,14 +459,14 @@ const KANJI_LV={none:"none yet",few:"under 50",some:"50–300",many:"300+"};
 /* ============ STATE ============ */
 const KEY="yuki-sensei-v3";
 const DEFAULT={
-  v:10,onboarded:false,name:"",level:"n5",goal:"",
+  v:11,onboarded:false,name:"",level:"n5",goal:"",
   about:{done:false,focus:[],hira:"",kata:"",kanji:"",location:"",native:"English",minutes:15,notes:""},
   placement:null,plan:null,course:null,
   profile:{facts:[],weak:[],strong:[],learned:[]},
   stats:{msgs:0,quizRight:0,quizWrong:0,cards:0,streak:0,lastDay:""},
   done:[],cards:{},chat:[],currentLesson:null,
   settings:{apiKey:"",model:"claude-haiku-4-5-20251001",rate:0.9,autoSpeakChat:false,speakEnglish:true,micLang:"ja-JP",
-    style:{length:"normal",english:"balanced",script:"auto",simple:false},history:12,voiceEn:"",voiceJa:"",jaRec:"ryusei",vvUrl:"",
+    style:{length:"normal",english:"balanced",script:"auto",simple:false},history:12,voiceEn:"",voiceJa:"",jaRec:"ryusei",vvUrl:"",enVoice:"ryusei",
     tts:"quest",azKey:"",azRegion:"eastus",azEn:"en-US-AvaMultilingualNeural",azJa:"ja-JP-NanamiNeural",ttsChars:{month:"",n:0},captions:true}
 };
 let S=JSON.parse(JSON.stringify(DEFAULT));
@@ -512,6 +512,8 @@ function migrate(st){
   if(!["device","azure","voicevox","quest"].includes(S2.tts))S2.tts="quest";
   // v9 → v10: Ryusei everywhere (live voice via free tts.quest, recordings in Ryusei)
   if((st.v||0)<10){S2.jaRec="ryusei";if(S2.tts==="device")S2.tts="quest";}
+  // v10 → v11: Ryusei can read English too
+  if(!["ryusei","iphone"].includes(S2.enVoice))S2.enVoice="ryusei";
   if(typeof S2.azKey!=="string")S2.azKey="";
   if(!AZ_REGIONS.includes(S2.azRegion))S2.azRegion="eastus";
   if(!AZ_VOICES.en.some(v=>v[0]===S2.azEn))S2.azEn=DEFAULT.settings.azEn;
@@ -789,8 +791,19 @@ function playUrl(url,my,rate){return new Promise((res,rej)=>{
   a.play().catch(()=>fin(false));
 });}
 function stopQuest(){if(qa){try{qa.pause();}catch(e){}}}
-// Japanese parts: Ryusei's recording if we have one (instant), otherwise live from tts.quest; English parts: iPhone voice
+// VOICEVOX reads English best in lower case with short forms written out ("Hi" would be spelled "H-I")
+const EN_FIX=[[/\bi'm\b/g,"i am"],[/\byou're\b/g,"you are"],[/\bwe're\b/g,"we are"],[/\bthey're\b/g,"they are"],[/\b(it|that|what|there|here|she|he)'s\b/g,"$1 is"],[/\bdon't\b/g,"do not"],[/\bdoesn't\b/g,"does not"],[/\bdidn't\b/g,"did not"],[/\bcan't\b/g,"can not"],[/\bwon't\b/g,"will not"],[/\bisn't\b/g,"is not"],[/\baren't\b/g,"are not"],[/\b(i|you|we|they)'ll\b/g,"$1 will"],[/\b(i|you|we|they)'ve\b/g,"$1 have"],[/\b(i|you|we|they)'d\b/g,"$1 would"],[/\bok\b/g,"okay"]];
+function englishForVV(t){t=t.toLowerCase().replace(/[’‘]/g,"'");EN_FIX.forEach(([a,b])=>{t=t.replace(a,b);});return t;}
+const enRyusei=()=>S.settings.enVoice==="ryusei";
+// Japanese parts: Ryusei's recording if we have one (instant), otherwise live from tts.quest;
+// English parts: Ryusei too (live) when enVoice is "ryusei", else the iPhone voice
 async function speakQuest(segs,rate,text,opts){
+  if(enRyusei()){
+    // merge neighbours so a mixed reply is a few live requests instead of many
+    const merged=[];segs.forEach(sg=>{const k=sg.k==="ja"&&RECORDED.has(recKey(sg.t))?"rec":"live",t=sg.k==="en"?englishForVV(sg.t):sg.t;
+      const last=merged[merged.length-1];if(last&&last.mode==="live"&&k==="live")last.t+=" "+t;else merged.push({mode:k,k:sg.k,t,orig:sg.t});});
+    segs=merged.map(m=>({k:"ja",t:m.t,orig:m.orig,live:m.mode==="live"}));
+  }
   const my=++natSeq;natBusy=true;
   const recUrl=sg=>{const k=recKey(sg.t);return RECORDED.has(k)?`audio/${S.settings.jaRec}/${recId(k)}.mp3`:null;};
   const jobs=segs.map(sg=>sg.k!=="ja"?null:(recUrl(sg)?Promise.resolve(recUrl(sg)):questUrl(sg.t.trim())));
@@ -799,15 +812,18 @@ async function speakQuest(segs,rate,text,opts){
     for(let i=0;i<segs.length;i++){
       if(my!==natSeq)return;
       if(!jobs[i]){await sayDevice(segs[i].t.trim(),"en-US",rate);continue;}
+      // (with enVoice "ryusei" every segment is sent as "ja", so it never reaches the iPhone English voice unless the service fails)
       natLoading=true;let url=null;try{url=await jobs[i];}catch(e){
         if(!questNote){questNote=true;toast(/busy|limit|wait/i.test(e.message)?"Ryusei's live voice is busy — using the iPhone voice for a moment":"Couldn't reach Ryusei's live voice — using the iPhone voice",3500);}}
       natLoading=false;if(my!==natSeq)return;
       if(url){try{await playUrl(url,my,rate);continue;}catch(e){}}
       if(my!==natSeq)return;
-      await sayDevice(segs[i].t.trim(),"ja-JP",rate);
+      if(segs[i].orig!==undefined)await speakPlainDevice(segs[i].t,rate);else await sayDevice(segs[i].t.trim(),"ja-JP",rate);
     }
   }finally{if(my===natSeq){natBusy=false;natLoading=false;}}
 }
+// Fallback reader for mixed text: split again and read each part with the right iPhone voice
+async function speakPlainDevice(t,rate){for(const sg of segments(t))await sayDevice(sg.t.trim(),sg.k==="ja"?"ja-JP":"en-US",rate);}
 // Any Japanese bit of a reply that matches a recording (all course words, kana, cards) plays in
 // Himari/Ryusei; the rest uses the iPhone voice. No server or key needed.
 const recKey=t=>t.replace(/[\s、。！？!?,.「」…~～]/g,"");
@@ -1579,9 +1595,10 @@ function vMe(){
   <div class="sec">🔊 Voice</div><div class="card">
    <p class="sub" style="margin-bottom:6px">Voice engine</p>
    ${chipRow("ttsSet","tts",st.tts,[["quest","🎌 "+(REC_VOICES[st.jaRec]||REC_VOICES.ryusei).name.split(" ")[0]+" everywhere"],["device","Recordings + iPhone"],["azure","✨ Azure"],["voicevox","Own server"]])}
-   ${st.tts==="quest"?`<p class="sub" style="margin:10px 0 0">Free, no key: all Japanese — lessons, chat, calls — is spoken by ${esc((REC_VOICES[st.jaRec]||REC_VOICES.ryusei).name.split(" ")[0])}. Words you're learning play instantly from recordings; new sentences come live from the free VOICEVOX service <b>tts.quest</b> (can take a few seconds; if it's busy, that sentence uses the iPhone voice). English parts use your best iPhone voice.</p>
+   ${st.tts==="quest"?`<p class="sub" style="margin:10px 0 0">Free, no key: all Japanese — lessons, chat, calls — is spoken by ${esc((REC_VOICES[st.jaRec]||REC_VOICES.ryusei).name.split(" ")[0])}. Words you're learning play instantly from recordings; new sentences come live from the free VOICEVOX service <b>tts.quest</b> (can take a few seconds; if it's busy, that sentence uses the iPhone voice). English parts can be ${esc((REC_VOICES[st.jaRec]||REC_VOICES.ryusei).name.split(" ")[0])} too, or your best iPhone voice.</p>
     <p class="sub" style="margin:10px 0 6px">Voice</p>${chipRow("recSet","jaRec",st.jaRec==="off"?"ryusei":st.jaRec,Object.entries(REC_VOICES).map(([k,v])=>[k,v.name.split(" ")[0]]))}
-    <p class="sub" style="margin-top:6px">Voice: ${esc((REC_VOICES[st.jaRec]||REC_VOICES.ryusei).credit)} · live audio by tts.quest</p>${englishTip()}`:""}
+    <p class="sub" style="margin:12px 0 6px">English parts</p>${chipRow("enVoiceSet","enVoice",st.enVoice,[["ryusei",(REC_VOICES[st.jaRec]||REC_VOICES.ryusei).name.split(" ")[0]+" (Japanese accent)"],["iphone","iPhone voice"]])}
+    <p class="sub" style="margin-top:6px">Voice: ${esc((REC_VOICES[st.jaRec]||REC_VOICES.ryusei).credit)} · live audio by tts.quest</p>${st.enVoice==="iphone"?englishTip():""}`:""}
    ${st.tts==="device"?`<p class="sub" style="margin:10px 0 0">Free, no key: every word from your lessons, flashcards and kana is spoken by ${esc((REC_VOICES[st.jaRec]||REC_VOICES.himari).name.split(" ")[0])} (recorded), including when Yuki uses them in chat. Other sentences use your best iPhone voice.</p>`:""}
    ${st.tts==="voicevox"?`
     <p class="sub" style="margin:12px 0 0">Advanced: if you have your own VOICEVOX server (e.g. a Hugging Face Space — note some accounts now need billing for Docker Spaces), Yuki speaks <b>all</b> Japanese in Himari or Ryusei. English parts use your best iPhone voice.</p>
@@ -1761,6 +1778,7 @@ const ACT={
     <p class="sub" style="margin-top:10px">Free Spaces fall asleep after a couple of days unused. Yuki wakes yours when you open the app; the very first sentence after a long break may use the iPhone voice while it wakes (about a minute).</p>
     <button class="btn ghost" style="margin-top:10px" data-act="closeSheet">Done</button>`),
   copyDock:()=>{const t=$("#vvDock");if(navigator.clipboard)navigator.clipboard.writeText(t.value).then(()=>toast("Copied ✓"),()=>{t.select();toast("Select all and copy");});else{t.select();toast("Select all and copy");}},
+  enVoiceSet:el=>{S.settings.enVoice=el.dataset.v;save();rerender();speak("Hi! This is how I sound in English.",{forceEnglish:true});},
   ttsSet:el=>{S.settings.tts=el.dataset.v;natFailNote=false;vvNote=false;questNote=false;save();rerender();pingVV();},
   saveAz:()=>{const v=$("#azKeyIn");S.settings.azKey=v?v.value.trim():"";natCache.clear();natFailNote=false;save();toast(S.settings.azKey?"Key saved — tap Test voice 🔊":"Key removed");rerender();},
   azHelp:()=>sheet(`<div class="h2" style="margin-bottom:10px">✨ Getting natural voices (free)</div><ol>
