@@ -121,17 +121,16 @@ Safari → Add to Home Screen.
   line can never break a reply.
   Japanese-mic transcripts go through `jaDigits()` and `kanaize()` (course words via `KANJI_ALT` +
   common beginner words in `KANA_EXTRA` back to kana; 今日は/今晩は only as standalone greetings);
-  if kanji is left, the API text gets a note that voice typing added it. Before listening the
-  shared player is released (`releasePlayer`) and the mic starts after 250 ms (hands-free waits
-  900 ms after Yuki); a watchdog restarts a recogniser that never fires start/audio/sound/speech
-  events within 3.5 s (gives up after 3 tries); early "audio-capture" errors are retried.
-  Mic engine (`MIC`, `startMic`/`micRun`/`stopMic`/`switchMicLang`): continuous recognition that
-  restarts itself when iPhone stops after a pause, until the user taps ➤ Send (or 25 s of
-  silence). Two languages per message: tap the other language while listening to continue in it
-  (iPhone recognises one language at a time). Call screen: 🎤 日本語 / 🎤 English to start, then
-  Cancel / ⇄ other language / ➤ Send; hands-free (`S.settings.handsFree`, default on) starts
-  listening after Yuki finishes speaking; reply-length switch (Very short/Short/Normal) on the
-  call. Chat mic fills the text box (no auto-send). Default `micLang="ja-JP"`.
+  if kanji is left, the API text gets a note that voice typing added it.
+  Mic engine (`MIC`, `startMic`/`micRun`/`resumeMic`/`stopMic`): iPhone only reliably starts
+  recognition directly inside a tap, so `rec.start()` runs synchronously in the tap handler (no
+  delays, no audio-session switching; the shared player is released first). Continuous listening
+  until ➤ Send; if iPhone ends it, one immediate restart is tried, and if there's no sign of life
+  (2 s, 4 s on first start) the mic PAUSES keeping the words ("tap 🎤 Continue or ➤ Send").
+  Tapping the other language (or the same one while paused) resumes inside the tap. Hands-free
+  (`S.settings.handsFree`) is off by default since iPhone may refuse a mic start without a tap.
+  Mic events are written to the voice log. Chat mic fills the text box (no auto-send).
+  Default `micLang="ja-JP"`.
   Yuki is told English via the Japanese mic arrives as katakana and English-mode Japanese as
   look-alikes ("Ohio"). Captions toggle sits top-right on the call screen.
   Has Repeat and Slower buttons. If the mic is blocked, it shows iPhone fix-it steps.
@@ -146,7 +145,7 @@ Safari → Add to Home Screen.
   settings, what Yuki remembers, and backup/restore as JSON (key excluded).
 
 ## Technical notes
-- State object `S` (currently `v:17`) saved to localStorage key `yuki-sensei-v3`. Keep it backward
+- State object `S` (currently `v:18`) saved to localStorage key `yuki-sensei-v3`. Keep it backward
   compatible. Saved data (and restored backups) go through `migrate()`; if the shape
   changes, bump `DEFAULT.v` and add a step there instead of wiping progress.
 - Clicks route through `data-act` attributes to the `ACT` object.
