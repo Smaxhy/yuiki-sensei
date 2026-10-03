@@ -296,7 +296,7 @@ input,textarea,select{font:inherit;font-size:16px;color:var(--text)}
 <script>
 "use strict";
 // Bump this on every change so phones can spot a new version and offer to update
-const APP_VERSION="2026.10.04-19";
+const APP_VERSION="2026.10.04-20";
 /* ============ DATA ============ */
 const LV = {
   n5:{label:"N5",name:"Beginner",color:"#9fd67c"},
@@ -489,7 +489,7 @@ const KANJI_LV={none:"none yet",few:"under 50",some:"50–300",many:"300+"};
 /* ============ STATE ============ */
 const KEY="yuki-sensei-v3";
 const DEFAULT={
-  v:17,onboarded:false,name:"",level:"n5",goal:"",
+  v:18,onboarded:false,name:"",level:"n5",goal:"",
   about:{done:false,focus:[],hira:"",kata:"",kanji:"",location:"",native:"English",minutes:15,notes:""},
   placement:null,plan:null,course:null,
   profile:{facts:[],weak:[],strong:[],learned:[]},
@@ -497,7 +497,7 @@ const DEFAULT={
   done:[],cards:{},chat:[],currentLesson:null,
   threads:{main:{title:"Chat with Yuki",kind:"free",msgs:[],at:0}},chatId:"main",
   settings:{apiKey:"",model:"claude-haiku-4-5-20251001",rate:0.9,autoSpeakChat:false,speakEnglish:true,micLang:"ja-JP",
-    style:{length:"short",english:"balanced",script:"auto",simple:false},history:12,voiceEn:"",voiceJa:"",handsFree:true,jaRec:"ryusei",vvUrl:"",enVoice:"ryusei",questKey:"",
+    style:{length:"short",english:"balanced",script:"auto",simple:false},history:12,voiceEn:"",voiceJa:"",handsFree:false,jaRec:"ryusei",vvUrl:"",enVoice:"ryusei",questKey:"",
     tts:"quest",azKey:"",azRegion:"eastus",azEn:"en-US-AvaMultilingualNeural",azJa:"ja-JP-NanamiNeural",ttsChars:{month:"",n:0},captions:true}
 };
 let S=JSON.parse(JSON.stringify(DEFAULT));
@@ -573,9 +573,11 @@ function migrate(st){
   if((st.v||0)<15)S2.enVoice="ryusei";
   // v15 → v16: shorter replies by default, hands-free calls
   // v16 → v17: owner wants Ryusei for everything (undo any accidental switch)
+  // v17 → v18: hands-free off (iPhone won't reliably start the mic without a tap)
+  if((st.v||0)<18)S2.handsFree=false;
   if((st.v||0)<17){S2.tts="quest";S2.enVoice="ryusei";if(S2.jaRec==="off")S2.jaRec="ryusei";}
   if((st.v||0)<16){if(S2.style&&S2.style.length==="normal")S2.style.length="short";S2.handsFree=true;}
-  S2.handsFree=S2.handsFree!==false;
+  S2.handsFree=S2.handsFree===true;
   if(typeof S2.questKey!=="string")S2.questKey="";
   // v12 → v13: the mic listens in Japanese by default (English mode turned "ohayou" into "Ohio")
   if((st.v||0)<13)S2.micLang="ja-JP";
@@ -1006,61 +1008,70 @@ document.addEventListener("touchend",()=>{if(unlocked||!synth)return;unlocked=tr
 /* ============ SPEECH IN ============ */
 let rec=null;
 function micSupported(){return !!(window.SpeechRecognition||window.webkitSpeechRecognition);}
-// You decide when you're done: listening keeps going (it restarts itself if iPhone stops after a
-// pause) until you tap Send. Tapping the other language mid-way continues in that language, so one
-// message can mix 日本語 and English.
-const MIC={on:false,lang:"ja-JP",base:"",sess:"",stopReq:false,cancel:false,onText:null,onDone:null,restarts:0,heardAt:0};
+// Mic: iPhone only reliably turns the mic on when start() runs directly inside your tap, so every
+// start/resume happens in the tap handler. Listening runs until you tap ➤ Send. If iPhone stops by
+// itself we try once to carry on; if that's refused we PAUSE and keep your words ("tap 🎤 to continue").
+const MIC={on:false,paused:false,lang:"ja-JP",base:"",sess:"",stopReq:false,cancel:false,onText:null,onDone:null,heardAt:0,audioOk:false};
 function micText(){return(MIC.base+" "+MIC.sess).replace(/\s+/g," ").trim();}
-// Let go of Ryusei's audio completely before listening (iPhone can keep it and the mic then hears nothing)
+// Let go of Ryusei's audio before listening
 function releasePlayer(){if(qa){try{qa.pause();qa.removeAttribute("src");qa.load();}catch(e){}}natPlaying=false;}
+function micPause(why){
+  MIC.base=micText();MIC.sess="";MIC.paused=true;rec=null;
+  vlog("⏸ mic paused: "+why);
+  const v=$(".vstat");if(v&&UI.voice)v.textContent="⏸ Paused · tap 🎤 to keep talking, or ➤ Send";
+  if(UI.voice)renderVoice();else toast("🎤 Mic paused — tap 🎤 to keep talking"+(micText()?", or send":""),2500);
+}
 function micRun(){
   const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
-  try{rec=new SR();}catch(e){micHelp("blocked");micFinish(true);return;}
-  rec.lang=MIC.lang;rec.interimResults=true;rec.continuous=true;rec.maxAlternatives=1;
-  MIC.sess="";MIC.audioOk=false;
-  const me=rec;
-  const ok=()=>{if(MIC.audioOk)return;MIC.audioOk=true;MIC.fails=0;const v=$(".vstat");if(v&&UI.voice)v.textContent="🎤 Hearing you · tap ➤ Send when you're done";};
-  rec.onstart=rec.onaudiostart=rec.onsoundstart=rec.onspeechstart=ok;
-  // watchdog: if the mic never actually starts, restart it (iPhone sometimes starts "deaf")
-  setTimeout(()=>{if(rec===me&&MIC.on&&!MIC.stopReq&&!MIC.audioOk){MIC.fails=(MIC.fails||0)+1;
-    if(MIC.fails>3){toast("The mic didn't start — tap 🎤 again",3000);MIC.stopReq=true;MIC.cancel=!micText();try{me.abort();}catch(e){micFinish();}return;}
-    try{me.onend=()=>{if(MIC.on&&!MIC.stopReq)setTimeout(micRun,250);else micFinish();};me.abort();}catch(e){micRun();}}},3500);
-  rec.onresult=e=>{let t="";for(let i=0;i<e.results.length;i++)t+=e.results[i][0].transcript;MIC.sess=MIC.lang==="ja-JP"?kanaize(jaDigits(t)):t;MIC.heardAt=Date.now();MIC.audioOk=true;if(MIC.onText)MIC.onText(micText());};
-  rec.onerror=e=>{
-    // "audio-capture" right after Ryusei talked usually just means the audio was still busy: retry a few times first
-    if(e.error==="audio-capture"&&(MIC.fails||0)<3&&MIC.on){MIC.fails=(MIC.fails||0)+1;return;}
-    if(e.error==="not-allowed"||e.error==="service-not-allowed"||e.error==="audio-capture"){MIC.stopReq=true;MIC.cancel=true;micHelp("blocked");}
-    else if(e.error!=="no-speech"&&e.error!=="aborted"&&e.error!=="network")toast("Mic problem: "+e.error);};
-  rec.onend=()=>{
+  let r;try{r=new SR();}catch(e){vlog("✗ mic: can't create ("+e.message+")");micHelp("blocked");micFinish(true);return;}
+  const first=!MIC.base&&!MIC.sess;
+  rec=r;MIC.paused=false;MIC.sess="";MIC.audioOk=false;
+  if(!first){const v=$(".vstat");if(v&&UI.voice)v.textContent="🎤 Still listening…";}
+  r.lang=MIC.lang;r.interimResults=true;r.continuous=true;r.maxAlternatives=1;
+  const ok=ev=>{if(rec!==r)return;if(!MIC.audioOk)vlog("🎤 mic "+ev);MIC.audioOk=true;const v=$(".vstat");if(v&&UI.voice)v.textContent="🎤 Hearing you · tap ➤ Send when you're done";};
+  r.onstart=()=>ok("started");r.onaudiostart=()=>ok("hearing audio");r.onspeechstart=()=>ok("hearing speech");
+  r.onresult=e=>{if(rec!==r)return;let t="";for(let i=0;i<e.results.length;i++)t+=e.results[i][0].transcript;
+    MIC.sess=MIC.lang==="ja-JP"?kanaize(jaDigits(t)):t;MIC.heardAt=Date.now();MIC.audioOk=true;if(MIC.onText)MIC.onText(micText());};
+  r.onerror=e=>{if(rec!==r)return;vlog("✗ mic error: "+e.error);
+    if((e.error==="not-allowed"||e.error==="service-not-allowed")&&!micText()&&!MIC.base){MIC.stopReq=true;MIC.cancel=true;micHelp("blocked");}};
+  r.onend=()=>{if(rec!==r)return;vlog("■ mic ended"+(MIC.stopReq?" (you tapped)":" by itself"));
     MIC.base=micText();MIC.sess="";
     if(MIC.stopReq||!MIC.on){micFinish();return;}
-    // iPhone ended by itself (pause/timeout): keep listening, unless nothing was said for 25 s
-    if(Date.now()-MIC.heardAt>25000||++MIC.restarts>40){toast("Stopped listening — tap 🎤 to talk again");micFinish(!micText());return;}
-    setTimeout(()=>{if(MIC.on&&!MIC.stopReq)micRun();},150);
+    if(Date.now()-MIC.heardAt>30000){micPause("nothing heard for 30 s");return;}
+    // try to carry on (iPhone may refuse outside a tap → then pause, keeping the words)
+    try{micRun();}catch(e){micPause("iPhone stopped listening");}
   };
-  try{rec.start();}catch(e){setTimeout(()=>{if(MIC.on&&!MIC.stopReq)micRun();},300);}
+  try{r.start();vlog("🎤 mic start ("+MIC.lang+")");}catch(e){vlog("✗ mic start refused: "+e.message);micPause("start refused");return;}
+  // no sign of life after 4 s → pause (don't fight iPhone with restarts)
+  setTimeout(()=>{if(rec===r&&MIC.on&&!MIC.stopReq&&!MIC.audioOk){vlog("✗ mic never started");try{r.onend=null;r.abort();}catch(e){}micPause("the mic didn't start");}},first?4000:2000);
 }
 function startMic(onText,onDone,lang){
   const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
   if(!SR){micHelp("unsupported");return false;}
-  stopSpeak();
-  Object.assign(MIC,{on:true,lang:lang||S.settings.micLang,base:"",sess:"",stopReq:false,cancel:false,onText,onDone,restarts:0,heardAt:Date.now(),fails:0});
-  releasePlayer();
-  UI.micLang=MIC.lang;UI.listening=true;setAudioMode("play-and-record");refreshMic();
-  setTimeout(()=>{if(MIC.on&&!MIC.stopReq)micRun();},250);return true;
+  stopSpeak();releasePlayer();
+  Object.assign(MIC,{on:true,paused:false,lang:lang||S.settings.micLang,base:"",sess:"",stopReq:false,cancel:false,onText,onDone,heardAt:Date.now(),audioOk:false});
+  UI.micLang=MIC.lang;UI.listening=true;refreshMic();
+  micRun();   // right here, inside the tap
+  return true;
 }
-// Switch language mid-message: what you said so far stays, listening continues in the other language
-function switchMicLang(lang){
-  if(!MIC.on||MIC.lang===lang)return;
-  MIC.lang=lang;UI.micLang=lang;MIC.heardAt=Date.now();
-  if(rec){rec.onend=()=>{MIC.base=micText();MIC.sess="";if(MIC.on&&!MIC.stopReq)micRun();else micFinish();};try{rec.stop();}catch(e){micRun();}}
-  refreshMic();toast(lang==="ja-JP"?"🎤 Now listening in 日本語":"🎤 Now listening in English",1200);
+// Tap while paused (same language) = carry on; tap the other language = continue in that language
+function resumeMic(lang){
+  if(!MIC.on)return;
+  if(lang&&lang!==MIC.lang){MIC.lang=lang;UI.micLang=lang;toast(lang==="ja-JP"?"🎤 Now listening in 日本語":"🎤 Now listening in English",1200);}
+  if(rec){const old=rec;rec=null;try{old.onend=null;old.abort();}catch(e){}MIC.base=micText();MIC.sess="";}
+  MIC.heardAt=Date.now();micRun();refreshMic();
 }
-function stopMic(cancel){if(!MIC.on)return;MIC.stopReq=true;if(cancel)MIC.cancel=true;if(rec){try{rec.stop();}catch(e){micFinish();}}else micFinish();}
+function switchMicLang(lang){resumeMic(lang);}
+function stopMic(cancel){
+  if(!MIC.on)return;MIC.stopReq=true;if(cancel)MIC.cancel=true;
+  if(rec&&!MIC.paused){const r=rec;try{r.stop();}catch(e){micFinish();return;}
+    setTimeout(()=>{if(MIC.on&&rec===r){MIC.base=micText();MIC.sess="";micFinish();}},1500);}   // iPhone sometimes never fires "end"
+  else micFinish();
+}
 function micFinish(cancelled){
-  if(!MIC.on)return;MIC.on=false;
+  if(!MIC.on)return;MIC.on=false;MIC.paused=false;
   const text=micText(),done=MIC.onDone,cancel=cancelled||MIC.cancel;
-  UI.listening=false;setAudioMode("auto");refreshMic();
+  rec=null;UI.listening=false;refreshMic();
   if(done)done(cancel?"":text);
 }
 function refreshMic(){
@@ -1936,13 +1947,13 @@ function voicePicker(lang,label,cur){
 /* ============ VOICE CALL ============ */
 function openVoice(){UI.voice=true;UI.vstate="idle";UI.vyou="";$("#voice").classList.remove("hidden");renderVoice();
   if(!S.chat.length||S.chat[S.chat.length-1].role!=="assistant"){/* nothing */}}
-function closeVoice(){setAudioMode("auto");UI.voice=false;stopMic(true);stopSpeak();$("#voice").classList.add("hidden");if(UI.tab==="chat")render();}
+function closeVoice(){UI.voice=false;stopMic(true);stopSpeak();$("#voice").classList.add("hidden");if(UI.tab==="chat")render();}
 function renderVoice(){
   if(!UI.voice)return;
   const last=[...S.chat].reverse().find(m=>m.role==="assistant");
   const st=UI.listening?"listening":UI.vstate;
   const other=UI.micLang==="ja-JP"?"en-US":"ja-JP";
-  const label={idle:"Tap 🎤 日本語 or 🎤 English to answer",listening:"Listening in "+(UI.micLang==="en-US"?"English":"日本語")+" · tap ➤ Send when you're done",thinking:"Thinking…",speaking:"Yuki is talking · tap 🎤 to answer"}[st];
+  const label={idle:"Tap 🎤 日本語 or 🎤 English to answer",listening:MIC.paused?"⏸ Paused · tap 🎤 Continue, or ➤ Send":"Starting the mic ("+(UI.micLang==="en-US"?"English":"日本語")+")… talk when it says Hearing you",thinking:"Thinking…",speaking:"Yuki is talking · tap 🎤 to answer"}[st];
   const cap=last&&!last.err?esc(cleanSpeech(last.text).replace(/\s+\n/g,"\n").trim()).replace(/\n+/g,"<br>"):last&&last.err?"Connection problem — check the chat.":"Say hi! Try 「こんにちは」 or ask me anything in English.";
   const cc=S.settings.captions,len=S.settings.style.length;
   $("#voice").innerHTML=`<div class="vtop"><button class="iconbtn" data-act="closeVoice" aria-label="Close">✕</button>
@@ -1955,7 +1966,7 @@ function renderVoice(){
     <div class="vcap">${UI.listening?`<div class="vtext vlive">${UI.vyou?esc(UI.vyou):"…"}</div>`:`<div class="vtext${cc?"":" off"}">${cap}</div><div class="vyou">${UI.vyou?"You: "+esc(UI.vyou):""}</div>`}</div></div>
    ${UI.listening?`<div class="vctrl">
     <button class="vbtn" data-act="vCancel"><i>✕</i>Cancel</button>
-    <button class="micbtn ${other==="ja-JP"?"ja":"en"} alt" data-act="vMic" data-v="${other}" aria-label="Continue in ${other==="ja-JP"?"Japanese":"English"}"><span>⇄</span>${other==="ja-JP"?"+ 日本語":"+ English"}</button>
+    ${MIC.paused?`<button class="micbtn ${UI.micLang==="ja-JP"?"ja":"en"}" data-act="vMic" data-v="${UI.micLang}" aria-label="Keep talking"><span>🎤</span>Continue</button>`:`<button class="micbtn ${other==="ja-JP"?"ja":"en"} alt" data-act="vMic" data-v="${other}" aria-label="Continue in ${other==="ja-JP"?"Japanese":"English"}"><span>⇄</span>${other==="ja-JP"?"+ 日本語":"+ English"}</button>`}
     <button class="micbtn send" data-act="vSend" aria-label="Send"><span>➤</span>Send</button>
     <button class="vbtn" data-act="closeVoice"><i class="vend">📞</i>End</button>
    </div>`:`<div class="vctrl">
@@ -1969,14 +1980,15 @@ function renderVoice(){
 setInterval(()=>{if(UI.voice&&UI.vstate==="speaking"&&!isSpeaking()){UI.vstate="idle";renderVoice();afterYukiSpoke();}},400);
 function voiceMic(lang){
   lang=lang||S.settings.micLang;
-  if(UI.listening){if(lang!==UI.micLang){switchMicLang(lang);return;}stopMic();return;}
+  if(UI.listening){if(MIC.paused||lang!==UI.micLang){resumeMic(lang);return;}stopMic();return;}
   if(UI.busy)return;
   stopSpeak();UI.vyou="";S.settings.micLang=lang;
   startMic(t=>{UI.vyou=t;const y=document.querySelector(".vlive");if(y)y.textContent=t||"…";},
     final=>{if(final){UI.vyou=final;send(final,hasKanji(final)?final+"\n(said out loud; the phone's voice typing added the kanji automatically — I can't read kanji yet, please reply in kana)":null,"voice");}else{UI.vstate="idle";renderVoice();}},lang);
 }
 // Hands-free: when Yuki finishes talking, start listening for your answer (you still tap Send)
-function afterYukiSpoke(){const c=activeCourse();if(c&&c.used.length>=c.targets.length&&!c.keep)return;if(UI.voice&&S.settings.handsFree&&!UI.listening&&!UI.busy)setTimeout(()=>{if(UI.voice&&!UI.listening&&!UI.busy&&!isSpeaking())voiceMic(S.settings.micLang);},900);}
+function afterYukiSpoke(){const c=activeCourse();if(c&&c.used.length>=c.targets.length&&!c.keep)return;if(UI.voice&&S.settings.handsFree&&!UI.listening&&!UI.busy)setTimeout(()=>{if(UI.voice&&!UI.listening&&!UI.busy&&!isSpeaking())voiceMic(S.settings.micLang);},900);
+  else if(UI.voice){const v=$(".vstat");if(v)v.textContent="Your turn · tap 🎤 日本語 or 🎤 English";}}
 
 /* ============ SHEET ============ */
 function sheet(html){const s=$("#sheet");s.innerHTML=`<div class="sh">${html}</div>`;s.classList.remove("hidden");}
@@ -2040,7 +2052,7 @@ const ACT={
   send:()=>{if(UI.listening){MIC.onDone=()=>doSend();stopMic();return;}doSend();},
   chip:el=>{const t=el.dataset.t;if(t.startsWith("Say it slower")){const last=[...S.chat].reverse().find(m=>m.role==="assistant"&&!m.err);if(last)speak(last.text,{rate:0.6});return;}send(t);},
   mic:el=>{const lang=el.dataset.v;
-    if(UI.listening){if(lang!==UI.micLang){switchMicLang(lang);return;}stopMic();return;}
+    if(UI.listening){if(MIC.paused||lang!==UI.micLang){resumeMic(lang);return;}stopMic();return;}
     const inp=$("#inp");const before=inp?inp.value.trim():"";
     startMic(t=>{if(inp){inp.value=(before?before+" ":"")+t;inp.dispatchEvent(new Event("input"));}},()=>{const i=$("#inp");if(i)i.focus();},lang);},
   sayMsg:el=>{const m=S.chat[+el.dataset.i];if(m)speak(m.text,{say:m.say});},
@@ -2108,7 +2120,7 @@ const ACT={
   vMic:el=>voiceMic(el.dataset.v),
   vSend:()=>stopMic(),
   vCancel:()=>{stopMic(true);UI.vyou="";},
-  vHands:()=>{S.settings.handsFree=!S.settings.handsFree;save();renderVoice();toast(S.settings.handsFree?"🙌 Yuki listens for your answer after she talks":"✋ Tap 🎤 yourself to answer",2000);},
+  vHands:()=>{S.settings.handsFree=!S.settings.handsFree;save();renderVoice();toast(S.settings.handsFree?"🙌 Yuki tries to listen after she talks (iPhone may still need a tap)":"✋ Tap 🎤 yourself to answer",2500);},
   vLen:el=>{S.settings.style.length=el.dataset.v;save();renderVoice();},
   vCaptions:()=>{S.settings.captions=!S.settings.captions;save();renderVoice();},
   vRepeat:()=>{const l=[...S.chat].reverse().find(m=>m.role==="assistant"&&!m.err);if(l){UI.vstate="speaking";renderVoice();speak(l.text,{say:l.say});}},
