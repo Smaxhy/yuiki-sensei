@@ -104,9 +104,13 @@ Safari → Add to Home Screen.
   All recordings and tts.quest clips play through one shared <audio> element (`questPlayer`,
   `playUrl`, unlocked on first touch/pointer) rather than Web Audio, which iOS silently suspends
   after calls/mic use/app switches; the first clip starts synchronously inside the tap.
-  iPhone audio session: `setAudioMode("playback")` normally, "play-and-record" only while the
-  mic is actually listening ("playback" alone blocks the microphone; keeping "play-and-record"
-  for a whole call makes voices sound muffled/telephone-like).
+  iPhone audio session: left on "auto" (forcing "playback" could silence speechSynthesis);
+  "play-and-record" only while the mic is actually listening, then back to "auto" (keeping
+  "play-and-record" for a whole call makes voices sound muffled/telephone-like).
+  tts.quest playback (`playQuestAudio`): `questUrl` returns {stream, mp3, wav, status}; poll the
+  status URL until `isAudioReady`, then play the finished MP3 (iOS is unreliable with streams);
+  if status can't be read, try the stream, then retry the finished files. The "Test Ryusei"
+  sheet shows which of the 3 steps fails (`questFail`) and has an iPhone-voice test.
   `cleanSpeech()` drops romaji in brackets right after Japanese (「こんにちは」(konnichiwa)) so the
   English voice doesn't mangle it.
   `applyMem` coerces MEM fields with `asList()` and is wrapped in try/catch so an odd memory
