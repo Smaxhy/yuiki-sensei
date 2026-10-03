@@ -18,7 +18,7 @@ Safari → Add to Home Screen.
   basic conversation. Task codes: `L:` lesson, `C:` flashcard deck (`due` = review),
   `K:` kana chart, `Q:` quiz, `T:` talk prompt in `TALK`. Progress in `S.plan` (`start`,
   `done["day:task"]`). Tasks tick themselves (`planAuto`, lesson completion, 4 Yuki replies
-  via `UI.planCtx`) or by tapping the circle. Today's tasks show on Home; full plan in Learn.
+  via `UI.planCtx`) or via ✓ Done in chat. Shown as the Path (see below).
 - **Auto-update**: on open, on returning to the app, and every 15 min, `checkUpdate` fetches
   the live page and compares its `<script>`/`<style>` with the running ones. If different it
   reloads right away when idle (`canReloadNow`), otherwise when the app is next hidden. Loop
@@ -52,6 +52,12 @@ Safari → Add to Home Screen.
   and speechSynthesis that splits Japanese and English into separate voices. Voices are
   ranked by `voiceScore()` (Premium/Enhanced/Siri first, novelty voices excluded) and can be
   chosen in Me (`S.settings.voiceEn` / `voiceJa`).
+  Optional "Natural voices" engine (`S.settings.tts="azure"`): Microsoft Azure neural TTS
+  (same voices as Edge Read Aloud; Edge TTS itself can't be called from iPhone Safari) via
+  REST with the owner's own key (`azKey`, `azRegion`, never in backups). One SSML request per
+  reply switching between `azEn`/`azJa` voices (`AZ_VOICES`), played with Web Audio, cached
+  (`natCache`), monthly characters counted (`ttsChars`, free tier 500k). Falls back to iPhone
+  voices on any error. `isSpeaking()` / `stopSpeak()` cover both engines.
   Has Repeat and Slower buttons. If the mic is blocked, it shows iPhone fix-it steps.
 - **Listening**: Japanese wrapped in [[double brackets]] in AI replies shows as a hidden,
   tap-to-play audio clip.
@@ -64,7 +70,7 @@ Safari → Add to Home Screen.
   settings, what Yuki remembers, and backup/restore as JSON (key excluded).
 
 ## Technical notes
-- State object `S` (currently `v:6`) saved to localStorage key `yuki-sensei-v3`. Keep it backward
+- State object `S` (currently `v:7`) saved to localStorage key `yuki-sensei-v3`. Keep it backward
   compatible. Saved data (and restored backups) go through `migrate()`; if the shape
   changes, bump `DEFAULT.v` and add a step there instead of wiping progress.
 - Clicks route through `data-act` attributes to the `ACT` object.

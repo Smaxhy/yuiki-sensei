@@ -104,38 +104,46 @@ input,textarea,select{font:inherit;font-size:16px;color:var(--text)}
 .sw.on::after{left:23px}
 /* chat */
 .chat{display:flex;flex-direction:column;height:100%}
-.chathead{display:flex;align-items:center;gap:10px;padding:10px 12px;border-bottom:1px solid var(--line);background:var(--ink2);flex-shrink:0}
+.chathead{display:flex;align-items:center;gap:10px;padding:8px 12px;flex-shrink:0;border-bottom:1px solid #ffffff0d}
 .chathead .ct{flex:1;min-width:0}
-.chathead .ct b{display:block;font-size:15px}
-.chathead .ct small{display:block;color:var(--dim);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.chathead .ct b{display:block;font-size:16px}
+.chathead .ct small{display:flex;align-items:center;gap:6px;color:var(--dim);font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.chathead .ct small::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--matcha);flex-shrink:0}
 .mini{display:inline-flex;align-items:center;justify-content:center;min-height:44px;min-width:44px;background:var(--ink3);border:1px solid var(--line);border-radius:12px;padding:0 12px;font-size:13px;font-weight:700}
 .mini.ok{border-color:var(--matcha);color:var(--matcha)}
-.iconbtn{width:44px;height:44px;border-radius:14px;background:var(--ink3);border:1px solid var(--line);font-size:20px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
-.iconbtn.live{background:#4a2630;border-color:var(--red);animation:throb 1.2s infinite}
-.msgs{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:14px 12px;display:flex;flex-direction:column;gap:12px}
+.iconbtn{width:44px;height:44px;border-radius:50%;background:var(--ink3);border:none;font-size:19px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.iconbtn.call{background:linear-gradient(140deg,var(--sakura),var(--sakura2))}
+.iconbtn.live{background:#4a2630;box-shadow:0 0 0 2px var(--red);animation:throb 1.2s infinite}
+.msgs{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:16px 14px;display:flex;flex-direction:column;gap:6px}
 .m{display:flex;gap:8px;max-width:100%}
-.m.u{justify-content:flex-end}
-.bub{max-width:84%;padding:11px 14px;border-radius:18px;font-size:16px;line-height:1.6;word-break:break-word}
-.m.a .bub{background:var(--ink2);border:1px solid var(--line);border-bottom-left-radius:6px}
-.m.u .bub{background:#4a2c3c;border-bottom-right-radius:6px}
-.m.a .av{width:30px;height:30px;font-size:14px;margin-top:2px}
-.bubwrap{display:flex;flex-direction:column;gap:4px;max-width:84%}
-.bubwrap .bub{max-width:100%}
-.say{align-self:flex-start;min-height:44px;font-size:13px;color:var(--dim);padding:0 12px;border-radius:10px;background:var(--ink3)}
+.m.u{justify-content:flex-end;margin-top:8px}
+.m.a{margin-top:8px}
+.m.a.cont{margin-top:0}
+.bub{max-width:82%;padding:11px 15px;border-radius:20px;font-size:16px;line-height:1.6;word-break:break-word}
+.m.a .bub{background:var(--ink2);border-bottom-left-radius:6px}
+.m.u .bub{background:linear-gradient(140deg,#5a3247,#46283a);border-bottom-right-radius:6px}
+.bubwrap{display:flex;flex-direction:column;max-width:86%}
+.bubwrap .bub{max-width:100%;position:relative;padding-bottom:6px}
+.bubfoot{display:flex;justify-content:flex-end;margin:2px -6px -2px 0}
+.say{width:44px;height:36px;border-radius:12px;font-size:16px;color:var(--dim);display:inline-flex;align-items:center;justify-content:center}
+.say.on{color:var(--sakura)}
 .bub code{background:var(--ink3);padding:1px 5px;border-radius:5px}
 .listen{display:inline-flex;flex-direction:column;gap:4px;margin:4px 0}
-.play{min-height:44px;background:var(--sky);color:#0f2235;font-weight:800;border-radius:10px;padding:0 16px;font-size:14px}
+.play{min-height:44px;background:var(--sky);color:#0f2235;font-weight:800;border-radius:12px;padding:0 16px;font-size:14px}
 .hid{filter:blur(6px);font-size:14px;color:var(--dim);padding:8px 0;cursor:pointer}
 .hid.show{filter:none}
-.err{background:#3a2026;border:1px solid #6b3340;border-radius:14px;padding:12px;font-size:14px;line-height:1.5}
+.err{background:#3a2026;border:1px solid #6b3340;border-radius:16px;padding:12px;font-size:14px;line-height:1.5;max-width:86%}
 .dots{display:flex;gap:5px;padding:4px 2px}
 .dots i{width:8px;height:8px;border-radius:50%;background:var(--dim);animation:dot 1s infinite}
 .dots i:nth-child(2){animation-delay:.15s}.dots i:nth-child(3){animation-delay:.3s}
-.chatfoot{border-top:1px solid var(--line);background:var(--ink2);padding:8px 10px 10px;flex-shrink:0}
-.inputbar{display:flex;gap:8px;align-items:flex-end;margin-top:6px}
-#inp{flex:1;background:var(--ink);border:1px solid var(--line);border-radius:16px;padding:11px 14px;resize:none;outline:none;max-height:120px;line-height:1.35}
-#inp:focus{border-color:var(--sakura)}
-.send{width:44px;height:44px;border-radius:14px;background:linear-gradient(140deg,var(--sakura),var(--sakura2));color:#2a1520;font-size:20px;font-weight:900;flex-shrink:0}
+.chatfoot{padding:6px 10px 8px;flex-shrink:0}
+.chatfoot .chips{padding-bottom:6px}
+.chatfoot .chip{min-height:40px;font-size:13px;background:transparent}
+.inputbar{display:flex;gap:6px;align-items:flex-end;background:var(--ink2);border:1px solid var(--line);border-radius:26px;padding:4px}
+.inputbar:focus-within{border-color:var(--sakura)}
+.inputbar .iconbtn{background:transparent}
+#inp{flex:1;background:transparent;border:none;padding:11px 4px;resize:none;outline:none;max-height:120px;line-height:1.35}
+.send{width:44px;height:44px;border-radius:50%;background:linear-gradient(140deg,var(--sakura),var(--sakura2));color:#2a1520;font-size:20px;font-weight:900;flex-shrink:0}
 /* flashcards */
 .fc{perspective:1000px;margin:10px 0 16px}
 .fcin{background:var(--ink2);border:1px solid var(--line);border-radius:24px;min-height:300px;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;text-align:center;gap:10px}
@@ -152,21 +160,31 @@ input,textarea,select{font:inherit;font-size:16px;color:var(--text)}
 .kc.blank{visibility:hidden}
 .kc.weak{border-color:var(--red)}
 /* voice overlay */
-#voice{position:fixed;inset:0;background:radial-gradient(circle at 50% 30%,#2b2340,#121420 70%);z-index:50;display:flex;flex-direction:column;padding:calc(14px + var(--safeT)) 18px calc(18px + var(--safeB))}
+#voice{position:fixed;inset:0;background:radial-gradient(120% 70% at 50% 28%,#2b2340 0%,#141624 60%,#101119 100%);z-index:50;display:flex;flex-direction:column;padding:calc(10px + var(--safeT)) 16px calc(16px + var(--safeB))}
 .vtop{display:flex;justify-content:space-between;align-items:center;gap:8px}
-.orbwrap{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;min-height:0}
-.orb{width:150px;height:150px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#ffd6e6,var(--sakura) 45%,var(--sakura2));box-shadow:0 0 60px #f4a3c055;display:flex;align-items:center;justify-content:center;font-size:56px;font-weight:800;color:#3a1828;transition:.3s}
-.orb.listening{animation:breathe 1.1s infinite;box-shadow:0 0 80px #f27c7c88;background:radial-gradient(circle at 35% 30%,#ffe0e0,#f27c7c 50%,#c24f5f)}
+.vtitle{text-align:center;flex:1}
+.vtitle b{display:block;font-size:17px}
+.vtitle small{color:var(--dim);font-size:12.5px}
+.seg{display:flex;background:#ffffff10;border-radius:14px;padding:3px}
+.seg button{min-width:44px;min-height:38px;border-radius:11px;font-size:14px;font-weight:800;color:var(--dim);padding:0 8px}
+.seg button.on{background:var(--text);color:var(--ink)}
+.orbwrap{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px;min-height:0}
+.orb{width:170px;height:170px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#ffe3ee,var(--sakura) 45%,var(--sakura2));box-shadow:0 0 0 14px #f4a3c014,0 0 90px #f4a3c050;display:flex;align-items:center;justify-content:center;font-size:60px;font-weight:800;color:#3a1828;transition:.3s}
+.orb.listening{animation:breathe 1.1s infinite;box-shadow:0 0 0 16px #f27c7c1c,0 0 100px #f27c7c80;background:radial-gradient(circle at 35% 30%,#ffe6e6,#f27c7c 50%,#c24f5f)}
 .orb.thinking{animation:spin 2.4s linear infinite;opacity:.8}
 .orb.speaking{animation:talk .45s infinite alternate}
-.vstat{font-size:15px;color:var(--dim);font-weight:600}
-.vtext{max-height:30vh;overflow-y:auto;font-size:17px;line-height:1.6;text-align:center;padding:0 6px;width:100%}
-.vyou{font-size:14px;color:var(--dim);text-align:center;min-height:20px}
-.vctrl{display:flex;justify-content:center;align-items:center;gap:18px;margin-top:10px}
-.bigmic{width:86px;height:86px;border-radius:50%;background:linear-gradient(140deg,var(--sakura),var(--sakura2));font-size:36px;box-shadow:0 6px 30px #f4a3c066}
+.vstat{font-size:14px;color:var(--dim);font-weight:700;letter-spacing:.02em}
+.vcap{width:100%;max-width:520px;min-height:90px}
+.vtext{max-height:28vh;overflow-y:auto;font-size:19px;line-height:1.55;text-align:center;padding:0 8px;font-weight:600}
+.vtext.off{filter:blur(8px);opacity:.5}
+.vyou{font-size:14.5px;color:var(--dim);text-align:center;min-height:22px;margin-top:12px}
+.vctrl{display:flex;justify-content:space-around;align-items:flex-start;max-width:400px;width:100%;margin:8px auto 0}
+.vbtn{display:flex;flex-direction:column;align-items:center;gap:7px;font-size:12px;color:var(--dim);font-weight:700;min-width:64px}
+.vbtn i{font-style:normal;width:58px;height:58px;border-radius:50%;background:#ffffff12;display:flex;align-items:center;justify-content:center;font-size:21px}
+.vbtn.on i{background:#ffffff2a}
+.bigmic{width:84px;height:84px;border-radius:50%;background:linear-gradient(140deg,var(--sakura),var(--sakura2));font-size:34px;box-shadow:0 8px 34px #f4a3c060;display:flex;align-items:center;justify-content:center;margin-top:-13px}
 .bigmic.live{background:linear-gradient(140deg,#ff9a9a,#d64f63);animation:throb 1.2s infinite}
-.vside{width:54px;height:54px;border-radius:50%;background:var(--ink3);border:1px solid var(--line);font-size:20px}
-.vside small{display:block;font-size:9px;color:var(--dim)}
+.vend{background:#d64f63!important}
 /* sheet + toast */
 #sheet{position:fixed;inset:0;background:#000a;z-index:80;display:flex;align-items:flex-end}
 #sheet .sh{background:var(--ink2);width:100%;max-height:85vh;overflow-y:auto;border-radius:22px 22px 0 0;padding:20px 18px calc(20px + var(--safeB))}
@@ -213,7 +231,7 @@ input,textarea,select{font:inherit;font-size:16px;color:var(--text)}
 <script>
 "use strict";
 // Bump this on every change so phones can spot a new version and offer to update
-const APP_VERSION="2026.10.03-5";
+const APP_VERSION="2026.10.03-6";
 /* ============ DATA ============ */
 const LV = {
   n5:{label:"N5",name:"Beginner",color:"#9fd67c"},
@@ -382,14 +400,15 @@ const KANJI_LV={none:"none yet",few:"under 50",some:"50–300",many:"300+"};
 /* ============ STATE ============ */
 const KEY="yuki-sensei-v3";
 const DEFAULT={
-  v:6,onboarded:false,name:"",level:"n5",goal:"",
+  v:7,onboarded:false,name:"",level:"n5",goal:"",
   about:{done:false,focus:[],hira:"",kata:"",kanji:"",location:"",native:"English",minutes:15,notes:""},
   placement:null,plan:null,
   profile:{facts:[],weak:[],strong:[],learned:[]},
   stats:{msgs:0,quizRight:0,quizWrong:0,cards:0,streak:0,lastDay:""},
   done:[],cards:{},chat:[],currentLesson:null,
   settings:{apiKey:"",model:"claude-haiku-4-5-20251001",rate:0.9,autoSpeakChat:false,speakEnglish:true,micLang:"ja-JP",
-    style:{length:"normal",english:"balanced",script:"auto",simple:false},history:12,voiceEn:"",voiceJa:""}
+    style:{length:"normal",english:"balanced",script:"auto",simple:false},history:12,voiceEn:"",voiceJa:"",
+    tts:"device",azKey:"",azRegion:"eastus",azEn:"en-US-AvaMultilingualNeural",azJa:"ja-JP-NanamiNeural",ttsChars:{month:"",n:0},captions:true}
 };
 let S=JSON.parse(JSON.stringify(DEFAULT));
 const UI={tab:"home",ob:0,obEdit:false,place:null,planCtx:null,fc:null,chart:null,voice:false,vstate:"idle",vyou:"",busy:false,listening:false};
@@ -426,6 +445,15 @@ function migrate(st){
   // v4 → v5: guided plan
   if(st.plan&&(typeof st.plan!=="object"||!/^\d{4}-\d{2}-\d{2}$/.test(st.plan.start||"")))st.plan=null;
   if(st.plan){st.plan.done=obj(st.plan.done);st.plan.custom=arr(st.plan.custom).filter(c=>c&&c.id&&c.title);}  // v6: custom path lessons
+  // v6 → v7: natural voices
+  const S2=st.settings;
+  if(!["device","azure"].includes(S2.tts))S2.tts="device";
+  if(typeof S2.azKey!=="string")S2.azKey="";
+  if(!AZ_REGIONS.includes(S2.azRegion))S2.azRegion="eastus";
+  if(!AZ_VOICES.en.some(v=>v[0]===S2.azEn))S2.azEn=DEFAULT.settings.azEn;
+  if(!AZ_VOICES.ja.some(v=>v[0]===S2.azJa))S2.azJa=DEFAULT.settings.azJa;
+  S2.ttsChars=obj(S2.ttsChars);S2.ttsChars.n=num(S2.ttsChars.n);if(typeof S2.ttsChars.month!=="string")S2.ttsChars.month="";
+  S2.captions=S2.captions!==false;
   if(![6,12,24].includes(+st.settings.history))st.settings.history=12;else st.settings.history=+st.settings.history;
   st.v=DEFAULT.v;
   return st;
@@ -505,7 +533,77 @@ function segments(t){
   if(cur)segs.push(cur);
   return segs.filter(s=>/[A-Za-z\u3040-\u9fff\u30a0-\u30ff]/.test(s.t));
 }
+/* ---- Natural voices: Microsoft Azure neural TTS (the same voices as Edge "Read aloud") ---- */
+// [voice id, short name, description]
+const AZ_VOICES={
+ en:[["en-US-AvaMultilingualNeural","Ava","US · warm, very natural (best)"],["en-US-AndrewMultilingualNeural","Andrew","US · relaxed, friendly"],["en-US-EmmaMultilingualNeural","Emma","US · bright, cheerful"],["en-US-BrianMultilingualNeural","Brian","US · calm, clear"],
+   ["en-US-JennyNeural","Jenny","US · friendly assistant"],["en-US-AriaNeural","Aria","US · expressive"],["en-US-GuyNeural","Guy","US · easygoing"],["en-US-DavisNeural","Davis","US · smooth"],["en-US-SaraNeural","Sara","US · young, gentle"],["en-US-JaneNeural","Jane","US · soft"],["en-US-TonyNeural","Tony","US · upbeat"],["en-US-NancyNeural","Nancy","US · mature"],
+   ["en-GB-SoniaNeural","Sonia","UK · polished"],["en-GB-RyanNeural","Ryan","UK · friendly"],["en-GB-LibbyNeural","Libby","UK · lively"],["en-GB-AdaMultilingualNeural","Ada","UK · natural"],["en-GB-OllieMultilingualNeural","Ollie","UK · casual"],
+   ["en-AU-NatashaNeural","Natasha","Australia · bright"],["en-AU-WilliamNeural","William","Australia · warm"],["en-IE-EmilyNeural","Emily","Ireland · soft"],["en-CA-ClaraNeural","Clara","Canada · clear"]],
+ ja:[["ja-JP-NanamiNeural","Nanami (七海)","female · bright, friendly (best)"],["ja-JP-KeitaNeural","Keita (圭太)","male · natural, calm"],["ja-JP-AoiNeural","Aoi (碧衣)","female · young, cheerful"],["ja-JP-MayuNeural","Mayu (真夕)","female · soft, gentle"],
+   ["ja-JP-ShioriNeural","Shiori (志織)","female · clear, calm"],["ja-JP-DaichiNeural","Daichi (大智)","male · deep, steady"],["ja-JP-NaokiNeural","Naoki (直紀)","male · bright"],["ja-JP-MasaruMultilingualNeural","Masaru","male · warm, natural"]]
+};
+const AZ_REGIONS=["eastus","eastus2","westus","westus2","westus3","centralus","southcentralus","canadacentral","uksouth","westeurope","northeurope","francecentral","germanywestcentral","swedencentral","switzerlandnorth","japaneast","japanwest","koreacentral","eastasia","southeastasia","australiaeast","centralindia","brazilsouth"];
+let actx=null,natSrc=null,natPlaying=false,natLoading=false,natSeq=0,natFailNote=false;
+const natCache=new Map();
+// iPhone only lets a page play sound after a tap, so the audio engine is woken on the first touch
+// "playback" lets voices play even when the iPhone's silent switch is on (Safari 16.4+)
+try{if(navigator.audioSession)navigator.audioSession.type="playback";}catch(e){}
+function audioCtx(){if(!actx){const C=window.AudioContext||window.webkitAudioContext;if(!C)return null;actx=new C();}if(actx.state==="suspended")actx.resume().catch(()=>{});return actx;}
+document.addEventListener("touchend",()=>{if(S.settings.tts==="azure"){const c=audioCtx();if(c){try{const b=c.createBuffer(1,1,22050),src=c.createBufferSource();src.buffer=b;src.connect(c.destination);src.start(0);}catch(e){}}}},{passive:true});
+const useNatural=()=>S.settings.tts==="azure"&&S.settings.azKey.trim()&&S.settings.azRegion;
+const xmlEsc=t=>t.replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&apos;"}[c]));
+const pct=r=>{const p=Math.round((r-1)*100);return(p>=0?"+":"")+p+"%";};
+// One request per reply: Japanese parts in the Japanese voice, English parts in the English voice
+function buildSSML(segs,rate,en,ja){
+  return`<speak version="1.0" xmlns="http://www.w3.org/2001/10/synthesis" xml:lang="en-US">`+segs.map(sg=>{
+    const isJ=sg.k==="ja",r=isJ?rate:Math.max(0.85,Math.min(1.1,rate+0.1));
+    return`<voice name="${isJ?ja:en}"><prosody rate="${pct(r)}">${xmlEsc(sg.t.trim())}</prosody></voice>`;}).join("")+`</speak>`;
+}
+function countChars(n){const m=isoDay().slice(0,7),c=S.settings.ttsChars;if(c.month!==m){c.month=m;c.n=0;}c.n+=n;save();}
+async function fetchNatural(ssml){
+  if(natCache.has(ssml))return natCache.get(ssml);
+  const st=S.settings;
+  const res=await fetch(`https://${st.azRegion}.tts.speech.microsoft.com/cognitiveservices/v1`,{method:"POST",
+    headers:{"Ocp-Apim-Subscription-Key":st.azKey.trim(),"Content-Type":"application/ssml+xml","X-Microsoft-OutputFormat":"audio-24khz-48kbitrate-mono-mp3"},body:ssml});
+  if(!res.ok){const e=new Error("HTTP "+res.status);e.status=res.status;throw e;}
+  const buf=await res.arrayBuffer();
+  natCache.set(ssml,buf);if(natCache.size>40)natCache.delete(natCache.keys().next().value);
+  return buf;
+}
+function stopNatural(){natSeq++;natLoading=false;if(natSrc){try{natSrc.onended=null;natSrc.stop();}catch(e){}natSrc=null;}natPlaying=false;}
+async function speakNatural(segs,rate,en,ja){
+  const my=++natSeq;const ctx=audioCtx();if(!ctx)throw new Error("no audio");
+  const ssml=buildSSML(segs,rate,en,ja);
+  natLoading=true;
+  const cached=natCache.has(ssml);
+  const buf=await fetchNatural(ssml);
+  if(!cached)countChars(segs.reduce((a,x)=>a+x.t.length,0));
+  if(my!==natSeq)return;
+  const audio=await ctx.decodeAudioData(buf.slice(0));
+  if(my!==natSeq)return;
+  natLoading=false;
+  const src=ctx.createBufferSource();src.buffer=audio;src.connect(ctx.destination);
+  src.onended=()=>{if(natSrc===src){natSrc=null;natPlaying=false;}};
+  natSrc=src;natPlaying=true;src.start(0);
+}
 function speak(text,opts){
+  opts=opts||{};
+  stopNatural();
+  const segsN=segments(cleanSpeech(text)).filter(s=>s.k==="ja"||S.settings.speakEnglish||opts.forceEnglish);
+  if(useNatural()&&segsN.length){
+    if(synth)synth.cancel();
+    const st=S.settings;
+    speakNatural(segsN,opts.rate||st.rate,opts.en||st.azEn,opts.ja||st.azJa).catch(e=>{
+      natLoading=false;natPlaying=false;
+      if(!natFailNote){natFailNote=true;toast(e.status===401?"Natural voice key was rejected — using iPhone voice. Check Me → Voice.":e.status===429?"Natural voice limit reached — using iPhone voice for now.":"Natural voice unavailable — using iPhone voice.",3500);}
+      speakDevice(text,opts);
+    });
+    return;
+  }
+  speakDevice(text,opts);
+}
+function speakDevice(text,opts){
   opts=opts||{};
   if(!synth){toast("Speech isn't supported in this browser");return;}
   synth.cancel();
@@ -521,7 +619,9 @@ function speak(text,opts){
     synth.speak(u);
   });
 }
-function stopSpeak(){if(synth)synth.cancel();}
+function stopSpeak(){if(synth)synth.cancel();stopNatural();}
+// Is any voice (iPhone or natural) talking right now?
+function isSpeaking(){return natPlaying||natLoading||(synth&&(synth.speaking||synth.pending));}
 let unlocked=false;
 document.addEventListener("touchend",()=>{if(unlocked||!synth)return;unlocked=true;try{const u=new SpeechSynthesisUtterance(" ");u.volume=0;synth.speak(u);}catch(e){}},{once:false,passive:true});
 
@@ -964,21 +1064,24 @@ function vChat(){
   const les=S.currentLesson&&lessonById(S.currentLesson);
   const chips=les?["I don't get it","Give me an example","Quiz me on this","Next step","Say it slower 🔊"]:["Quiz me","Teach me something new","Let's practice talking","Explain simpler","Say it slower 🔊"];
   return`<div class="chat">
-  <div class="chathead"><div class="av">ゆ</div><div class="ct"><b>Yuki</b><small>${les?"📖 "+esc(les.title):UI.planCtx?"🗺️ "+esc(UI.planCtx.label):"Your tutor · "+LV[S.level].label}</small></div>
-   ${les?`${S.done.includes(les.id)?"":`<button class="mini ok" data-act="lessonDone">✓ Done</button>`}<button class="mini" data-act="lessonExit">✕</button>`:UI.planCtx?`<button class="mini ok" data-act="ctxDone">✓ Done</button>`:""}
-   <button class="iconbtn" data-act="voice" aria-label="Voice call">📞</button></div>
+  <div class="chathead"><div class="av">ゆ</div><div class="ct"><b>Yuki</b><small>${les?esc(les.title):UI.planCtx?esc(UI.planCtx.label):"Online · "+LV[S.level].label}</small></div>
+   ${les?`${S.done.includes(les.id)?"":`<button class="mini ok" data-act="lessonDone">✓ Done</button>`}<button class="iconbtn" data-act="lessonExit" aria-label="Leave lesson">✕</button>`:UI.planCtx?`<button class="mini ok" data-act="ctxDone">✓ Done</button>`:""}
+   <button class="iconbtn call" data-act="voice" aria-label="Voice call">📞</button></div>
   <div id="msgs" class="msgs">${S.chat.length?S.chat.map(msgHTML).join(""):emptyChat()}</div>
   <div class="chatfoot"><div class="chips">${chips.map(c=>`<button class="chip" data-act="chip" data-t="${esc(c)}">${esc(c)}</button>`).join("")}</div>
   <div class="inputbar"><button id="micBtn" class="iconbtn${UI.listening?" live":""}" data-act="mic" aria-label="Speak">🎤</button>
-  <textarea id="inp" rows="1" placeholder="Type, or tap 🎤 to speak…" enterkeyhint="send"></textarea>
+  <textarea id="inp" rows="1" placeholder="Message Yuki…" enterkeyhint="send"></textarea>
   <button class="send" data-act="send" aria-label="Send">↑</button></div></div></div>`;
 }
 function rerenderChatHead(){const box=$("#msgs");const y=box?box.scrollTop:0;render();const b=$("#msgs");if(b)b.scrollTop=y||b.scrollHeight;}
 function emptyChat(){return`<div style="text-align:center;padding:30px 10px" class="sub"><div class="av big" style="margin:0 auto 12px">ゆ</div>Ask me anything, or try one of the buttons below.</div>`;}
 function msgHTML(m,i){
   if(m.role==="user")return`<div class="m u"><div class="bub">${esc(m.text)}</div></div>`;
-  if(m.err)return`<div class="m a"><div class="av">ゆ</div><div class="err">${m.text}<br><button class="mini" style="margin-top:8px" data-act="tab" data-tab="me">Open AI setup</button></div></div>`;
-  return`<div class="m a"><div class="av">ゆ</div><div class="bubwrap"><div class="bub">${md(m.text)}</div><button class="say" data-act="sayMsg" data-i="${i}">🔊 Listen</button></div></div>`;
+  // Yuki's avatar only on the first of several messages in a row
+  const prev=S.chat[i-1],cont=prev&&prev.role==="assistant";
+  const av=cont?`<div style="width:30px;flex-shrink:0"></div>`:`<div class="av" style="width:30px;height:30px;font-size:14px;margin-top:2px">ゆ</div>`;
+  if(m.err)return`<div class="m a${cont?" cont":""}">${av}<div class="err">${m.text}<br><button class="mini" style="margin-top:8px" data-act="tab" data-tab="me">Open setup</button></div></div>`;
+  return`<div class="m a${cont?" cont":""}">${av}<div class="bubwrap"><div class="bub">${md(m.text)}<div class="bubfoot"><button class="say" data-act="sayMsg" data-i="${i}" aria-label="Listen">🔊</button></div></div></div></div>`;
 }
 function afterChat(){
   const box=$("#msgs");if(box)box.scrollTop=box.scrollHeight;
@@ -1122,13 +1225,25 @@ function vMe(){
    <button class="btn sm ghost" style="margin-top:8px" data-act="keyHelp">How do I get a key?</button>
   </div>
   <div class="sec">🔊 Voice</div><div class="card">
+   <p class="sub" style="margin-bottom:6px">Voice engine</p>
+   ${chipRow("ttsSet","tts",st.tts,[["device","iPhone voices"],["azure","✨ Natural voices"]])}
+   ${st.tts==="azure"?`
+    <p class="sub" style="margin:12px 0 0">Human-sounding Microsoft neural voices (the same ones as Edge "Read aloud"). Free for 500,000 characters a month with your own Azure key, stored only on this phone.</p>
+    <input class="field" id="azKeyIn" type="password" placeholder="Azure Speech key" value="${esc(st.azKey)}" autocomplete="off" autocapitalize="off" spellcheck="false">
+    <label class="sub">Region (must match your key)</label>
+    <select class="field" data-set="azRegion">${AZ_REGIONS.map(r=>`<option${st.azRegion===r?" selected":""}>${r}</option>`).join("")}</select>
+    <div class="grid2"><button class="btn sm" data-act="saveAz">Save key</button><button class="btn sm ghost" data-act="azHelp">Setup help</button></div>
+    <label class="sub" style="display:block;margin-top:12px">English voice</label>
+    <select class="field" data-set="azEn">${AZ_VOICES.en.map(([id,n,d])=>`<option value="${id}"${st.azEn===id?" selected":""}>${esc(n)} — ${esc(d)}</option>`).join("")}</select>
+    <label class="sub">Japanese voice</label>
+    <select class="field" data-set="azJa">${AZ_VOICES.ja.map(([id,n,d])=>`<option value="${id}"${st.azJa===id?" selected":""}>${esc(n)} — ${esc(d)}</option>`).join("")}</select>
+    <p class="sub">Used this month: ${(st.ttsChars.month===isoDay().slice(0,7)?st.ttsChars.n:0).toLocaleString()} / 500,000 free characters</p>`
+   :`${voicePicker("en","English voice",st.voiceEn)}${voicePicker("ja","Japanese voice",st.voiceJa)}`}
+   <div class="toggle" style="margin-top:8px"><span>Speaking speed</span><input type="range" min="0.5" max="1.2" step="0.05" value="${st.rate}" data-set="rate" style="width:45%"></div>
    ${sw("autoSpeakChat",st.autoSpeakChat,"Read replies aloud in chat")}
    ${sw("speakEnglish",st.speakEnglish,"Read English parts too")}
-   <div class="toggle"><span>Speaking speed</span><input type="range" min="0.5" max="1.2" step="0.05" value="${st.rate}" data-set="rate" style="width:45%"></div>
    <div class="toggle"><span>Mic listens for</span><div class="chips"><button class="chip${st.micLang==="ja-JP"?" on":""}" data-act="micLang" data-v="ja-JP">日本語</button><button class="chip${st.micLang==="en-US"?" on":""}" data-act="micLang" data-v="en-US">English</button></div></div>
-   ${voicePicker("en","English voice",st.voiceEn)}
-   ${voicePicker("ja","Japanese voice",st.voiceJa)}
-   <div class="grid2" style="margin-top:8px"><button class="btn sm ghost" data-act="testVoice">Test voice</button><button class="btn sm ghost" data-act="voiceHelp">Get better voices</button></div>
+   <div class="grid2" style="margin-top:8px"><button class="btn sm ghost" data-act="testVoice">Test voice</button><button class="btn sm ghost" data-act="${st.tts==="azure"?"azHelp":"voiceHelp"}">${st.tts==="azure"?"Setup help":"Get better voices"}</button></div>
   </div>
   <div class="sec">What Yuki remembers about you</div><div class="card">
    ${S.profile.facts.length?`<div class="tags">${S.profile.facts.map(f=>`<span class="tg">${esc(f)}</span>`).join("")}</div>`:`<p class="sub">Nothing yet — chat with her and she'll pick things up.</p>`}
@@ -1166,17 +1281,23 @@ function renderVoice(){
   if(!UI.voice)return;
   const last=[...S.chat].reverse().find(m=>m.role==="assistant");
   const st=UI.listening?"listening":UI.vstate;
-  const label={idle:"Tap the mic and talk to me",listening:"Listening… tap again when you're done",thinking:"Thinking…",speaking:"Speaking… tap the mic to interrupt"}[st];
-  $("#voice").innerHTML=`<div class="vtop"><button class="mini" data-act="closeVoice">✕ End</button>
-   <div class="chips"><button class="chip${S.settings.micLang==="ja-JP"?" on":""}" data-act="micLang" data-v="ja-JP">I speak 日本語</button><button class="chip${S.settings.micLang==="en-US"?" on":""}" data-act="micLang" data-v="en-US">English</button></div></div>
+  const label={idle:"Tap the mic to talk",listening:"Listening… tap when you're done",thinking:"Thinking…",speaking:"Speaking · tap the mic to interrupt"}[st];
+  const cap=last&&!last.err?esc(cleanSpeech(last.text).replace(/\s+\n/g,"\n").trim()).replace(/\n+/g,"<br>"):last&&last.err?"Connection problem — check the chat.":"Say hi! Try 「こんにちは」 or ask me anything in English.";
+  const cc=S.settings.captions;
+  $("#voice").innerHTML=`<div class="vtop"><button class="iconbtn" data-act="closeVoice" aria-label="Close">✕</button>
+   <div class="vtitle"><b>Yuki</b><small>${useNatural()?"✨ natural voice":"voice call"}</small></div>
+   <div class="seg" aria-label="I'm speaking"><button class="${S.settings.micLang==="ja-JP"?"on":""}" data-act="micLang" data-v="ja-JP">あ</button><button class="${S.settings.micLang==="en-US"?"on":""}" data-act="micLang" data-v="en-US">A</button></div></div>
    <div class="orbwrap"><div class="orb ${st}">ゆ</div><div class="vstat">${label}</div>
-   <div class="vtext">${last&&!last.err?md(last.text):last&&last.err?last.text:"Say hi! Try 「こんにちは」 or ask me something in English."}</div>
-   <div class="vyou">${UI.vyou?"You: "+esc(UI.vyou):""}</div></div>
-   <div class="vctrl"><button class="vside" data-act="vRepeat">🔁<small>Repeat</small></button>
-   <button class="bigmic${UI.listening?" live":""}" data-act="vMic">${UI.listening?"■":"🎤"}</button>
-   <button class="vside" data-act="vSlow">🐢<small>Slower</small></button></div>`;
+    <div class="vcap"><div class="vtext${cc?"":" off"}">${cap}</div><div class="vyou">${UI.vyou?"You: "+esc(UI.vyou):""}</div></div></div>
+   <div class="vctrl">
+    <button class="vbtn" data-act="vRepeat"><i>🔁</i>Repeat</button>
+    <button class="vbtn${cc?" on":""}" data-act="vCaptions"><i>${cc?"💬":"🙈"}</i>${cc?"Captions":"Hidden"}</button>
+    <button class="bigmic${UI.listening?" live":""}" data-act="vMic" aria-label="Talk">${UI.listening?"■":"🎤"}</button>
+    <button class="vbtn" data-act="vSlow"><i>🐢</i>Slower</button>
+    <button class="vbtn" data-act="closeVoice"><i class="vend">📞</i>End</button>
+   </div>`;
 }
-setInterval(()=>{if(UI.voice&&UI.vstate==="speaking"&&synth&&!synth.speaking&&!synth.pending){UI.vstate="idle";renderVoice();}},400);
+setInterval(()=>{if(UI.voice&&UI.vstate==="speaking"&&!isSpeaking()){UI.vstate="idle";renderVoice();}},400);
 function voiceMic(){
   if(UI.listening){stopMic();return;}
   stopSpeak();UI.vyou="";
@@ -1248,6 +1369,15 @@ const ACT={
   sayMsg:el=>{const m=S.chat[+el.dataset.i];if(m)speak(m.text);},
   sayText:el=>speak(el.dataset.text,{rate:0.8}),
   reveal:el=>el.classList.toggle("show"),
+  ttsSet:el=>{S.settings.tts=el.dataset.v;natFailNote=false;save();rerender();},
+  saveAz:()=>{const v=$("#azKeyIn");S.settings.azKey=v?v.value.trim():"";natCache.clear();natFailNote=false;save();toast(S.settings.azKey?"Key saved — tap Test voice 🔊":"Key removed");rerender();},
+  azHelp:()=>sheet(`<div class="h2" style="margin-bottom:10px">✨ Getting natural voices (free)</div><ol>
+    <li>In Safari go to <b>portal.azure.com</b> and sign up for a free Microsoft Azure account (it asks for a card to verify you, but the free tier costs nothing).</li>
+    <li>Search for <b>Speech service</b> → <b>Create</b>. Pick any region (e.g. <b>East US</b>), and choose the <b>Free F0</b> pricing tier.</li>
+    <li>When it's created, open it → <b>Keys and Endpoint</b>. Copy <b>KEY 1</b> and note the <b>Location/Region</b>.</li>
+    <li>Back here: paste the key, pick the same region, tap <b>Save key</b>, then <b>Test voice</b>.</li></ol>
+    <p class="sub" style="margin-top:10px">Free tier = 500,000 characters a month (roughly 1,500+ replies). If you go over, it just switches to the iPhone voice until next month. The key never leaves your phone except to talk to Microsoft.</p>
+    <button class="btn" style="margin-top:14px" data-act="closeSheet">Got it</button>`),
   voiceHelp:()=>sheet(`<div class="h2" style="margin-bottom:10px">🔊 Make Yuki sound better</div>
     <p class="sub" style="margin-bottom:10px">Your iPhone has much nicer voices, but you have to download them first (free):</p><ol>
     <li>Open <b>Settings → Accessibility → Spoken Content → Voices</b>.</li>
@@ -1259,6 +1389,7 @@ const ACT={
   voice:()=>openVoice(),
   closeVoice:()=>closeVoice(),
   vMic:()=>voiceMic(),
+  vCaptions:()=>{S.settings.captions=!S.settings.captions;save();renderVoice();},
   vRepeat:()=>{const l=[...S.chat].reverse().find(m=>m.role==="assistant"&&!m.err);if(l){UI.vstate="speaking";renderVoice();speak(l.text);}},
   vSlow:()=>{const l=[...S.chat].reverse().find(m=>m.role==="assistant"&&!m.err);if(l){UI.vstate="speaking";renderVoice();speak(l.text,{rate:0.6});}},
   micLang:el=>{S.settings.micLang=el.dataset.v;save();if(UI.voice)renderVoice();else rerender();},
@@ -1298,12 +1429,12 @@ const ACT={
     <p class="sub" style="margin-top:10px">The key lives only on this phone. The app file itself has no key in it, so sharing the link doesn't share your key. Pick "Fast & cheap" if you want it to cost less.</p>
     <button class="btn" style="margin-top:14px" data-act="closeSheet">Got it</button>`),
   testVoice:()=>speak("こんにちは！ゆきです。 Hi, this is how I sound.",{forceEnglish:true}),
-  exportData:()=>{const d=JSON.stringify({...S,settings:{...S.settings,apiKey:""}});sheet(`<div class="h2">Backup</div><p class="sub" style="margin:8px 0">Copy this and keep it somewhere safe (Notes works). Your API key isn't included.</p><textarea class="field" rows="6" readonly>${esc(d)}</textarea><button class="btn" data-act="copyBackup">Copy</button><button class="btn ghost" style="margin-top:8px" data-act="closeSheet">Close</button>`);},
+  exportData:()=>{const d=JSON.stringify({...S,settings:{...S.settings,apiKey:"",azKey:""}});sheet(`<div class="h2">Backup</div><p class="sub" style="margin:8px 0">Copy this and keep it somewhere safe (Notes works). Your API keys aren't included.</p><textarea class="field" rows="6" readonly>${esc(d)}</textarea><button class="btn" data-act="copyBackup">Copy</button><button class="btn ghost" style="margin-top:8px" data-act="closeSheet">Close</button>`);},
   copyBackup:()=>{const t=document.querySelector("#sheet textarea");if(navigator.clipboard)navigator.clipboard.writeText(t.value).then(()=>toast("Copied"),()=>{t.select();toast("Select all and copy");});else{t.select();toast("Select all and copy");}},
   importData:()=>sheet(`<div class="h2">Restore</div><p class="sub" style="margin:8px 0">Paste a backup below.</p><textarea id="impT" class="field" rows="6"></textarea><button class="btn" data-act="doImport">Restore</button><button class="btn ghost" style="margin-top:8px" data-act="closeSheet">Cancel</button>`),
-  doImport:()=>{try{const d=JSON.parse($("#impT").value);const key=S.settings.apiKey;S=migrate(merge(JSON.parse(JSON.stringify(DEFAULT)),d));S.settings.apiKey=key;save();closeSheet();toast("Restored ✅");render();}catch(e){toast("That doesn't look like a backup");}},
+  doImport:()=>{try{const d=JSON.parse($("#impT").value);const key=S.settings.apiKey,az=S.settings.azKey;S=migrate(merge(JSON.parse(JSON.stringify(DEFAULT)),d));S.settings.apiKey=key;S.settings.azKey=az;save();closeSheet();toast("Restored ✅");render();}catch(e){toast("That doesn't look like a backup");}},
   clearChat:()=>{if(confirm("Clear the chat? Your progress and what Yuki knows about you stay.")){S.chat=[];S.currentLesson=null;save();toast("Chat cleared");}},
-  resetAll:()=>{if(confirm("Erase EVERYTHING — progress, cards, memory, chat?")){const key=S.settings.apiKey;S=JSON.parse(JSON.stringify(DEFAULT));S.settings.apiKey=key;UI.ob=0;UI.obEdit=false;UI.place=null;UI.tab="home";save();render();}},
+  resetAll:()=>{if(confirm("Erase EVERYTHING — progress, cards, memory, chat?")){const key=S.settings.apiKey,az=S.settings.azKey;S=JSON.parse(JSON.stringify(DEFAULT));S.settings.apiKey=key;S.settings.azKey=az;UI.ob=0;UI.obEdit=false;UI.place=null;UI.tab="home";save();render();}},
   checkUpdate:()=>checkUpdate(true),
   closeSheet:()=>closeSheet()
 };
@@ -1317,6 +1448,8 @@ document.addEventListener("change",e=>{
   const el=e.target;const k=el.dataset&&el.dataset.set;if(!k)return;
   if(k==="name"||k==="goal")S[k]=el.value.trim();
   else if(k.startsWith("about."))S.about[k.slice(6)]=el.value.trim();
+  else if(k==="azRegion"){S.settings.azRegion=el.value;natCache.clear();}
+  else if(k==="azEn"||k==="azJa"){S.settings[k]=el.value;save();speak(k==="azEn"?"Hi! This is how I'll sound in English.":"こんにちは、ゆきです。よろしくね！",{forceEnglish:true});return;}
   else if(k==="voice.en"||k==="voice.ja"){S.settings[k==="voice.en"?"voiceEn":"voiceJa"]=el.value;save();speak(k==="voice.en"?"Hi! This is how I'll sound in English.":"こんにちは、ゆきです。",{forceEnglish:true});return;}
   else if(k==="rate")S.settings.rate=parseFloat(el.value);
   else if(k==="model")S.settings.model=el.value;
