@@ -364,7 +364,7 @@ input,textarea,select{font:inherit;font-size:16px;color:var(--text)}
 <script>
 "use strict";
 // Bump this on every change so phones can spot a new version and offer to update
-const APP_VERSION="2026.10.05-4";
+const APP_VERSION="2026.10.05-5";
 /* ============ DATA ============ */
 const LV = {
   n5:{label:"N5",name:"Beginner",color:"#9fd67c"},
@@ -705,9 +705,10 @@ function greeting(){const h=new Date().getHours();return h<11?"おはよう":h<1
 function nextLesson(){return LESSONS.find(l=>l.level===S.level&&!S.done.includes(l.id));}
 function dueIds(ids){const now=Date.now();return ids.filter(id=>S.cards[id]&&S.cards[id].due<=now);}
 function md(t){
-  let h=esc(t);
+  let h=esc(stripHidden(t));
   h=h.replace(/\[\[([\s\S]+?)\]\]/g,(m,p)=>`<span class="listen"><button class="play" data-act="sayText" data-text="${p}">▶ Play audio</button><span class="hid" data-act="reveal">${p}</span></span>`);
-  h=h.replace(/\*\*(.+?)\*\*/g,"<b>$1</b>").replace(/__(.+?)__/g,"<b>$1</b>");
+  h=h.replace(/\*\*(.+?)\*\*/g,"<b>$1</b>").replace(/__(.+?)__/g,"<b>$1</b>")
+   .replace(/(^|[\s(「])\*(?!\s)([^*\n]+?)\*(?=$|[\s).,!?:;」。、！？])/gm,"$1<i>$2</i>");
   h=h.replace(/^#{1,4}\s*(.+)$/gm,"<b>$1</b>");
   h=h.replace(/^\s*[-*]\s+/gm,"• ");
   h=h.replace(/`([^`]+)`/g,"<code>$1</code>");
@@ -753,7 +754,7 @@ function pickVoice(lang){
 const voiceNow=lang=>{const v=pickVoice(lang);return v?v.name+(isHQ(v)?" ★":""):"iPhone's own voice (Spoken Content)";};
 const JP=/[\u3040-\u30ff\u3400-\u9fff\uff66-\uff9f\u3005]/;
 function cleanSpeech(t){
-  return t.replace(/<<MEM>>[\s\S]*$/,"")
+  return stripHidden(t).replace(/<<MEM>>[\s\S]*$/,"")
    // 「こんにちは」(konnichiwa) → こんにちは: the romaji only repeats the Japanese, and an English voice mangles it
    .replace(/([\u3040-\u30ff\u3400-\u9fff\u3005][」』]?)\s*[（(]\s*[A-Za-zāēīōūÂâÊêÎîÔôÛû'\- ]+\s*[)）]/g,"$1")
    .replace(/\[\[|\]\]/g,"")
@@ -778,7 +779,7 @@ function tidySpeech(t){
 }
 // Text for the call captions: markdown and hidden bits removed, bullets kept as bullets
 function captionText(t){
-  return String(t).replace(/<<(MEM|SAY)>>[\s\S]*$/,"").replace(/\[\[|\]\]/g,"").replace(/\*\*|__|`/g,"")
+  return stripHidden(t).replace(/<<(MEM|SAY)>>[\s\S]*$/,"").replace(/\[\[|\]\]/g,"").replace(/\*\*|__|`/g,"")
     .replace(/^#{1,4}\s*/gm,"").replace(/^\s*[-*•]\s+/gm,"• ").replace(/[ \t]+\n/g,"\n").replace(/\n{2,}/g,"\n").trim();
 }
 function segments(t){
@@ -1119,11 +1120,20 @@ async function toBlobUrl(url){
   if(blobCache.size>40){const k=blobCache.keys().next().value;blobCache.get(k).then(u=>URL.revokeObjectURL(u)).catch(()=>{});blobCache.delete(k);}
   return p;
 }
+// How long Ryusei's live clips took recently. When the free service is slow, Yuki waits less before the
+// iPhone voice helps out, so conversations don't stall.
+const questLat=[];let slowTip=false;
+const questSlow=()=>{if(questLat.length<2)return false;const l=questLat.slice(-3).sort((a,b)=>a-b);return l[Math.floor(l.length/2)]>4500;};
+function noteLat(ms){questLat.push(ms);if(questLat.length>6)questLat.shift();
+  if(questSlow()&&!slowTip&&!S.settings.questKey){slowTip=true;vlog("🐢 tts.quest is slow right now ("+Math.round(ms/100)/10+" s)");
+    toast("🐢 Ryusei's free voice service is slow right now, so the iPhone voice helps out. A free tts.quest key (Me → Voice) makes him faster.",6000);}}
 async function prepClip(job,my){
+  const t0=Date.now(),live=typeof job!=="string";
   const o=typeof job==="string"?job:await job;
   if(typeof o==="string"){let blob=null;try{blob=await toBlobUrl(o);}catch(e){}return{o,blob};}
   const ready=await questReady(o,my);let blob=null;
   if(ready&&o.mp3&&my===natSeq){try{blob=await toBlobUrl(o.mp3);}catch(e){vlog("… couldn't preload the clip ("+e.message+"), streaming it");}}
+  if(live)noteLat(Date.now()-t0);
   return{o,ready,blob};
 }
 function englishForVV(t){t=t.toLowerCase().replace(/[’‘]/g,"'");EN_FIX.forEach(([a,b])=>{t=t.replace(a,b);});return t;}
@@ -1151,12 +1161,12 @@ async function speakQuest(segs,rate,text,opts){
       if(stay){if(segs[i].orig!==undefined)await speakPlainDevice(segs[i].orig,rate);else await sayDevice(segs[i].t.trim(),"ja-JP",rate);continue;}
       // (with enVoice "ryusei" every segment is sent as "ja", so it never reaches the iPhone English voice unless the service fails)
       natLoading=true;let clip=null;
-      const wait=Math.max(4000,(i?0:8000)-(Date.now()-t0));
+      const slow=questSlow(),wait=Math.max(slow?2500:4000,(i?0:slow?3500:8000)-(Date.now()-t0));
       try{clip=await Promise.race([jobs[i],new Promise(r=>setTimeout(()=>r(LATE),wait))]);
-        if(clip===LATE){clip=null;stay=true;vlog("… Ryusei not ready after "+(wait/1000).toFixed(1)+" s, iPhone voice says the rest of this reply (tts.quest busy)");}}catch(e){stay=true;
+        if(clip===LATE){clip=null;stay=true;noteLat(9000);vlog("… Ryusei not ready after "+(wait/1000).toFixed(1)+" s, iPhone voice says the rest of this reply (tts.quest busy)");}}catch(e){stay=true;
         if(!questNote){questNote=true;toast("Ryusei's voice didn't answer ("+e.message+"). Tap Me → Voice → Test Ryusei for details.",4500);}}
       natLoading=false;if(my!==natSeq)return;
-      if(clip){await synthIdle(6000);
+      if(clip){await synthIdle(1200);
         // iPhone keeps other sound turned down for a moment after its own voice ("ducking"); starting
         // Ryusei inside that moment made him sound quiet, so let it pass first
         const duck=300-(Date.now()-synthEndAt);if(duck>0)await new Promise(r=>setTimeout(r,duck));
@@ -1180,7 +1190,7 @@ async function speakWithRecordings(segs,rate,text,opts){
     for(let i=0;i<segs.length;i++){
       if(my!==natSeq)return;
       const k=recKey(segs[i].t);
-      if(segs[i].k==="ja"&&RECORDED.has(k)&&segs.length===1){await synthIdle(6000);try{await playUrl(recUrlFor(k),my,rate);continue;}catch(e){}}
+      if(segs[i].k==="ja"&&RECORDED.has(k)&&segs.length===1){await synthIdle(1200);try{await playUrl(recUrlFor(k),my,rate);continue;}catch(e){}}
       if(my!==natSeq)return;
       await sayDevice(segs[i].t.trim(),segs[i].k==="ja"?"ja-JP":"en-US",rate);
     }
@@ -1437,6 +1447,10 @@ function callAI(mode){
 // The hidden <<SAY>> line (spoken version for Ryusei) is taken out of the reply and kept separately
 const sayWanted=()=>S.settings.tts==="quest"&&S.settings.enVoice==="ryusei";
 // The hidden <<FIX>> line (corrected version + translation of what the student said) is shown under their message
+// Yuki sometimes writes a hidden marker slightly wrong ("FIX>>", "<FIX>", "<<FIX>> "). Put them all back
+// into the exact form, and never show or speak a leftover hidden line.
+const normMarkers=t=>String(t).replace(/(?:<{1,2}\s*)?\b(FIX|MEM|SAY)\s*>{1,2}/g,"<<$1>>");
+const stripHidden=t=>String(t).replace(/^[^\S\n]*(?:<{1,2}\s*)?\b(?:FIX|MEM|SAY)\s*>{1,2}.*$/gm,"").replace(/\n{3,}/g,"\n\n").trim();
 function takeFix(raw){
   const m=raw.match(/<<FIX>>\s*(\{[^\n]*\})[^\n]*\n?/);if(!m)return{raw,fix:null};
   let fix=null;try{const o=JSON.parse(m[1]);if(o&&typeof o==="object"&&(o.ja||o.en))fix={ja:String(o.ja||"").slice(0,300),en:String(o.en||"").slice(0,300),ok:o.ok===true,why:String(o.why||"").slice(0,120)};}catch(e){}
@@ -1492,16 +1506,17 @@ async function send(display,apiText,mode){
   if(UI.voice){UI.vstate="thinking";renderVoice();}
   try{
     const raw=await callAI(UI.voice?"voice":mode);
-    const f0=takeFix(raw),t0=takeSay(f0.raw),say=t0.say;
+    const f0=takeFix(normMarkers(raw)),t0=takeSay(f0.raw),say=t0.say;
     if(f0.fix&&(!apiText||mode==="voice")){um.fix=f0.fix;const ui=box.indexOf(um),el=S.chat===box&&document.querySelector(`.m.u[data-i="${ui}"]`);if(el)el.outerHTML=msgHTML(um,ui);}
     const {text,mem}=parseMem(t0.raw);
     try{applyMem(mem);}catch(e){console.warn("memory skipped",e);}
-    box.push({role:"assistant",text:text||"…",say:say||undefined});save();
+    const shown=stripHidden(text);
+    box.push({role:"assistant",text:shown||"…",say:say||undefined});save();
     // A plan quiz or talk counts as done after a few back-and-forths with Yuki
     if(UI.planCtx&&++UI.planCtx.replies>=4){markNode(UI.planCtx.key);UI.planCtx=null;if(UI.tab==="chat"&&!UI.voice)rerenderChatHead();}
     showTyping(false);if(S.chat===box)appendLast();
-    if(UI.voice){UI.vstate="speaking";renderVoice();speak(text,{say});}
-    else if(S.settings.autoSpeakChat&&S.chat===box&&UI.tab==="chat"&&document.visibilityState==="visible")speak(text,{say});
+    if(UI.voice){UI.vstate="speaking";renderVoice();speak(shown,{say});}
+    else if(S.settings.autoSpeakChat&&S.chat===box&&UI.tab==="chat"&&document.visibilityState==="visible")speak(shown,{say});
   }catch(err){
     showTyping(false);
     const noKey=!S.settings.apiKey.trim();

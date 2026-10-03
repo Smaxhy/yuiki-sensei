@@ -83,6 +83,9 @@ Safari → Add to Home Screen.
   `takeSay`), it's stored as `msg.fix` on the user message and shown under it (`fixHTML`: correct Japanese
   with 🔊, punctuated English translation, 💡 reason) and on the call screen (`.vfix`). Skipped for app
   commands (messages with `api` text, except voice).
+  Yuki sometimes writes markers slightly wrong ("FIX>>"): `normMarkers()` restores `<<FIX>>`/`<<MEM>>`/
+  `<<SAY>>` before parsing, and `stripHidden()` removes any leftover hidden line from what is shown
+  (`md`), captioned (`captionText`) or spoken (`cleanSpeech`). `md()` also renders *italics*.
 - **Tidy voice typing**: `tidySpeech()` (free, on the phone) gives mic transcripts punctuation and capitals:
   spaces between Japanese words removed (。 after です/ます…, 、 after greetings/yes/no via `JA_PAUSE`),
   ending 。/？ or ./?, capital first letters and "I". Course-word detection still uses the untidied words
@@ -166,6 +169,10 @@ Safari → Add to Home Screen.
   and the silent unlock sound never plays on a mic tap or while listening (it could block the mic).
   A clip that hasn't started within 3.5 s (local/blob) or 9 s (remote) is given up (`t2` in `playUrl`; iPhone
   sometimes accepts play() and stays silent); a failed recording is then said by the iPhone Japanese voice.
+  Before a clip, Ryusei waits at most 1.2 s for the iPhone voice (`synthIdle(1200)`; iOS can report
+  "speaking" for seconds after a line ended). `noteLat()` records live clip times; when the free service is
+  slow (`questSlow()`, median of the last 3 > 4.5 s) the cut-off is shorter (3.5 s first, 2.5 s later) and a
+  one-time tip suggests the free tts.quest key.
   A mic with no sign of life retries once by itself (`MIC.retried`) before pausing.
   Text for Ryusei goes through `vvText()`: spaces between Japanese characters removed (spaced
   beginner kana makes VOICEVOX pause after every word and stress oddly), Japanese punctuation.
