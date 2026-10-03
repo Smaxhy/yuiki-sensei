@@ -273,6 +273,17 @@ input,textarea,select{font:inherit;font-size:16px;color:var(--text)}
 .obnav{display:flex;gap:8px;margin-top:18px}
 .obnav .btn{flex:1}
 .obnav .btn.ghost{flex:0 0 96px}
+/* corrections under your messages */
+.ubw{display:flex;flex-direction:column;align-items:flex-end;max-width:86%}
+.ubw .bub{max-width:100%}
+.fix{margin-top:5px;width:100%;max-width:340px;background:#2a2234;border:1px solid #5a3a4c;border-radius:14px;padding:8px 10px 9px 12px;font-size:14px;line-height:1.45}
+.fix.ok{background:#1f2c1c;border-color:#3f5a32}
+.fxh{display:flex;align-items:center;justify-content:space-between;min-height:30px}
+.fxh b{font-size:12px;color:var(--sakura)}.fix.ok .fxh b{color:var(--matcha)}
+.fxs{width:44px;height:36px;margin:-6px -6px -6px 0;font-size:15px}
+.fj{font-size:16px;font-weight:700}.fe{color:var(--dim);margin-top:2px}.fw{color:var(--gold);font-size:13px;margin-top:3px}
+.vfix{margin:12px auto 0;max-width:420px;text-align:center;font-size:16px;font-weight:700;background:#ffffff10;border-radius:14px;padding:10px 14px}
+.vfix b{color:var(--sakura);font-size:13px}.vfix.ok b{color:var(--matcha)}.vfix small{display:block;font-size:13.5px;color:var(--dim);font-weight:600;margin-top:4px}
 /* progress, calendar, badges */
 .today{display:flex;gap:8px;margin:10px 0 2px}
 .tmain{flex:1;min-width:0;display:flex;align-items:center;gap:12px;text-align:left;background:var(--ink2);border:1px solid var(--line);border-radius:20px;padding:10px 14px;min-height:66px}
@@ -349,7 +360,7 @@ input,textarea,select{font:inherit;font-size:16px;color:var(--text)}
 <script>
 "use strict";
 // Bump this on every change so phones can spot a new version and offer to update
-const APP_VERSION="2026.10.05-1";
+const APP_VERSION="2026.10.05-2";
 /* ============ DATA ============ */
 const LV = {
   n5:{label:"N5",name:"Beginner",color:"#9fd67c"},
@@ -746,6 +757,20 @@ function cleanSpeech(t){
    .replace(/[*_#`>|]/g," ")
    .replace(/\p{Extended_Pictographic}/gu,"")
    .replace(/[→←↑↓•]/g,", ");
+}
+// Voice typing gives text without punctuation or capitals. Tidy it: 、 between spoken Japanese phrases,
+// 。/？ (or ./?) at the end, capital first letters and "I". Free, on the phone, no AI.
+const JA_PAUSE=/(^|[、。])(こんにちは|こんばんは|おはよう|おはようございます|はい|いいえ|ええ|うん|ありがとう|ありがとうございます|すみません|あの|えっと|じゃあ|でも|そして)$/;
+const QWORD=/^(what|where|when|why|who|whom|which|how|do|does|did|is|are|am|was|were|can|could|would|will|should|shall|may|have|has)\b/i;
+function tidySpeech(t){
+  t=String(t||"").replace(/\s+/g," ").trim();if(!t)return t;
+  // Japanese has no spaces: drop them, with 。 after a finished sentence and 、 after a greeting or yes/no
+  t=t.replace(/([\u3040-\u30ff\u3400-\u9fff\u3005ー]+) (?=[\u3040-\u30ff\u3400-\u9fff\u3005])/g,(m,w)=>
+    /(です|ます|ました|でした|ません|ください|ね|よ)$/.test(w)?w+"。":JA_PAUSE.test(w)?w+"、":w);
+  if(!/[.!?。！？…]$/.test(t)){t=t.replace(/[,、]$/,"");
+    if(JP.test(t.slice(-1)))t+=/(か|かな|かしら|ですか|ますか)$/.test(t)?"？":"。";
+    else t+=QWORD.test(t.replace(/^[^A-Za-z]+/,""))?"?":".";}
+  return t.replace(/(^|[.!?。！？]\s*)([a-z])/g,(m,a,b)=>a+b.toUpperCase()).replace(/\bi\b/g,"I").replace(/\bi'(m|ve|ll|d)\b/g,"I'$1");
 }
 // Text for the call captions: markdown and hidden bits removed, bullets kept as bullets
 function captionText(t){
@@ -1322,7 +1347,10 @@ ${mode==="voice"?"":`- Make every question easy to understand: write the instruc
 ${sayWanted()?`SPOKEN VERSION (very important)
 Your reply is read aloud by a Japanese-only voice that cannot read English letters. Just before the memory line, add one line starting with <<SAY>> followed by the WHOLE reply rewritten for that voice: keep Japanese as it is, write every English word in katakana the way it sounds (e.g. "Great job! Now say hello." → グレート ジョブ！ ナウ セイ ハロー。), and drop emojis, romaji in brackets, markdown and symbols. Never mention this line.
 
-`:""}MEMORY (very important)
+`:""}CORRECTION LINE (very important)
+Whenever the student's latest message is their own sentence containing Japanese (kana, kanji or romaji), add one line just before the memory line: <<FIX>> followed by compact JSON {"ja":"their sentence as correct, natural Japanese with proper punctuation (、。？！), written at their reading level (kana, kanji only with the reading in brackets for beginners)","en":"a natural English translation with proper capitals, commas and full stops","ok":true if what they wrote was already correct (punctuation and spaces from voice typing don't count as mistakes),"why":"if not ok: the main fix in a few words"}. Skip it for English-only messages and app commands. The app shows this under their message, so in your visible reply just mention the key fix briefly (or not at all if it was fine); on a call, say the key fix out loud in a few words. Never mention this line.
+
+MEMORY (very important)
 At the very end of EVERY reply, on its own line, write <<MEM>> followed by compact JSON with anything NEW from this turn. Fields (all optional): "facts" (things about the student's life, interests or preferences), "weak" (specific items they got wrong or struggle with), "strong" (things they clearly mastered), "learned" (new words or patterns taught, as "word = meaning"), "right" (number of quiz answers correct this turn), "wrong" (number incorrect this turn), "lessonDone" (true only when the current lesson's core is mastered), "used" (only during conversation practice: target words the student used correctly this turn), "path" (short lesson topics to add to their learning path, like ["Ordering ramen"], only when they ask you to add or change something in their path or plan, or when a clear gap needs its own lesson; at most 2). If nothing new: <<MEM>>{}. Never mention this line to the student.`;
 }
 function memoryPrompt(){
@@ -1390,6 +1418,12 @@ function callAI(mode){
 }
 // The hidden <<SAY>> line (spoken version for Ryusei) is taken out of the reply and kept separately
 const sayWanted=()=>S.settings.tts==="quest"&&S.settings.enVoice==="ryusei";
+// The hidden <<FIX>> line (corrected version + translation of what the student said) is shown under their message
+function takeFix(raw){
+  const m=raw.match(/<<FIX>>\s*(\{[^\n]*\})[^\n]*\n?/);if(!m)return{raw,fix:null};
+  let fix=null;try{const o=JSON.parse(m[1]);if(o&&typeof o==="object"&&(o.ja||o.en))fix={ja:String(o.ja||"").slice(0,300),en:String(o.en||"").slice(0,300),ok:o.ok===true,why:String(o.why||"").slice(0,120)};}catch(e){}
+  return{raw:raw.replace(m[0],"").replace(/<<FIX>>[^\n]*\n?/g,""),fix};
+}
 function takeSay(raw){
   const i=raw.indexOf("<<SAY>>");if(i<0)return{raw,say:""};
   const rest=raw.slice(i+7),m=rest.indexOf("<<MEM>>");
@@ -1430,8 +1464,9 @@ async function send(display,apiText,mode){
   UI.busy=true;
   if(UI.voice){S.stats.calls++;addXP(3,"calls");}else addXP(2,"msgs");
   const box=S.chat;  // the reply goes to the chat this was sent from, even if you switch chats meanwhile
-  box.push({role:"user",text:display,api:apiText||undefined});S.stats.msgs++;
-  if(activeCourse()&&(!apiText||mode==="voice"))markUsed(detectUsed(kanaize(display)));
+  const um={role:"user",text:display,api:apiText||undefined};box.push(um);S.stats.msgs++;
+  const said=UI.spoken&&UI.spoken.tidy===display?UI.spoken.raw:display;UI.spoken=null;
+  if(activeCourse()&&(!apiText||mode==="voice"))markUsed(detectUsed(kanaize(said)));
   while(box.length>200)box.shift();
   save();
   if(!UI.voice&&UI.tab!=="chat"){UI.tab="chat";render();}else appendLast();
@@ -1439,7 +1474,8 @@ async function send(display,apiText,mode){
   if(UI.voice){UI.vstate="thinking";renderVoice();}
   try{
     const raw=await callAI(UI.voice?"voice":mode);
-    const t0=takeSay(raw),say=t0.say;
+    const f0=takeFix(raw),t0=takeSay(f0.raw),say=t0.say;
+    if(f0.fix&&(!apiText||mode==="voice")){um.fix=f0.fix;const ui=box.indexOf(um),el=S.chat===box&&document.querySelector(`.m.u[data-i="${ui}"]`);if(el)el.outerHTML=msgHTML(um,ui);}
     const {text,mem}=parseMem(t0.raw);
     try{applyMem(mem);}catch(e){console.warn("memory skipped",e);}
     box.push({role:"assistant",text:text||"…",say:say||undefined});save();
@@ -2083,9 +2119,14 @@ function vChat(){
   <button class="send" data-act="send" aria-label="Send">↑</button></div></div></div>`;
 }
 function rerenderChatHead(){const box=$("#msgs");const y=box?box.scrollTop:0;render();const b=$("#msgs");if(b)b.scrollTop=y||b.scrollHeight;}
+// Under your message: the correct Japanese (tap 🔊 to hear it) and a proper English translation
+function fixHTML(f){
+  return`<div class="fix${f.ok?" ok":""}"><div class="fxh"><b>${f.ok?"✓ Perfect":"✏️ Better"}</b>${f.ja?`<button class="fxs" data-act="sayText" data-text="${esc(f.ja)}" aria-label="Hear it">🔊</button>`:""}</div>
+   ${f.ja?`<div class="fj">${esc(f.ja)}</div>`:""}${f.en?`<div class="fe">🇬🇧 ${esc(f.en)}</div>`:""}${!f.ok&&f.why?`<div class="fw">💡 ${esc(f.why)}</div>`:""}</div>`;
+}
 function emptyChat(){return`<div style="text-align:center;padding:30px 10px" class="sub"><div class="av big" style="margin:0 auto 12px">ゆ</div>Ask me anything, or try one of the buttons below.</div>`;}
 function msgHTML(m,i){
-  if(m.role==="user")return`<div class="m u"><div class="bub">${esc(m.text)}</div></div>`;
+  if(m.role==="user")return`<div class="m u" data-i="${i}"><div class="ubw"><div class="bub">${esc(m.text)}</div>${m.fix?fixHTML(m.fix):""}</div></div>`;
   // Yuki's avatar only on the first of several messages in a row
   const prev=S.chat[i-1],cont=prev&&prev.role==="assistant";
   const av=cont?`<div style="width:30px;flex-shrink:0"></div>`:`<div class="av" style="width:30px;height:30px;font-size:14px;margin-top:2px">ゆ</div>`;
@@ -2356,7 +2397,7 @@ function renderVoice(){
     <span class="vlen">${[["tiny","Very short"],["short","Short"],["normal","Normal"]].map(([v,t])=>`<button class="vopt${len===v?" on":""}" data-act="vLen" data-v="${v}">${t}</button>`).join("")}</span></div>
    <div class="orbwrap${activeCourse()?" compact":""}"><div class="orb ${st}">ゆ</div><div class="vstat">${label}</div>
     ${activeCourse()?`<div class="vchips">${talkChips()}</div>${courseDoneCard(true)}${activeCourse().keep?`<button class="vopt on" data-act="courseDone" style="margin-top:6px">✓ Finish lesson</button>`:""}`:""}
-    <div class="vcap">${UI.listening?`<div class="vtext vlive">${UI.vyou?esc(UI.vyou):"…"}</div>`:`<div class="vtext${cc?"":" off"}">${cap}</div>${last&&!last.err?`<button class="vopt again" data-act="vRepeat">🔁 Say it again</button>`:""}<div class="vyou">${UI.vyou?"You: "+esc(UI.vyou):""}</div>`}</div></div>
+    <div class="vcap">${UI.listening?`<div class="vtext vlive">${UI.vyou?esc(UI.vyou):"…"}</div>`:`<div class="vtext${cc?"":" off"}">${cap}</div>${last&&!last.err?`<button class="vopt again" data-act="vRepeat">🔁 Say it again</button>`:""}${(()=>{const lu=[...S.chat].reverse().find(m=>m.role==="user");return lu&&lu.fix&&UI.vstate!=="thinking"?`<div class="vfix${lu.fix.ok?" ok":""}"><b>${lu.fix.ok?"✓ You said it right":"✏️ Better"}</b> ${esc(lu.fix.ja)}<small>🇬🇧 ${esc(lu.fix.en)}${!lu.fix.ok&&lu.fix.why?" · 💡 "+esc(lu.fix.why):""}</small></div>`:`<div class="vyou">${UI.vyou?"You: "+esc(UI.vyou):""}</div>`;})()}`}</div></div>
    ${UI.listening?`<div class="vctrl">
     <button class="vbtn" data-act="vCancel"><i>✕</i>Cancel</button>
     ${MIC.paused?`<button class="micbtn ${UI.micLang==="ja-JP"?"ja":"en"}" data-act="vMic" data-v="${UI.micLang}" aria-label="Keep talking"><span>🎤</span>Continue</button>`:`<button class="micbtn ${other==="ja-JP"?"ja":"en"} alt" data-act="vMic" data-v="${other}" aria-label="Continue in ${other==="ja-JP"?"Japanese":"English"}"><span>⇄</span>${other==="ja-JP"?"+ 日本語":"+ English"}</button>`}
@@ -2376,7 +2417,7 @@ function voiceMic(lang){
   if(UI.busy){toast("Yuki is still thinking — one moment",1500);return;}
   stopSpeak();UI.vyou="";S.settings.micLang=lang;
   startMic(t=>{UI.vyou=t;const y=document.querySelector(".vlive");if(y)y.textContent=t||"…";},
-    final=>{if(final){UI.vyou=final;send(final,hasKanji(final)?final+"\n(said out loud; the phone's voice typing added the kanji automatically — I can't read kanji yet, please reply in kana)":null,"voice");}else{UI.vstate="idle";renderVoice();}},lang);
+    final=>{if(final){const raw=final;final=tidySpeech(final);UI.spoken={tidy:final,raw};UI.vyou=final;send(final,hasKanji(final)?final+"\n(said out loud; the phone's voice typing added the kanji automatically — I can't read kanji yet, please reply in kana)":null,"voice");}else{UI.vstate="idle";renderVoice();}},lang);
 }
 // Hands-free: when Yuki finishes talking, start listening for your answer (you still tap Send)
 function afterYukiSpoke(){const c=activeCourse();if(c&&c.used.length>=c.targets.length&&!c.keep)return;if(UI.voice&&S.settings.handsFree&&!UI.listening&&!UI.busy)setTimeout(()=>{if(UI.voice&&!UI.listening&&!UI.busy&&!isSpeaking())voiceMic(S.settings.micLang);},900);
@@ -2455,7 +2496,7 @@ const ACT={
   mic:el=>{const lang=el.dataset.v;
     if(UI.listening){if(MIC.paused||lang!==UI.micLang){resumeMic(lang);return;}stopMic();return;}
     const inp=$("#inp");const before=inp?inp.value.trim():"";
-    startMic(t=>{if(inp){inp.value=(before?before+" ":"")+t;inp.dispatchEvent(new Event("input"));}},()=>{const i=$("#inp");if(i)i.focus();},lang);},
+    startMic(t=>{if(inp){inp.value=(before?before+" ":"")+t;inp.dispatchEvent(new Event("input"));}},()=>{const i=$("#inp");if(i){const raw=i.value;if(raw.trim()){i.value=tidySpeech(raw);UI.spoken={tidy:i.value.trim(),raw};}i.focus();}},lang);},
   sayMsg:el=>sayAgain(S.chat[+el.dataset.i]),
   sayText:el=>speak(el.dataset.text,{rate:0.8}),
   reveal:el=>el.classList.toggle("show"),
