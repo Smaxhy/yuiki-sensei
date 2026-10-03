@@ -77,7 +77,13 @@ Safari → Add to Home Screen.
   `cache_control`) and `memoryPrompt()` (memory, stats, current lesson) which changes per turn.
 - **Reply style** (`S.settings.style`): length (tiny/short/normal/detailed, default short), English vs Japanese, reading help, simple
   English. Turned into prompt lines by `styleRules()`.
-- **Credit saver** (`S.settings.history`): 6/12/24 recent messages sent per request.
+- **Credit saver** (`S.settings.history`): 6/12/24 recent messages sent per request, default 6 (v22 set
+  everyone to 6). Messages older than the last two are cut to 300 characters in `buildMessages`. The system
+  prompt is deliberately compact (~600 tokens) and `memoryPrompt` sends short lists (6 lessons, 12 facts,
+  8 weak, 5 strong, 12 learned); max_tokens tiny 350 / short 500 / normal 800 / detailed 1300 (calls 350).
+  A typical chat request is ~1,100–1,300 input tokens. Keep new prompt text short: it's paid on every message.
+- **Spending meter** (`S.usage`, `noteUsage()` from the API's `usage`, `PRICE` per model, `spendCard()` in
+  Me → AI setup & spending): this month, replies, cost per reply, "$20 ≈ N replies", last reply's tokens.
 - **Corrections**: when the student's message is their own sentence with Japanese, Yuki adds a hidden
   `<<FIX>>{"ja","en","ok","why"}` line before `<<MEM>>` (rule in `systemPrompt`). `takeFix()` strips it (before
   `takeSay`), it's stored as `msg.fix` on the user message and shown under it (`fixHTML`: correct Japanese
@@ -214,7 +220,10 @@ Safari → Add to Home Screen.
 - **Listening**: Japanese wrapped in [[double brackets]] in AI replies shows as a hidden,
   tap-to-play audio clip.
 - **Flashcards**: decks for hiragana, katakana, 80 core words, and 50 kanji, using
-  Leitner spaced repetition stored in `S.cards`. Works offline with no AI. A card speaks only when flipped
+  Leitner spaced repetition stored in `S.cards`. Works offline with no AI. Rounds only use cards already
+  learned (due first, then weakest); new kana come only from "＋ 5 new" (`learnNew`: 5 characters in chart
+  order, shown with answer and sound, `UI.fc.learn`) or path lessons. Practice shows kana first, other decks
+  folded under "More decks"; the Cards tab defaults to Kana. A card speaks only when flipped
   (audio before flipping gave the answer away; "🔊 Hear it (a hint)" plays it on purpose).
 - **Multiple-choice quiz** (`buildQz`/`startQz`/`vQuiz`, `UI.qz`): 10 questions from learned cards only (due
   first), 4 options from the same kind (kana: sound↔character; words: meaning↔Japanese; kanji: meaning or
@@ -228,7 +237,7 @@ Safari → Add to Home Screen.
   `captionText()` (markdown removed, bullets kept); spoken answers with kanji still tick course words.
 
 ## Technical notes
-- State object `S` (currently `v:21`) saved to localStorage key `yuki-sensei-v3`. Keep it backward
+- State object `S` (currently `v:22`) saved to localStorage key `yuki-sensei-v3`. Keep it backward
   compatible. Saved data (and restored backups) go through `migrate()`; if the shape
   changes, bump `DEFAULT.v` and add a step there instead of wiping progress.
 - Clicks route through `data-act` attributes to the `ACT` object.
