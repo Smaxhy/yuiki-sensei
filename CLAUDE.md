@@ -138,6 +138,9 @@ Safari → Add to Home Screen.
   cancelled so it can't start late over Ryusei.
   iPhone speech (`sayDevice`/`sayChunk`): short sentence chunks (≤180 chars), resume if paused,
   120 ms gap after an audio clip, safety timer if "end" never fires, voice assignment guarded.
+  English voice default `voiceEn="system"` ("📱 iPhone's own voice", v20): a Siri voice if the phone lists
+  one (`sysVoice`), otherwise no voice is set so iOS uses the Spoken Content voice from Settings
+  (`pickVoice` returns null). "Automatic" (`""`) = best-ranked voice; or a voice by name.
   Me → Voice shows the English voice in use (★ = Premium/Enhanced) with a 🔊 Test button.
   Voice log (`VLOG`, `vlog()`, Me → Voice → "🧾 Voice log", or tap the title on the call screen):
   every speak attempt, tts.quest request/answer, audio play/refusal/error and iPhone voice that
@@ -173,7 +176,7 @@ Safari → Add to Home Screen.
   settings, what Yuki remembers, and backup/restore as JSON (key excluded).
 
 ## Technical notes
-- State object `S` (currently `v:19`) saved to localStorage key `yuki-sensei-v3`. Keep it backward
+- State object `S` (currently `v:20`) saved to localStorage key `yuki-sensei-v3`. Keep it backward
   compatible. Saved data (and restored backups) go through `migrate()`; if the shape
   changes, bump `DEFAULT.v` and add a step there instead of wiping progress.
 - Clicks route through `data-act` attributes to the `ACT` object.

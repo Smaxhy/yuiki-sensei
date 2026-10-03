@@ -297,7 +297,7 @@ input,textarea,select{font:inherit;font-size:16px;color:var(--text)}
 <script>
 "use strict";
 // Bump this on every change so phones can spot a new version and offer to update
-const APP_VERSION="2026.10.04-26";
+const APP_VERSION="2026.10.04-27";
 /* ============ DATA ============ */
 const LV = {
   n5:{label:"N5",name:"Beginner",color:"#9fd67c"},
@@ -490,7 +490,7 @@ const KANJI_LV={none:"none yet",few:"under 50",some:"50–300",many:"300+"};
 /* ============ STATE ============ */
 const KEY="yuki-sensei-v3";
 const DEFAULT={
-  v:19,onboarded:false,name:"",level:"n5",goal:"",
+  v:20,onboarded:false,name:"",level:"n5",goal:"",
   about:{done:false,focus:[],hira:"",kata:"",kanji:"",location:"",native:"English",minutes:15,notes:""},
   placement:null,plan:null,course:null,
   profile:{facts:[],weak:[],strong:[],learned:[]},
@@ -498,7 +498,7 @@ const DEFAULT={
   done:[],cards:{},chat:[],currentLesson:null,
   threads:{main:{title:"Chat with Yuki",kind:"free",msgs:[],at:0}},chatId:"main",
   settings:{apiKey:"",model:"claude-haiku-4-5-20251001",rate:0.9,autoSpeakChat:false,speakEnglish:true,micLang:"ja-JP",
-    style:{length:"short",english:"balanced",script:"auto",simple:false},history:12,voiceEn:"",voiceJa:"",handsFree:false,jaRec:"ryusei",vvUrl:"",enVoice:"iphone",questKey:"",
+    style:{length:"short",english:"balanced",script:"auto",simple:false},history:12,voiceEn:"system",voiceJa:"",handsFree:false,jaRec:"ryusei",vvUrl:"",enVoice:"iphone",questKey:"",
     tts:"quest",azKey:"",azRegion:"eastus",azEn:"en-US-AvaMultilingualNeural",azJa:"ja-JP-NanamiNeural",ttsChars:{month:"",n:0},captions:true}
 };
 let S=JSON.parse(JSON.stringify(DEFAULT));
@@ -580,6 +580,8 @@ function migrate(st){
   // v18 → v19: Ryusei for Japanese, a natural iPhone voice for English (owner's choice)
   if((st.v||0)<17){S2.tts="quest";S2.enVoice="ryusei";if(S2.jaRec==="off")S2.jaRec="ryusei";}
   if((st.v||0)<19)S2.enVoice="iphone";
+  // v19 → v20: English in the iPhone's own voice (Siri if the phone shares it, else the Spoken Content voice)
+  if((st.v||0)<20&&!S2.voiceEn)S2.voiceEn="system";
   if((st.v||0)<16){if(S2.style&&S2.style.length==="normal")S2.style.length="short";S2.handsFree=true;}
   S2.handsFree=S2.handsFree===true;
   if(typeof S2.questKey!=="string")S2.questKey="";
@@ -658,11 +660,16 @@ function voiceList(lang){
   const L=lang.toLowerCase();
   return voices.filter(v=>vlang(v).startsWith(L.slice(0,2))).sort((a,b)=>voiceScore(b,L)-voiceScore(a,L));
 }
+// "system" = the iPhone's own voice: a Siri voice if the phone lets websites use one, otherwise no voice is
+// set, so iOS speaks with the voice chosen in Settings → Accessibility → Spoken Content → Voices
+const sysVoice=lang=>voiceList(lang).find(v=>/siri/i.test(vq(v))&&!NOVELTY.test(v.name))||null;
 function pickVoice(lang){
   const list=voiceList(lang);
   const chosen=lang.startsWith("ja")?S.settings.voiceJa:S.settings.voiceEn;
+  if(chosen==="system")return sysVoice(lang);
   return (chosen&&list.find(v=>v.name===chosen))||list[0]||null;
 }
+const voiceNow=lang=>{const v=pickVoice(lang);return v?v.name+(isHQ(v)?" ★":""):"iPhone's own voice (Spoken Content)";};
 const JP=/[\u3040-\u30ff\u3400-\u9fff\uff66-\uff9f\u3005]/;
 function cleanSpeech(t){
   return t.replace(/<<MEM>>[\s\S]*$/,"")
@@ -1976,7 +1983,7 @@ function vMe(){
     <p class="sub" style="margin:10px 0 6px">Voice</p>${chipRow("recSet","jaRec",st.jaRec==="off"?"ryusei":st.jaRec,Object.entries(REC_VOICES).map(([k,v])=>[k,v.name.split(" ")[0]]))}
     <p class="sub" style="margin:12px 0 6px">English parts</p>${chipRow("enVoiceSet","enVoice",st.enVoice,[["ryusei",(REC_VOICES[st.jaRec]||REC_VOICES.ryusei).name.split(" ")[0]+" (Japanese accent)"],["iphone","iPhone voice"]])}
     ${st.enVoice==="iphone"?voicePicker("en","English voice",st.voiceEn):""}
-    ${st.enVoice==="iphone"?`<div class="toggle" style="margin-top:6px"><span>English voice now: <b>${esc((voiceList("en-US")[0]||{name:"default"}).name)}</b>${voiceList("en-US")[0]&&isHQ(voiceList("en-US")[0])?" ★":""}</span><button class="mini" data-act="iphoneVoiceTest">🔊 Test</button></div>`:""}
+    ${st.enVoice==="iphone"?`<div class="toggle" style="margin-top:6px"><span>English voice now: <b>${esc(voiceNow("en-US"))}</b></span><button class="mini" data-act="iphoneVoiceTest">🔊 Test</button></div>`:""}
     <button class="btn sm ghost" style="margin-top:12px" data-act="voiceLog">🧾 Voice log (send me a screenshot if voice is wrong)</button>
     <button class="btn sm" style="margin-top:8px" data-act="questTest">🔎 Test Ryusei's live voice</button>
     <details style="margin-top:10px"><summary class="sub" style="min-height:44px;display:flex;align-items:center">Optional: free tts.quest key (faster, fewer "busy")</summary>
@@ -2034,6 +2041,7 @@ function vMe(){
 
 // Nudge to download a Premium English voice if the phone doesn't have one yet
 function englishTip(){
+  if(S.settings.voiceEn==="system")return`<button class="row" data-act="voiceHelp" style="margin-top:4px"><span class="ri">📱</span><span class="rt"><b>Choose which voice that is</b><span>Siri or a Premium voice, in your iPhone's Settings</span></span></button>`;
   const best=voiceList("en-US")[0];
   if(!best||isHQ(best))return"";
   return`<button class="row" data-act="voiceHelp" style="margin-top:4px;border-color:var(--gold)"><span class="ri">💡</span><span class="rt"><b>Get a much better English voice (free)</b><span>Download "Ava (Premium)" on your iPhone in 1 minute</span></span></button>`;
@@ -2043,6 +2051,7 @@ function voicePicker(lang,label,cur){
   if(!list.length)return"";
   const best=list[0];
   return`<label class="sub" style="display:block;margin-top:10px">${label}</label><select class="field" data-set="voice.${lang}">
+   ${lang==="en"?`<option value="system"${cur==="system"?" selected":""}>📱 iPhone's own voice${sysVoice("en-US")?" (Siri)":" (Siri / Spoken Content)"}</option>`:""}
    <option value=""${cur?"":" selected"}>Automatic (best: ${esc(best.name)})</option>
    ${list.filter(v=>!NOVELTY.test(v.name)).slice(0,25).map(v=>`<option value="${esc(v.name)}"${cur===v.name?" selected":""}>${esc(v.name)} · ${esc(v.lang)}${isHQ(v)?" ★ "+(/premium/.test(vq(v))?"Premium":/enhanced/.test(vq(v))?"Enhanced":"Siri"):""}</option>`).join("")}
   </select>`;
@@ -2212,6 +2221,7 @@ const ACT={
     <p class="sub" style="margin-top:10px">Free tier = 500,000 characters a month (roughly 1,500+ replies). If you go over, it just switches to the iPhone voice until next month. The key never leaves your phone except to talk to Microsoft.</p>
     <button class="btn" style="margin-top:14px" data-act="closeSheet">Got it</button>`),
   voiceHelp:()=>sheet(`<div class="h2" style="margin-bottom:10px">🔊 Make Yuki sound better</div>
+    <p class="sub" style="margin-bottom:10px"><b>Siri's voice:</b> with "📱 iPhone's own voice" picked (Me → Voice), Yuki speaks English with the voice your iPhone uses for reading aloud. Choose it in <b>Settings → Accessibility → Spoken Content → Voices → English</b>. Pick a <b>Siri</b> voice there if your iPhone offers one. Apple doesn't always let websites use Siri voices; if it doesn't, pick a Premium voice instead (steps below).</p>
     <p class="sub" style="margin-bottom:10px">Your iPhone has much nicer voices, but you have to download them first (free):</p><ol>
     <li>Open <b>Settings → Accessibility → Spoken Content → Voices</b>.</li>
     <li>Tap <b>English</b> → <b>English (US)</b> (or UK/Australia), pick <b>Ava</b>, <b>Zoe</b> or <b>Evan</b>, and tap the download button next to <b>Premium</b> (best) or <b>Enhanced</b>. It's about 100–400 MB, so use Wi-Fi.</li>
