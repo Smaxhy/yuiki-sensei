@@ -164,8 +164,8 @@ Safari → Add to Home Screen.
   tts.quest `questReady`, then download into memory with `toBlobUrl`, cached) while the iPhone voice is
   still talking, so each clip starts the moment the English ends. The 120 ms gap before the iPhone voice
   only applies right after a clip (`clipEndAt`).
-  Ryusei never holds Yuki up: if a clip isn't ready 2.5 s after its turn (7 s for the first one), the
-  iPhone voice says that part. tts.quest requests go one at a time (`questQ`; bursts trigger "wait").
+  Ryusei never holds Yuki up: if a clip isn't ready 3 s after its turn (5 s for the first one; 2 s / 3 s when
+  `questSlow()`), the iPhone voice says the rest of that reply. tts.quest requests go one at a time (`questQ`; bursts trigger "wait").
   An iPhone line that hasn't started after 1.8 s is cancelled and tried once more (`sayChunk`).
   "🔁 Say it again" (call screen, under the captions; also Repeat and the chat 🔊) runs `sayAgain()`:
   `resetAudio()` fully resets the speech engine and makes a fresh audio player inside the tap.
@@ -203,13 +203,15 @@ Safari → Add to Home Screen.
   cancelled so it can't start late over Ryusei.
   iPhone speech (`sayDevice`/`sayChunk`): short sentence chunks (≤180 chars), resume if paused,
   120 ms gap after an audio clip, safety timer if "end" never fires, voice assignment guarded.
-  English voice default `voiceEn="system"` ("📱 iPhone's own voice", v20): a Siri voice if the phone lists
-  one (`sysVoice`), otherwise no voice is set so iOS uses the Spoken Content voice from Settings
-  (`pickVoice` returns null). "Automatic" (`""`) = best-ranked voice; or a voice by name.
+  English voice default `voiceEn=""` = Automatic: the best-ranked voice on the phone (Premium > Enhanced > rest).
+  v24 moved everyone off the old "system" value: Safari can't see the voice picked in iPhone Settings and web apps
+  can't use Siri voices, so "system" just gave the basic voice. Better voices come from downloading a Premium/
+  Enhanced voice in Settings → Accessibility → Spoken Content → Voices (then reopen the app); Automatic picks it up.
   Me → Voice shows the English voice in use (★ = Premium/Enhanced) with a 🔊 Test button.
   Voice log (`VLOG`, `vlog()`, Me → Voice → "🧾 Voice log", or tap the title on the call screen):
   every speak attempt, tts.quest request/answer, audio play/refusal/error and iPhone voice that
-  didn't start, for diagnosing problems on the owner's phone. Recordings inside a mixed reply are
+  didn't start, for diagnosing problems on the owner's phone. "📋 Copy log" copies it (with app version, engine and
+  English voice) so the owner can paste it to Claude. Recordings inside a mixed reply are
   no longer played as fragments (only when the whole thing is one recorded word).
   `cleanSpeech()` drops romaji in brackets right after Japanese (「こんにちは」(konnichiwa)) so the
   English voice doesn't mangle it.
@@ -222,7 +224,7 @@ Safari → Add to Home Screen.
   recognition directly inside a tap, so `rec.start()` runs synchronously in the tap handler (no
   delays, no audio-session switching; the shared player is released first). Continuous listening
   until ➤ Send; if iPhone ends it, one immediate restart is tried, and if there's no sign of life
-  (2 s, 4 s on first start) the mic PAUSES keeping the words ("tap 🎤 Continue or ➤ Send").
+  (3.5 s, 5.5 s on the first start: iOS can be slow to start dictation right after opening) the mic PAUSES keeping the words ("tap 🎤 Continue or ➤ Send").
   Tapping the other language (or the same one while paused) resumes inside the tap. Hands-free
   (`S.settings.handsFree`) is off by default since iPhone may refuse a mic start without a tap.
   Mic events are written to the voice log. Chat mic fills the text box (no auto-send).
@@ -309,7 +311,7 @@ Safari → Add to Home Screen.
 - Pages use `.sec` category headings: Practice (Today / Quick practice / decks…), Me (You / Yuki / App).
 
 ## Technical notes
-- State object `S` (currently `v:23`) saved to localStorage key `yuki-sensei-v3`. Keep it backward
+- State object `S` (currently `v:24`) saved to localStorage key `yuki-sensei-v3`. Keep it backward
   compatible. Saved data (and restored backups) go through `migrate()`; if the shape
   changes, bump `DEFAULT.v` and add a step there instead of wiping progress.
 - Clicks route through `data-act` attributes to the `ACT` object.
