@@ -565,6 +565,38 @@ html.light #voice{--ink:#0f1117;--ink2:#181b24;--ink3:#232733;--line:rgba(255,25
 html.light #voice .donecard{background:linear-gradient(140deg,#20372a,#181b24);border:none}
 html.light #voice .donecard span{color:var(--dim)}
 html.light #voice .btn{color:#2a1520}
+
+/* translator, big and clean */
+.tx-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.tx-on{font-size:13px;font-weight:800;color:var(--matcha);background:color-mix(in srgb,var(--matcha) 12%,transparent);padding:5px 10px;border-radius:999px}.tx-on.off{color:var(--dim);background:var(--ink3)}
+.tx-langs{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:8px;background:var(--ink2);border:2px solid var(--edge);border-radius:18px;padding:6px;margin-bottom:12px}
+.tx-langs span{text-align:center;font-weight:900;font-size:17px;padding:8px 0}
+.tx-swap{width:48px;height:44px;border-radius:14px;background:color-mix(in srgb,var(--sky) 14%,transparent);color:var(--sky);font-size:22px;font-weight:900}
+.tx-in{background:var(--ink2);border:2px solid var(--edge);border-bottom-width:4px;border-radius:22px;padding:14px 14px 10px}
+.tx-in:focus-within{border-color:var(--sky)}
+.tx-in textarea{width:100%;min-height:96px;border:none;outline:none;background:transparent;resize:none;font-size:22px;font-weight:700;line-height:1.35;color:var(--text);font-family:inherit}
+.tx-in.has textarea{min-height:0;font-size:19px}.tx-in.has .tx-mic{width:58px;height:58px;font-size:24px}.tx-in.has .tx-go{width:50px;height:50px}
+.tx-inbar{display:grid;grid-template-columns:44px 1fr 56px;align-items:center;gap:8px;margin-top:6px}
+.tx-mic{justify-self:center;width:72px;height:72px;border-radius:50%;background:var(--sakura);color:#fff;font-size:30px;box-shadow:0 5px 0 var(--sakuraLip)}
+.tx-mic:active{transform:translateY(5px);box-shadow:none}
+.tx-mic.live{background:var(--red);animation:throb 1.2s infinite}
+.tx-go{width:56px;height:56px;border-radius:18px;background:var(--sky);color:#fff;font-size:26px;font-weight:900;box-shadow:0 4px 0 color-mix(in srgb,var(--sky) 70%,#000)}
+.tx-go:active{transform:translateY(4px);box-shadow:none}
+.tx-ic{width:44px;height:44px;border-radius:14px;background:var(--ink3);font-size:18px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.tx-busy{text-align:center;color:var(--dim);font-weight:800;margin:16px 0}
+.tx-out{margin-top:14px;background:var(--ink2);border:2px solid var(--edge);border-bottom-width:4px;border-radius:22px;padding:22px 18px 16px;text-align:center}
+.tx-big{font-size:34px;font-weight:900;line-height:1.35;word-break:break-word}.tx-big.tx-en{font-size:28px}
+.tx-ro{color:var(--sky);font-weight:800;font-size:17px;margin-top:8px}
+.tx-kj{color:var(--dim);font-size:16px;margin-top:6px}
+.tx-note{font-size:13px;color:var(--dim);margin-top:10px}
+.tx-acts{display:flex;gap:8px;margin-top:16px}.tx-acts .tx-play{flex:1}.tx-acts .tx-ic{width:54px;height:auto;border-radius:16px;font-size:22px}
+.tx-words{margin-top:12px;text-align:left}.tx-words summary{min-height:44px;display:flex;align-items:center;justify-content:center;color:var(--dim);font-weight:800;list-style:none}.tx-words summary::-webkit-details-marker{display:none}
+.tx-src{font-size:11.5px;color:var(--dim);margin-top:8px}
+.tx-miss{text-align:left}
+.tx-alt-h{font-size:14px;font-weight:900;color:var(--dim);margin:20px 4px 8px}
+.tx-foot{display:flex;flex-wrap:wrap;justify-content:center;gap:6px;margin-top:22px}
+.tx-foot button{min-height:36px;padding:0 12px;border-radius:999px;background:var(--ink3);color:var(--dim);font-size:12.5px;font-weight:800}
+.tx-foot button[disabled]{opacity:.5}
 @keyframes dot{0%,80%,100%{opacity:.25}40%{opacity:1}}
 @keyframes throb{0%,100%{transform:scale(1)}50%{transform:scale(1.06)}}
 @keyframes breathe{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
@@ -592,7 +624,7 @@ html.light #voice .btn{color:#2a1520}
 <script>
 "use strict";
 // Bump this on every change so phones can spot a new version and offer to update
-const APP_VERSION="2026.10.11-1";
+const APP_VERSION="2026.10.11-2";
 /* ============ DATA ============ */
 const LV = {
   n5:{label:"N5",name:"Beginner",color:"#9fd67c"},
@@ -3045,26 +3077,33 @@ const TR_SRC={online:"🌐 Translated online for free (no AI credits). Saved, so
 const isKana=t=>/^[ぁ-んァ-ヶー\s、。？！!?]+$/.test(t);
 function vTranslate(){
   const T=UI.tr||(UI.tr={q:"",res:[],dir:"en"});T.dir=T.dir||"en";const r=T.res[0],en=T.dir==="en",on=navigator.onLine!==false,nb=trBank().length;
-  const card=!r?"":en?`<div class="card trres"><div class="trja">${esc(r.ja)}</div>${r.ro?`<div class="trro">${esc(r.ro)}</div>`:""}${r.say&&r.say!==r.ja.replace(/\s+/g,"")?`<div class="trkj">${esc(r.say)}</div>`:""}<div class="tren">🇬🇧 ${esc(r.en)}</div>
-     ${r.chunks&&r.chunks.length>1?`<div class="trbits">${r.chunks.map(c=>`<span class="trbit"><b>${esc(c.k.replace(/[。？！、]$/,""))}</b><i>${esc(kanaRomaji(c.k.replace(/[。？！、]$/,"")))}</i>${c.e?`<em>${esc(c.e)}</em>`:""}</span>`).join("")}</div>`:""}
-     ${r.guess&&r.guess.length?`<p class="sub" style="margin-top:8px">✏️ I don't know “${esc(r.guess.join("”, “"))}” yet, so it stays in English letters. Staff can usually read names.</p>`:""}
-     <div class="grid2" style="margin-top:12px"><button class="btn" data-act="trPlay" data-i="0">🔊 Play${r.rec?" (Ryusei)":""}</button><button class="btn ghost" data-act="trShow" data-i="0">📱 Show staff</button></div>
-     <p class="sub" style="margin-top:8px;font-size:12px">${TR_SRC[r.src]||""}</p></div>`
-    :`<div class="card trres"><div class="trja" style="font-size:26px">${esc(r.en)}</div><div class="trkj">🇯🇵 ${esc(r.ja)}</div>
-     <div class="grid2" style="margin-top:12px"><button class="btn" data-act="trPlay" data-i="0">🔊 Play English</button><button class="btn ghost" data-act="trPlayJa" data-i="0">🇯🇵 Hear Japanese</button></div>
-     <p class="sub" style="margin-top:8px;font-size:12px">${TR_SRC[r.src]||""}</p></div>`;
-  return`<div class="pad"><div style="display:flex;align-items:center;justify-content:space-between"><div class="h1">🗣️ Translator</div><span class="sub">${on?"🌐 online":"✈️ offline"}</span></div>
-   <div class="chips" style="margin:6px 0 10px"><button class="chip${en?" on":""}" data-act="trDir" data-v="en">🇬🇧 English → 🇯🇵</button><button class="chip${en?"":" on"}" data-act="trDir" data-v="ja">🇯🇵 Japanese → 🇬🇧</button></div>
-   <div class="inputbar trbar"><button class="iconbtn micen${UI.listening?" live":""}" data-act="trMic" aria-label="Speak">🎤</button>
-    <input id="trIn" class="field" value="${esc(T.q)}" placeholder="${en?"Say or type anything in English…":"日本語で話す・書く…"}" enterkeyhint="go" autocomplete="off" autocapitalize="off"><button class="send" data-act="trGo" aria-label="Translate">→</button></div>
-   ${T.busy?`<p class="sub" style="margin:10px 2px">⏳ Translating…</p>`:""}
+  const from=en?"English":"日本語",to=en?"日本語":"English";
+  const card=!r?"":`<div class="tx-out">
+     ${en?`<div class="tx-big">${esc(r.ja)}</div>${r.ro?`<div class="tx-ro">${esc(r.ro)}</div>`:""}${r.say&&r.say!==r.ja.replace(/\s+/g,"")?`<div class="tx-kj">${esc(r.say)}</div>`:""}`
+       :`<div class="tx-big tx-en">${esc(r.en)}</div><div class="tx-kj">${esc(r.ja)}</div>`}
+     ${r.guess&&r.guess.length?`<p class="tx-note">✏️ “${esc(r.guess.join("”, “"))}” stays in English letters. Staff can usually read names.</p>`:""}
+     <div class="tx-acts"><button class="btn tx-play" data-act="trPlay" data-i="0">🔊 ${en?"Play"+(r.rec?" · Ryusei":""):"Play English"}</button>
+      ${en?`<button class="tx-ic" data-act="trShow" data-i="0" aria-label="Show staff">📱</button>`:`<button class="tx-ic" data-act="trPlayJa" data-i="0" aria-label="Hear Japanese">🇯🇵</button>`}
+      <button class="tx-ic" data-act="trCopy" data-i="0" aria-label="Copy">📋</button></div>
+     ${en&&r.chunks&&r.chunks.length>1?`<details class="tx-words"><summary>Word by word ›</summary><div class="trbits">${r.chunks.map(c=>`<span class="trbit"><b>${esc(c.k.replace(/[。？！、]$/,""))}</b><i>${esc(kanaRomaji(c.k.replace(/[。？！、]$/,"")))}</i>${c.e?`<em>${esc(c.e)}</em>`:""}</span>`).join("")}</div></details>`:""}
+     <div class="tx-src">${TR_SRC[r.src]||""}</div></div>`;
+  return`<div class="pad tx">
+   <div class="tx-head"><div class="h1">Translate</div><span class="tx-on${on?"":" off"}">${on?"● Online":"✈️ Offline"}</span></div>
+   <div class="tx-langs"><span>${from}</span><button class="tx-swap" data-act="trDir" data-v="${en?"ja":"en"}" aria-label="Swap languages">⇄</button><span>${to}</span></div>
+   <div class="tx-in${r?" has":""}">
+    <textarea id="trIn" rows="${r?2:3}" placeholder="${en?"Type or tap the mic and speak…":"日本語で話す・書く…"}" enterkeyhint="go" autocomplete="off" autocapitalize="off">${esc(T.q)}</textarea>
+    <div class="tx-inbar">${T.q?`<button class="tx-ic" data-act="trClear" aria-label="Clear">✕</button>`:"<span></span>"}
+     <button class="tx-mic${UI.listening?" live":""}" data-act="trMic" aria-label="Speak">${UI.listening?"■":"🎤"}</button>
+     <button class="tx-go" data-act="trGo" aria-label="Translate">→</button></div>
+   </div>
+   ${T.busy?`<p class="tx-busy">Translating…</p>`:""}
    ${card}
-   ${r&&T.res.length>1?`<div class="sec">Other ways to say it</div>${T.res.slice(1).map((x,i)=>`<button class="row" data-act="trPick" data-i="${i+1}"><span class="rt"><b>${esc(en?x.ja:x.en)}</b><span>${esc(en?x.en:x.ja)}</span></span><span class="chev">›</span></button>`).join("")}`:""}
-   ${!r&&T.q&&!T.busy?`<div class="card"><b>${on?"Couldn't translate that":"No internet, and I haven't seen this sentence yet"}</b><p class="sub" style="margin-top:6px">${on?"The free translation service didn't answer. Try again in a moment.":"Offline I use the sentence builder and everything saved in your sentence bank. Try simpler words, or translate it once while online and it's saved for next time."}</p></div>`:""}
-   <div class="card" style="margin-top:14px"><b>🧠 Sentence bank: ${nb}</b><p class="sub" style="margin:6px 0 10px">Every Japanese sentence Yuki says to you and every translation you make is saved on your phone (no AI credits), so the translator finds them offline too.</p>
-    ${nb?`<button class="btn sm ghost" data-act="trBankView">📚 Browse saved sentences</button>`:""}</div>
-   <div class="card" style="margin-top:12px"><b>✈️ Offline</b><p class="sub" style="margin:6px 0 10px">${navigator.serviceWorker?"Online it translates anything for free. Offline it builds sentences itself and uses your sentence bank. Tap once on Wi-Fi to save Ryusei's recordings so they play with no internet. (The 🎤 may need internet on some iPhones; typing, or the keyboard's own mic button, always works.)":"Offline saving isn't available in this browser."}</p>
-    <button class="btn sm ghost" data-act="trSave">${T.saved?"✓ Saved for offline ("+T.saved+")":"⬇️ Save the voice for offline"}</button></div>
+   ${!r&&T.q&&!T.busy?`<div class="tx-out tx-miss"><b>${on?"Couldn't translate that":"Not saved for offline yet"}</b><p class="sub" style="margin-top:6px">${on?"The free translation service didn't answer. Try again in a moment.":"Offline I can build simple sentences and use your saved ones. Try simpler words, or translate it once while online."}</p></div>`:""}
+   ${r&&T.res.length>1?`<div class="tx-alt-h">Other ways to say it</div>${T.res.slice(1).map((x,i)=>`<button class="row" data-act="trPick" data-i="${i+1}"><span class="rt"><b>${esc(en?x.ja:x.en)}</b><span>${esc(en?x.en:x.ja)}</span></span><span class="chev">›</span></button>`).join("")}`:""}
+   <div class="tx-foot">
+    <button data-act="trBankView"${nb?"":" disabled"}>🧠 ${nb.toLocaleString()} saved</button>
+    <button data-act="trSave">${T.saved?"✓ Voice saved offline":"⬇️ Save voice offline"}</button>
+    <button data-act="trInfo">ⓘ</button></div>
   </div>`;
 }
 let trSeq=0;
@@ -3840,6 +3879,9 @@ const ACT={
   tab:el=>{const t=el.dataset.tab;if(t!==UI.tab)stopSpeak();if(t!=="me"||UI.tab==="me")UI.me=null;if(t!==UI.tab){UI.fc=null;UI.qz=null;}UI.tab=t;if(t!=="practice")UI.chart=null;render();if(t==="translate")trFillSoon(3000);},
   cardsF:el=>{UI.cardsF=el.dataset.v;rerender();},
   translate:()=>{stopSpeak();UI.tab="translate";render();trFillSoon(3000);},
+  trClear:()=>{const T=UI.tr;if(T){T.q="";T.res=[];}rerender();const i=$("#trIn");if(i)i.focus();},
+  trCopy:el=>{const r=UI.tr&&UI.tr.res[+el.dataset.i];if(!r)return;const t=UI.tr.dir==="ja"?r.en:(r.say||r.ja);(navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject()).then(()=>toast("Copied"),()=>toast("Couldn't copy"));},
+  trInfo:()=>sheet(`<div class="h2" style="margin-bottom:8px">How the translator works</div><p class="sub" style="margin-bottom:8px"><b>Online:</b> translates anything for free (no AI credits).</p><p class="sub" style="margin-bottom:8px"><b>Offline:</b> builds simple sentences itself and uses your 🧠 saved sentences (everything Yuki says to you and every translation you make is kept on your phone).</p><p class="sub" style="margin-bottom:12px"><b>⬇️ Save voice offline:</b> tap once on Wi-Fi so Ryusei's ~900 recorded sentences play with no internet. The 🎤 may need internet on some iPhones; typing, or the keyboard's own mic button, always works.</p><button class="btn" data-act="closeSheet">Got it</button>`),
   trGo:()=>{const i=$("#trIn");if(i&&i.value.trim())trRun(i.value.trim());else toast("Type or say something in English");},
   trMic:()=>{if(UI.listening){stopMic();return;}const i=$("#trIn"),ja=UI.tr&&UI.tr.dir==="ja";
     startMic(t=>{if(i)i.value=t;},final=>{if(final)trRun(final);else rerender();},ja?"ja-JP":"en-US");},
@@ -4077,7 +4119,7 @@ document.addEventListener("change",e=>{
 
 // Save typed profile answers as you type, so a re-render never loses them
 document.addEventListener("keydown",e=>{if(e.key==="Enter"&&e.target&&e.target.id==="qzIn"){e.preventDefault();ACT.qzType();}
-  if(e.key==="Enter"&&e.target&&e.target.id==="trIn"&&!e.isComposing){e.preventDefault();ACT.trGo();}});
+  if(e.key==="Enter"&&!e.shiftKey&&e.target&&e.target.id==="trIn"&&!e.isComposing){e.preventDefault();ACT.trGo();}});
 document.addEventListener("input",e=>{const k=e.target.dataset&&e.target.dataset.set;if(k&&k.startsWith("about.")){S.about[k.slice(6)]=e.target.value;save();}});
 
 /* ============ iPHONE LAYOUT ============ */
