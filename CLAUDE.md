@@ -103,7 +103,8 @@ Safari → Add to Home Screen.
   (sent with `output_config.effort:"low"` and server-side fallbacks; Haiku 4.5 rejects effort).
   The system prompt is two blocks: a stable one (persona, learner card, style rules; marked
   `cache_control`) and `memoryPrompt()` (memory, stats, current lesson) which changes per turn.
-- **Reply style** (`S.settings.style`): length (tiny/short/normal/detailed, default short), English vs Japanese, reading help, simple
+- **Reply style** (`S.settings.style`): length (tiny/short/normal/detailed, default tiny; v27 set everyone to tiny because
+  the owner's credits went too fast; tiny = under 20 words, calls = under 15 words, max_tokens 300 for both), English vs Japanese, reading help, simple
   English. Turned into prompt lines by `styleRules()`.
 - **Credit saver** (`S.settings.history`): 6/12/24 recent messages sent per request, default 6 (v22 set
   everyone to 6). Messages older than the last two are cut to 300 characters in `buildMessages`. The system
@@ -138,33 +139,15 @@ Safari → Add to Home Screen.
   and speechSynthesis that splits Japanese and English into separate voices. Voices are
   ranked by `voiceScore()` (Premium/Enhanced/Siri first, detected from name or `voiceURI` via `isHQ()`, novelty voices excluded) and can be
   chosen in Me (`S.settings.voiceEn` / `voiceJa`).
-  ElevenLabs engine (`S.settings.tts="eleven"`, `useEleven()`): the owner's own key `elKey` (typed in Me → Voice,
-  localStorage only, blanked in backups and kept on import/reset; NEVER put a key in the code). `speakAI` tries it first
-  (`speakEleven`): the whole reply as ONE request (`elText` fixes は/へ particles and Japanese spaces), model
-  `eleven_flash_v2_5` (cheapest, English + Japanese in one voice), `mp3_22050_32`. Credit saving: clips cached in memory
-  (`elMem`) and on disk (Cache Storage "yuki-eleven", max 500) so repeats are free, exact recorded words still play from
-  the recordings, replies over `EL_MAX` (500 chars) and anything past the monthly cap (`elCap` 5k/10k/20k/50k,
-  counted in `elChars`) use the free voices. Errors (`elFail`): 401/403 → off 30 min, 429 → off 10 min, else that reply
-  falls back. Voices: `elLoadVoices()` (GET /v1/voices, cached in localStorage "yuki-elvoices", previews are free),
-  auto-pick from `EL_PREFER`; `elRefreshSub()` shows account credits. The call-screen ⚡ switch remembers `ttsBack`.
-: Microsoft Azure neural TTS
-  (same voices as Edge Read Aloud; Edge TTS itself can't be called from iPhone Safari) via
-  REST with the owner's own key (`azKey`, `azRegion`, never in backups). One SSML request per
-  reply switching between `azEn`/`azJa` voices (`AZ_VOICES`), played with Web Audio, cached
-  (`natCache`), monthly characters counted (`ttsChars`, free tier 500k). Falls back to iPhone
-  voices on any error. `isSpeaking()` / `stopSpeak()` cover both engines.
+  Removed engines (owner's request, v27): ElevenLabs, Microsoft Azure and the "Own server" VOICEVOX Space are gone;
+  migrate drops their settings/keys and moves those users to Ryusei everywhere; the ElevenLabs clip cache is deleted on
+  open. The only engines are "quest" (Ryusei everywhere) and "device" (⚡ Fast).
   Free recorded Japanese audio: every `CARDS[*].say` (incl. course words) is pre-recorded with VOICEVOX in
   `audio/himari/` and `audio/ryusei/` (file name = `recId(text)`), chosen with
   `S.settings.jaRec`; `speak()` plays these first for exact matches, and in the default
   engine `speakWithRecordings()` also uses them for any matching Japanese segment inside Yuki's
   replies (rest = iPhone voice). New decks: re-run
   `tools/gen_audio.py`. Credits "VOICEVOX:冥鳴ひまり" / "VOICEVOX:青山龍星" must stay (Me + README).
-  Live "Himari & Ryusei" engine (`S.settings.tts="voicevox"`, `vvUrl`): the owner's own free
-  VOICEVOX server (Hugging Face Space built from `voice-server/Dockerfile`, CORS open). `speakVV`
-  synthesises Japanese segments on the server (`fetchVV`, speaker from `jaRec`, cached) and
-  speaks English segments with the best iPhone voice, in order; falls back to iPhone voices if
-  the server is asleep/unreachable. `pingVV()` wakes the server on open. `vvBase()` accepts
-  "user/space" or a full URL. Shown as "Own server (advanced)" (HF Docker Spaces may need billing).
   Default engine "Ryusei everywhere" (`S.settings.tts="quest"`, default voice `jaRec="ryusei"`):
   Japanese segments play from the recordings when they match, otherwise live from the free public
   VOICEVOX service tts.quest (`questUrl` → mp3StreamingUrl, played on one shared <audio> element
@@ -232,8 +215,8 @@ Safari → Add to Home Screen.
   iPhone speech (`sayDevice`/`sayChunk`): short sentence chunks (≤180 chars), resume if paused,
   120 ms gap after an audio clip, safety timer if "end" never fires, voice assignment guarded.
   🌐 Online English voices (`WEB_EN`, `voiceEn="web:<id>"`, default "web:google" since v25): free text-to-speech with
-  no key or AI credits: Google Translate's `translate_tts` (client=tw-ob, US/UK) and StreamElements (Amazon Polly
-  Joanna/Matthew/Amy/Brian). `sayDevice` sends English to `sayWebEn` (≤170-char sentence chunks on the shared player
+  no key or AI credits: Google Translate's `translate_tts` (client=tw-ob, US/UK). The StreamElements (Polly) voices
+  were removed in v27: on the owner's iPhone they always failed with "play() refused: NotSupportedError". `sayDevice` sends English to `sayWebEn` (≤170-char sentence chunks on the shared player
   via `playUrl`, without bumping `natSeq`); offline, a failure, or 3 failures in a row → the iPhone voice. `speakDevice`
   routes through `sayDevice` when one is chosen (5 s to start; after one failure, the iPhone voice for the rest of
   the session). Reason: the owner's iPhone only gives web apps the basic voices (Samantha), even after downloading Premium.
@@ -370,7 +353,7 @@ Safari → Add to Home Screen.
 - Pages use `.sec` category headings: Practice (Today / Quick practice / decks…), Me (You / Yuki / App).
 
 ## Technical notes
-- State object `S` (currently `v:26`) saved to localStorage key `yuki-sensei-v3`. Keep it backward
+- State object `S` (currently `v:27`) saved to localStorage key `yuki-sensei-v3`. Keep it backward
   compatible. Saved data (and restored backups) go through `migrate()`; if the shape
   changes, bump `DEFAULT.v` and add a step there instead of wiping progress.
 - Clicks route through `data-act` attributes to the `ACT` object.
