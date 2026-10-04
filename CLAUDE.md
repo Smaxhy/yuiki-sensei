@@ -14,9 +14,11 @@ Safari → Add to Home Screen.
   No AI, no credits. Result saved to `S.placement` and can set `S.level`.
 - **Learner card**: `learnerCard()` turns `S.about` + `S.placement` into one compact line
   sent with every request so Yuki always knows who the student is.
-- **Conversation course (N5 path)**: `COURSE` = 12 topic units (greetings, introductions,
-  numbers, food, time, hobbies, family, shopping, directions, weather & feelings, travel, real
-  conversations). Each unit: 3 lessons of max 5 words `[jp, romaji, en]`, a 5-kana bite
+- **Conversation course (N5 path)**: `COURSE` = 14 topic units (greetings, introductions,
+  numbers, food, time, hobbies, family, shopping, directions, weather & feelings, travel, small talk (c13*),
+  making friends (c14*), real conversations). State v26 inserted the two new units before "Real conversations"
+  (migrate remaps cr:11/cq:11:m/cq:11:t → index 13; ck:11 stays since unit 11 still teaches カキクケコ). Each unit
+  has a can-do goal `cd`. Each unit: 3 lessons of max 5 words `[jp, romaji, en]`, a 5-kana bite
   (`kana`), and a roleplay (`rp`; "FINAL" = end-of-course conversation). Path order per unit:
   lesson, lesson, kana, lesson, roleplay. Node keys `cl:<id>`, `ck:<unit>`, `cr:<unit>`.
   Lesson player (`UI.lp`, `vLesson`): Learn (one word per card, recorded audio) → Practise
@@ -30,6 +32,15 @@ Safari → Add to Home Screen.
   → node done and a "Lesson complete" card (`courseDoneCard`) with ✓ Finish lesson / Keep practising
   appears in chat and on the call (hands-free stops auto-listening until "keep practising"). Course words are flashcards `w:<jp>` ("My words" deck) and share spaced
   repetition in `S.cards` (`bumpWord`, `reviewWords`).
+- **Tutor structure** (owner: "make it professional, like a real tutor giving assignments"): every path step has an
+  objective `nodeGoal(n)`, a kind `nodeKind`, minutes `nodeMin`, a plan `nodePlan` (numbered steps + what counts as
+  passing) and `nodeBuilds` (the last finished lesson goal before it). Tapping a node (or the Home "📋 Your next
+  assignment" card, `nextCard()`) opens the lesson brief `vBrief` (`UI.brief` = node key, full screen) → "Start lesson"
+  (`ACT.briefGo` → `startNode`). Unit banners show the unit goal; the path folds finished units into slim bars and shows
+  only banners for units after the next one (no auto-scroll; tap a banner → `unitSheet`, which lists each step with its
+  objective and opens its brief). Lesson-player done screens and `courseDoneCard` show the objective; finishing a
+  roleplay toasts "🏅 Unit goal reached". Progress → "🎯 What you can do now" (`canDoList`/`canDoHTML`: finished lesson
+  goals + reached unit goals, next objective). `coursePrompt` asks Yuki to open with today's objective in one line.
 - **Roleplay warm-up**: a roleplay / the final conversation (CR node) first runs the lesson player on its 5
   target words (`rpTargets(n)`, `UI.lp.pre`: "Warm-up" → Practise, free), then `startTalk(n, lp.targets)` uses
   the same words. `coursePrompt` tells Yuki to use only Japanese the student has learned (anything else with
@@ -350,7 +361,7 @@ Safari → Add to Home Screen.
 - Pages use `.sec` category headings: Practice (Today / Quick practice / decks…), Me (You / Yuki / App).
 
 ## Technical notes
-- State object `S` (currently `v:25`) saved to localStorage key `yuki-sensei-v3`. Keep it backward
+- State object `S` (currently `v:26`) saved to localStorage key `yuki-sensei-v3`. Keep it backward
   compatible. Saved data (and restored backups) go through `migrate()`; if the shape
   changes, bump `DEFAULT.v` and add a step there instead of wiping progress.
 - Clicks route through `data-act` attributes to the `ACT` object.
