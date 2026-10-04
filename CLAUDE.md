@@ -138,7 +138,16 @@ Safari → Add to Home Screen.
   and speechSynthesis that splits Japanese and English into separate voices. Voices are
   ranked by `voiceScore()` (Premium/Enhanced/Siri first, detected from name or `voiceURI` via `isHQ()`, novelty voices excluded) and can be
   chosen in Me (`S.settings.voiceEn` / `voiceJa`).
-  Optional "Natural voices" engine (`S.settings.tts="azure"`): Microsoft Azure neural TTS
+  ElevenLabs engine (`S.settings.tts="eleven"`, `useEleven()`): the owner's own key `elKey` (typed in Me → Voice,
+  localStorage only, blanked in backups and kept on import/reset; NEVER put a key in the code). `speakAI` tries it first
+  (`speakEleven`): the whole reply as ONE request (`elText` fixes は/へ particles and Japanese spaces), model
+  `eleven_flash_v2_5` (cheapest, English + Japanese in one voice), `mp3_22050_32`. Credit saving: clips cached in memory
+  (`elMem`) and on disk (Cache Storage "yuki-eleven", max 500) so repeats are free, exact recorded words still play from
+  the recordings, replies over `EL_MAX` (500 chars) and anything past the monthly cap (`elCap` 5k/10k/20k/50k,
+  counted in `elChars`) use the free voices. Errors (`elFail`): 401/403 → off 30 min, 429 → off 10 min, else that reply
+  falls back. Voices: `elLoadVoices()` (GET /v1/voices, cached in localStorage "yuki-elvoices", previews are free),
+  auto-pick from `EL_PREFER`; `elRefreshSub()` shows account credits. The call-screen ⚡ switch remembers `ttsBack`.
+: Microsoft Azure neural TTS
   (same voices as Edge Read Aloud; Edge TTS itself can't be called from iPhone Safari) via
   REST with the owner's own key (`azKey`, `azRegion`, never in backups). One SSML request per
   reply switching between `azEn`/`azJa` voices (`AZ_VOICES`), played with Web Audio, cached

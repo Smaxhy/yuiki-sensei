@@ -650,7 +650,7 @@ html.light #voice .btn{color:#2a1520}
 <script>
 "use strict";
 // Bump this on every change so phones can spot a new version and offer to update
-const APP_VERSION="2026.10.12-2";
+const APP_VERSION="2026.10.12-3";
 /* ============ DATA ============ */
 const LV = {
   n5:{label:"N5",name:"Beginner",color:"#9fd67c"},
@@ -881,7 +881,7 @@ const DEFAULT={
   threads:{main:{title:"Chat with Yuki",kind:"free",msgs:[],at:0}},chatId:"main",
   settings:{apiKey:"",model:"claude-haiku-4-5-20251001",rate:0.9,autoSpeakChat:false,speakEnglish:true,micLang:"ja-JP",
     style:{length:"short",english:"balanced",script:"auto",simple:false},history:6,voiceEn:"web:google",voiceJa:"",handsFree:false,jaRec:"ryusei",vvUrl:"",enVoice:"iphone",questKey:"",
-    tts:"quest",azKey:"",azRegion:"eastus",azEn:"en-US-AvaMultilingualNeural",azJa:"ja-JP-NanamiNeural",ttsChars:{month:"",n:0},captions:true}
+    tts:"quest",azKey:"",azRegion:"eastus",azEn:"en-US-AvaMultilingualNeural",azJa:"ja-JP-NanamiNeural",ttsChars:{month:"",n:0},elKey:"",elVoice:"",elVoiceName:"",elCap:10000,elChars:{month:"",n:0},ttsBack:"",captions:true}
 };
 let S=JSON.parse(JSON.stringify(DEFAULT));
 const UI={me:null,cal:null,tab:"home",ob:0,obEdit:false,place:null,planCtx:null,lp:null,fc:null,chart:null,voice:false,vstate:"idle",vyou:"",busy:false,listening:false};
@@ -998,10 +998,10 @@ function migrate(st){
   if(st.plan){st.plan.done=obj(st.plan.done);st.plan.custom=arr(st.plan.custom).filter(c=>c&&c.id&&c.title);}  // v6: custom path lessons
   // v6 → v7: natural voices
   const S2=st.settings;
-  if(!["device","azure","voicevox","quest"].includes(S2.tts))S2.tts="quest";
+  if(!["device","azure","voicevox","quest","eleven"].includes(S2.tts))S2.tts="quest";
   if(typeof S2.vvUrl!=="string")S2.vvUrl="";
   if(S2.tts==="voicevox"&&!S2.vvUrl.trim())S2.tts="device";
-  if(!["device","azure","voicevox","quest"].includes(S2.tts))S2.tts="quest";
+  if(!["device","azure","voicevox","quest","eleven"].includes(S2.tts))S2.tts="quest";
   // v9 → v10: Ryusei everywhere (live voice via free tts.quest, recordings in Ryusei)
   if((st.v||0)<10){S2.jaRec="ryusei";if(S2.tts==="device")S2.tts="quest";}
   // v10 → v11: Ryusei can read English too
@@ -1031,6 +1031,9 @@ function migrate(st){
   if(!st.threads[st.chatId])st.chatId="main";
   st.chat=st.threads[st.chatId].msgs;
   if(typeof S2.azKey!=="string")S2.azKey="";
+  ["elKey","elVoice","elVoiceName","ttsBack"].forEach(k=>{if(typeof S2[k]!=="string")S2[k]="";});
+  S2.elCap=EL_CAPS.includes(+S2.elCap)?+S2.elCap:10000;S2.elChars=obj(S2.elChars);S2.elChars.n=num(S2.elChars.n);if(typeof S2.elChars.month!=="string")S2.elChars.month="";
+  if(S2.tts==="eleven"&&!S2.elKey.trim())S2.tts="quest";
   if(!AZ_REGIONS.includes(S2.azRegion))S2.azRegion="eastus";
   if(!AZ_VOICES.en.some(v=>v[0]===S2.azEn))S2.azEn=DEFAULT.settings.azEn;
   if(!AZ_VOICES.ja.some(v=>v[0]===S2.azJa))S2.azJa=DEFAULT.settings.azJa;
@@ -1226,6 +1229,86 @@ async function speakNatural(segs,rate,en,ja){
   src.onended=()=>{if(natSrc===src){natSrc=null;natPlaying=false;}};
   natSrc=src;natPlaying=true;src.start(0);
 }
+/* ---- ElevenLabs voice (owner's own key, kept only on this phone) ---- */
+// Credit saver: the Flash model (cheapest, handles English + Japanese in one voice), one request per reply,
+// every clip kept on the phone (Cache Storage "yuki-eleven") so repeats and "Say it again" are free, a monthly
+// character limit the owner picks, recorded words still play from the free recordings, and very long replies
+// use the free voices instead. Any error or the limit → the free voices take over.
+const EL_MODEL="eleven_flash_v2_5",EL_MAX=500,EL_CAPS=[5000,10000,20000,50000];
+const EL_PREFER=["Jessica","Sarah","Lily","Alice","Matilda","Laura","Charlotte","River"];
+let elOffUntil=0,elNote=false,elSub=null;
+const elMonth=()=>{const m=isoDay().slice(0,7),c=S.settings.elChars;if(c.month!==m){c.month=m;c.n=0;}return c;};
+const elLeft=()=>S.settings.elCap-elMonth().n;
+const useEleven=()=>S.settings.tts==="eleven"&&!!S.settings.elKey.trim()&&!!S.settings.elVoice&&Date.now()>elOffUntil&&location.protocol!=="file:";
+// Japanese written for beginners has spaces and は/へ particles that a voice would read as "ha"/"he"
+const elText=t=>String(t)
+  .replace(/([぀-のば-ヿ㐀-鿿])は(?=[ 　、。！？!?,.]|$)/g,"$1わ")
+  .replace(/([぀-ぷべ-ヿ㐀-鿿])へ(?=[ 　、。！？!?,.]|$)/g,"$1え")
+  .replace(/([぀-ヿ㐀-鿿々ー])[ 　]+(?=[぀-ヿ㐀-鿿々ー])/g,"$1")
+  .replace(/\s+/g," ").trim();
+async function elHash(t){try{const b=await crypto.subtle.digest("SHA-1",new TextEncoder().encode(t));return[...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,"0")).join("");}catch(e){let h=0;for(const c of t)h=(h*31+c.codePointAt(0))|0;return"h"+(h>>>0).toString(16)+t.length;}}
+const elMem=new Map();
+const elHeaders=()=>({"xi-api-key":S.settings.elKey.trim()});
+async function elClip(text){
+  const st=S.settings,key=st.elVoice+"|"+EL_MODEL+"|"+text;
+  if(elMem.has(key))return{url:elMem.get(key),cached:true};
+  const req="https://yuki-eleven.cache/"+(await elHash(key))+".mp3";let c=null;
+  try{c=await caches.open("yuki-eleven");const hit=await c.match(req);if(hit){const u=URL.createObjectURL(await hit.blob());elMem.set(key,u);return{url:u,cached:true};}}catch(e){}
+  if(text.length>elLeft())throw Object.assign(new Error("monthly limit reached"),{cap:true});
+  const ac=new AbortController(),tm=setTimeout(()=>ac.abort(),10000);let r;
+  try{r=await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${encodeURIComponent(st.elVoice)}?output_format=mp3_22050_32`,{method:"POST",signal:ac.signal,
+    headers:{...elHeaders(),"Content-Type":"application/json",Accept:"audio/mpeg"},body:JSON.stringify({text,model_id:EL_MODEL,voice_settings:{stability:0.5,similarity_boost:0.75}})});}
+  finally{clearTimeout(tm);}
+  if(!r.ok){let d="";try{const j=await r.json();d=j.detail&&(j.detail.message||j.detail.status||j.detail)||"";}catch(e){}throw Object.assign(new Error("HTTP "+r.status+(d?" · "+String(d).slice(0,80):"")),{status:r.status});}
+  const blob=await r.blob();if(blob.size<200)throw new Error("empty audio");
+  elMonth().n+=text.length;save();
+  try{if(c){await c.put(req,new Response(blob,{headers:{"Content-Type":"audio/mpeg"}}));const ks=await c.keys();if(ks.length>500)for(const k of ks.slice(0,ks.length-500))await c.delete(k);}}catch(e){}
+  const u=URL.createObjectURL(blob);elMem.set(key,u);
+  if(elMem.size>80){const k=elMem.keys().next().value;URL.revokeObjectURL(elMem.get(k));elMem.delete(k);}
+  return{url:u,cached:false};
+}
+async function speakEleven(text,segs,opts){
+  const t=elText(segs.map(s=>s.t.trim()).join(" "));if(!t)return;
+  if(t.length>EL_MAX)throw Object.assign(new Error("long reply"),{long:true});
+  const my=++natSeq;natBusy=true;natLoading=true;
+  try{const t0=Date.now(),{url,cached}=await elClip(t);vlog((cached?"✓ ElevenLabs (saved, free): ":"✓ ElevenLabs "+(Date.now()-t0)+" ms, "+t.length+" chars: ")+t.slice(0,40));
+    if(my!==natSeq)return;natLoading=false;await playUrl(url,my,opts.rate||S.settings.rate);}
+  finally{if(my===natSeq){natBusy=false;natLoading=false;}}
+}
+function elFail(e){
+  vlog("✗ ElevenLabs: "+e.message);
+  if(e.long)return;
+  if(e.status===401||e.status===403){elOffUntil=Date.now()+30*60e3;toast("ElevenLabs refused the key — using the free voices. Check Me → Voice.",4000);return;}
+  if(e.cap){if(!elNote){elNote=true;toast("This month's ElevenLabs limit is used up — free voices until next month (change it in Me → Voice).",4500);}return;}
+  if(e.status===429){elOffUntil=Date.now()+10*60e3;toast("ElevenLabs is out of credits or busy — free voices for 10 minutes.",4000);return;}
+  if(!elNote){elNote=true;toast("ElevenLabs didn't answer — that reply uses the free voice.",3000);}
+}
+// Voices on the owner's account (listing them and playing their previews is free)
+async function elLoadVoices(){
+  const r=await withTimeout(fetch("https://api.elevenlabs.io/v1/voices",{headers:elHeaders()}),12000);
+  if(!r.ok)throw Object.assign(new Error("HTTP "+r.status),{status:r.status});
+  const j=await r.json();
+  const list=(j.voices||[]).map(v=>({id:v.voice_id,name:v.name,cat:v.category||"",g:(v.labels||{}).gender||"",acc:(v.labels||{}).accent||"",d:(v.labels||{}).description||(v.labels||{}).descriptive||"",p:v.preview_url||""}));
+  try{localStorage.setItem("yuki-elvoices",JSON.stringify(list));}catch(e){}
+  return list;
+}
+const elVoices=()=>{try{return JSON.parse(localStorage.getItem("yuki-elvoices")||"[]");}catch(e){return[];}};
+async function elRefreshSub(){
+  try{const r=await withTimeout(fetch("https://api.elevenlabs.io/v1/user/subscription",{headers:elHeaders()}),10000);if(r.ok){const j=await r.json();elSub={used:j.character_count,limit:j.character_limit,reset:j.next_character_count_reset_unix,tier:j.tier};}}catch(e){}
+  return elSub;
+}
+function elSettings(){
+  const st=S.settings,vs=elVoices(),used=elMonth().n,cur=vs.find(v=>v.id===st.elVoice);
+  return`<p class="sub" style="margin:12px 0 0">Very natural voices from ElevenLabs, with your own key (stored only on this phone, never in backups or the code). One voice speaks both English and Japanese.</p>
+   <input class="field" id="elKeyIn" type="password" placeholder="ElevenLabs API key (sk_…)" value="${esc(st.elKey)}" autocomplete="off" autocapitalize="off" spellcheck="false">
+   <div class="grid2"><button class="btn sm" data-act="saveEl">Save key</button><button class="btn sm ghost" data-act="elVoicesLoad">🔄 Load my voices</button></div>
+   ${st.elKey?`<div class="toggle" style="margin-top:10px"><span>Yuki's voice: <b>${esc(cur?cur.name:st.elVoiceName||"not picked yet")}</b></span><button class="mini" data-act="testVoice">🔊 Test</button></div>`:""}
+   ${vs.length?`<p class="sub" style="margin:12px 0 6px">Pick Yuki's voice (▶ preview is free)</p><div class="card" style="padding:2px 12px;max-height:46vh;overflow:auto">${vs.map(v=>`<div class="wbrow"><button class="phins" data-act="elPick" data-v="${esc(v.id)}" data-n="${esc(v.name)}"><span class="wbj" style="font-size:16px">${v.id===st.elVoice?"✓ ":""}${esc(v.name)}</span><span class="wbe">${esc([v.g,v.acc,v.d].filter(Boolean).join(" · ")||v.cat)}</span></button>${v.p?`<button class="mini" data-act="elPreview" data-u="${esc(v.p)}" aria-label="Preview">▶</button>`:""}</div>`).join("")}</div>`:st.elKey?`<p class="sub" style="margin-top:8px">Tap 🔄 Load my voices to choose one.</p>`:""}
+   <p class="sub" style="margin:14px 0 6px">Monthly limit (protects your credits; after it, the free voices take over)</p>
+   ${chipRow("elCapSet","elCap",String(st.elCap),EL_CAPS.map(n=>[String(n),(n/1000)+"k chars"]))}
+   <p class="sub" style="margin-top:6px">This month on this phone: <b>${used.toLocaleString()}</b> / ${st.elCap.toLocaleString()} characters${elSub&&elSub.limit?` · Your ElevenLabs account: ${Number(elSub.used).toLocaleString()} / ${Number(elSub.limit).toLocaleString()} credits used`:""}</p>
+   <p class="sub" style="margin-top:6px">💡 Saving credits: uses the cheaper Flash model, every sentence is saved on the phone so repeats and 🔁 Say it again are free, words you've learned play from the free Ryusei recordings, and replies over ${EL_MAX} characters use the free voice. The ⚡ Fast switch on the call screen turns ElevenLabs off for a while.</p>`;
+}
 /* ---- Free recorded Japanese voice (VOICEVOX, made ahead of time, served from this site) ---- */
 // Every flashcard/kana sound is recorded in two voices under audio/<voice>/. Credits required by the voice terms.
 const REC_VOICES={himari:{name:"Himari (冥鳴ひまり)",desc:"female · calm, natural",credit:"VOICEVOX:冥鳴ひまり",id:14},ryusei:{name:"Ryusei (青山龍星)",desc:"male · deep, clear",credit:"VOICEVOX:青山龍星",id:13}};
@@ -1242,7 +1325,7 @@ function playRecorded(t,rate){
 // Voice log: what happened each time Yuki tried to speak (Me → Voice → Voice log), to find problems
 const VLOG=[];
 function vlog(msg){const d=new Date();VLOG.push(String(d.getHours()).padStart(2,"0")+":"+String(d.getMinutes()).padStart(2,"0")+":"+String(d.getSeconds()).padStart(2,"0")+"  "+msg);if(VLOG.length>40)VLOG.shift();}
-const engineName=()=>({quest:"Ryusei everywhere",device:"Recordings + iPhone",azure:"Azure",voicevox:"Own server"}[S.settings.tts]||S.settings.tts)+" · English: "+(S.settings.enVoice==="ryusei"?"Ryusei":"iPhone");
+const engineName=()=>({quest:"Ryusei everywhere",device:"Recordings + iPhone",azure:"Azure",voicevox:"Own server",eleven:"ElevenLabs"}[S.settings.tts]||S.settings.tts)+" · English: "+(S.settings.enVoice==="ryusei"?"Ryusei":"iPhone");
 function speak(text,opts){
   opts=opts||{};
   vlog("▶ speak ["+engineName()+"]: "+String(opts.say||text).replace(/\s+/g," ").slice(0,50));
@@ -1368,6 +1451,8 @@ function toSpeakable(t){
 }
 function speakAI(text,opts){
   const segsN=segments(cleanSpeech(text)).filter(s=>s.k==="ja"||S.settings.speakEnglish||opts.forceEnglish);
+  if(!opts.noEleven&&useEleven()&&segsN.length){if(synth)synth.cancel();
+    speakEleven(text,segsN,opts).catch(e=>{natBusy=false;natLoading=false;natPlaying=false;elFail(e);speakAI(text,{...opts,noEleven:true});});return;}
   if(useQuest()&&segsN.length){if(synth)synth.cancel();
     if(enRyusei()){
       // one request with the spoken version (English already in katakana); without it, speak what we safely can
@@ -3861,7 +3946,7 @@ function vMe(){
   `,
    voice:()=>`<button class="btn" style="margin-bottom:12px" data-act="voiceCheck">🩺 Run a voice check (30 seconds)</button><div class="card">
    <p class="sub" style="margin-bottom:6px">Voice engine</p>
-   ${chipRow("ttsSet","tts",st.tts,[["quest","🎌 "+(REC_VOICES[st.jaRec]||REC_VOICES.ryusei).name.split(" ")[0]+" everywhere"],["device","⚡ Fast (iPhone voice)"],["azure","✨ Azure"],["voicevox","Own server"]])}
+   ${chipRow("ttsSet","tts",st.tts,[["quest","🎌 "+(REC_VOICES[st.jaRec]||REC_VOICES.ryusei).name.split(" ")[0]+" everywhere"],["eleven","🎙️ ElevenLabs"],["device","⚡ Fast (iPhone voice)"],["azure","✨ Azure"],["voicevox","Own server"]])}
    ${st.tts==="quest"?`<p class="sub" style="margin:10px 0 0">Free, no key: all Japanese — lessons, chat, calls — is spoken by ${esc((REC_VOICES[st.jaRec]||REC_VOICES.ryusei).name.split(" ")[0])}. Words you're learning play instantly from recordings; new sentences come live from the free VOICEVOX service <b>tts.quest</b> (can take a few seconds; if it's busy, that sentence uses the iPhone voice). English parts use your iPhone's voice (or ${esc((REC_VOICES[st.jaRec]||REC_VOICES.ryusei).name.split(" ")[0])} with a Japanese accent, if you prefer).</p>
     <p class="sub" style="margin:10px 0 6px">Voice</p>${chipRow("recSet","jaRec",st.jaRec==="off"?"ryusei":st.jaRec,Object.entries(REC_VOICES).map(([k,v])=>[k,v.name.split(" ")[0]]))}
     <p class="sub" style="margin:12px 0 6px">English parts</p>${chipRow("enVoiceSet","enVoice",st.enVoice,[["ryusei",(REC_VOICES[st.jaRec]||REC_VOICES.ryusei).name.split(" ")[0]+" (Japanese accent)"],["iphone","iPhone voice"]])}
@@ -3884,6 +3969,7 @@ function vMe(){
     ${chipRow("recSet","jaRec",st.jaRec==="off"?"himari":st.jaRec,Object.entries(REC_VOICES).map(([k,v])=>[k,v.name.split(" ")[0]]))}
     <p class="sub" style="margin-top:6px">Voice: ${esc((REC_VOICES[st.jaRec]||REC_VOICES.himari).credit)}</p>
     ${voicePicker("en","English voice (iPhone)",st.voiceEn)}${englishTip()}`
+   :st.tts==="eleven"?elSettings()
    :st.tts==="azure"?`
     <p class="sub" style="margin:12px 0 0">Human-sounding Microsoft neural voices (the same ones as Edge "Read aloud"). Free for 500,000 characters a month with your own Azure key, stored only on this phone.</p>
     <input class="field" id="azKeyIn" type="password" placeholder="Azure Speech key" value="${esc(st.azKey)}" autocomplete="off" autocapitalize="off" spellcheck="false">
@@ -4033,9 +4119,9 @@ function renderVoice(){
   const cap=last&&!last.err?esc(captionText(last.text)).replace(/\n+/g,"<br>"):last&&last.err?"Connection problem — check the chat.":"Say hi! Try 「こんにちは」 or ask me anything in English.";
   const cc=S.settings.captions,len=S.settings.style.length;
   $("#voice").innerHTML=`<div class="vtop"><button class="iconbtn" data-act="closeVoice" aria-label="Close">✕</button>
-   <div class="vtitle" data-act="voiceLog" role="button" title="Voice log"><b>Yuki</b><small>${useQuest()?"🎌 "+(REC_VOICES[S.settings.jaRec]||REC_VOICES.ryusei).name.split(" ")[0]+"'s voice":useVV()?"🎌 "+(REC_VOICES[S.settings.jaRec]||REC_VOICES.himari).name.split(" ")[0]+"'s voice":useNatural()?"✨ natural voice":"voice call"}</small></div>
+   <div class="vtitle" data-act="voiceLog" role="button" title="Voice log"><b>Yuki</b><small>${useEleven()?"🎙️ "+esc(S.settings.elVoiceName||"ElevenLabs")+" (ElevenLabs)":useQuest()?"🎌 "+(REC_VOICES[S.settings.jaRec]||REC_VOICES.ryusei).name.split(" ")[0]+"'s voice":useVV()?"🎌 "+(REC_VOICES[S.settings.jaRec]||REC_VOICES.himari).name.split(" ")[0]+"'s voice":useNatural()?"✨ natural voice":"voice call"}</small></div>
    <button class="iconbtn" data-act="vCaptions" aria-label="Captions" style="font-size:15px;font-weight:800">${cc?"CC":"🙈"}</button></div>
-   <div class="vopts"><button class="vopt${S.settings.tts==="device"||questPaused()?" on":""}" data-act="vFast">${S.settings.tts==="device"?"⚡ Fast voice":questPaused()?"⚡ Fast · tap for 🎌":"🎌 Ryusei"}</button><button class="vopt${S.settings.handsFree?" on":""}" data-act="vHands">${S.settings.handsFree?"🙌 Hands-free":"✋ Tap to talk"}</button>
+   <div class="vopts"><button class="vopt${S.settings.tts==="device"||questPaused()?" on":""}" data-act="vFast">${S.settings.tts==="device"?"⚡ Fast voice":S.settings.tts==="eleven"?"🎙️ ElevenLabs":questPaused()?"⚡ Fast · tap for 🎌":"🎌 Ryusei"}</button><button class="vopt${S.settings.handsFree?" on":""}" data-act="vHands">${S.settings.handsFree?"🙌 Hands-free":"✋ Tap to talk"}</button>
     ${activeConvo()?`<button class="vopt" data-act="phrases">💡 Phrases</button>`:""}<span class="vlen">${[["tiny","Very short"],["short","Short"],["normal","Normal"]].map(([v,t])=>`<button class="vopt${len===v?" on":""}" data-act="vLen" data-v="${v}">${t}</button>`).join("")}</span></div>
    <div class="orbwrap${activeCourse()||(!UI.listening&&(()=>{const lu=[...S.chat].reverse().find(m=>m.role==="user");return lu&&lu.fix;})())?" compact":""}"><div class="orb ${st}">ゆ</div><div class="vstat">${label}</div>
     ${activeCourse()?`<div class="vchips">${talkChips()}</div>${courseDoneCard(true)}${activeCourse().keep?`<button class="vopt on" data-act="courseDone" style="margin-top:6px">✓ Finish lesson</button>`:""}`:""}
@@ -4227,7 +4313,18 @@ const ACT={
     let started=false;u.onstart=()=>{started=true;};u.onend=()=>toast(started?"English voice ("+(v?v.name:"default")+") worked ✓"+(v&&isHQ(v)?"":" — download Ava (Premium) for a much nicer one"):"English voice: no sound",3500);u.onerror=e=>toast("iPhone voice error: "+(e.error||"unknown"),3500);synth.speak(u);
     setTimeout(()=>{if(!started)toast("iPhone voice didn't start — check Settings → Accessibility → Read &amp; Speak (Spoken Content)",4000);},4000);},
   enVoiceSet:el=>{S.settings.enVoice=el.dataset.v;save();rerender();speak("Hi! This is how I sound in English.",{forceEnglish:true,say:"ハイ！ディス イズ ハウ アイ サウンド イン イングリッシュ。"});},
-  ttsSet:el=>{S.settings.tts=el.dataset.v;natFailNote=false;vvNote=false;questNote=false;save();rerender();pingVV();},
+  ttsSet:el=>{S.settings.tts=el.dataset.v;if(el.dataset.v==="eleven"&&S.settings.elKey)elRefreshSub().then(()=>{if(UI.me==="voice")rerender();});natFailNote=false;vvNote=false;questNote=false;save();rerender();pingVV();},
+  saveEl:async()=>{const v=$("#elKeyIn");S.settings.elKey=v?v.value.trim():"";elOffUntil=0;elNote=false;save();
+    if(!S.settings.elKey){toast("Key removed");rerender();return;}
+    toast("Checking the key…",1500);
+    try{const vs=await elLoadVoices();if(!S.settings.elVoice||!vs.some(x=>x.id===S.settings.elVoice)){const pick=EL_PREFER.map(n=>vs.find(x=>x.name.split(/\s|-/)[0]===n)).find(Boolean)||vs.find(x=>x.g==="female")||vs[0];if(pick){S.settings.elVoice=pick.id;S.settings.elVoiceName=pick.name;}}
+      S.settings.tts="eleven";save();elRefreshSub().then(()=>{if(UI.me==="voice")rerender();});toast("✓ Key works — Yuki now uses "+(S.settings.elVoiceName||"ElevenLabs")+". Tap 🔊 Test",3000);}
+    catch(e){toast(e.status===401?"ElevenLabs says the key is wrong (401)":"Couldn't reach ElevenLabs: "+e.message,4000);}
+    rerender();},
+  elVoicesLoad:async()=>{if(!S.settings.elKey){toast("Paste your key and tap Save key first");return;}try{const vs=await elLoadVoices();elRefreshSub();toast(vs.length+" voices loaded",1500);}catch(e){toast("Couldn't load voices: "+e.message,3500);}rerender();},
+  elPick:el=>{S.settings.elVoice=el.dataset.v;S.settings.elVoiceName=el.dataset.n;S.settings.tts="eleven";elOffUntil=0;save();rerender();toast("Yuki's voice: "+el.dataset.n,1500);},
+  elPreview:el=>{stopSpeak();const my=++natSeq;playUrl(el.dataset.u,my,1).catch(()=>toast("Preview wouldn't play"));},
+  elCapSet:el=>{S.settings.elCap=+el.dataset.v;elNote=false;save();rerender();},
   saveAz:()=>{const v=$("#azKeyIn");S.settings.azKey=v?v.value.trim():"";natCache.clear();natFailNote=false;save();toast(S.settings.azKey?"Key saved — tap Test voice 🔊":"Key removed");rerender();},
   azHelp:()=>sheet(`<div class="h2" style="margin-bottom:10px">✨ Getting natural voices (free)</div><ol>
     <li>In Safari go to <b>portal.azure.com</b> and sign up for a free Microsoft Azure account (it asks for a card to verify you, but the free tier costs nothing).</li>
@@ -4253,8 +4350,8 @@ const ACT={
   vSend:()=>stopMic(),
   vCancel:()=>{stopMic(true);UI.vyou="";},
   // One tap between Ryusei (live from a free online service, can lag) and the iPhone's own Japanese voice (instant)
-  vFast:()=>{if(questPaused()&&S.settings.tts==="quest"){questPauseUntil=0;questLateN=0;toast("🎌 Ryusei is back",1500);renderVoice();return;}const fast=S.settings.tts!=="device";S.settings.tts=fast?"device":"quest";if(!fast&&S.settings.jaRec==="off")S.settings.jaRec="ryusei";questNote=false;save();renderVoice();
-    toast(fast?"⚡ Fast voice: the iPhone's Japanese voice, no waiting (words you've learned still play in Ryusei)":"🎌 Ryusei for everything (can lag when the free service is busy)",3500);},
+  vFast:()=>{if(questPaused()&&S.settings.tts==="quest"){questPauseUntil=0;questLateN=0;toast("🎌 Ryusei is back",1500);renderVoice();return;}const fast=S.settings.tts!=="device";if(fast)S.settings.ttsBack=S.settings.tts;S.settings.tts=fast?"device":S.settings.ttsBack==="eleven"&&S.settings.elKey?"eleven":"quest";if(!fast&&S.settings.jaRec==="off")S.settings.jaRec="ryusei";questNote=false;elOffUntil=0;save();renderVoice();
+    toast(fast?"⚡ Fast voice: the iPhone's Japanese voice, no waiting (words you've learned still play in Ryusei)":S.settings.tts==="eleven"?"🎙️ ElevenLabs voice is back":"🎌 Ryusei for everything (can lag when the free service is busy)",3500);},
   vHands:()=>{S.settings.handsFree=!S.settings.handsFree;save();renderVoice();toast(S.settings.handsFree?"🙌 Yuki tries to listen after she talks (iPhone may still need a tap)":"✋ Tap 🎤 yourself to answer",2500);},
   vLen:el=>{S.settings.style.length=el.dataset.v;save();renderVoice();},
   vCaptions:()=>{S.settings.captions=!S.settings.captions;save();renderVoice();},
@@ -4321,12 +4418,12 @@ const ACT={
     <p class="sub" style="margin-top:10px">The key lives only on this phone. The app file itself has no key in it, so sharing the link doesn't share your key. Pick "Fast & cheap" if you want it to cost less.</p>
     <button class="btn" style="margin-top:14px" data-act="closeSheet">Got it</button>`),
   testVoice:()=>{questNote=false;speak("こんにちは！ゆきです。きょうも いっしょに がんばりましょう。 Hi, this is how I sound.",{forceEnglish:true,say:"こんにちは！ゆきです。きょうも いっしょに がんばりましょう。ハイ、ディス イズ ハウ アイ サウンド。"});},
-  exportData:()=>{const d=JSON.stringify({...S,settings:{...S.settings,apiKey:"",azKey:"",questKey:""}});sheet(`<div class="h2">Backup</div><p class="sub" style="margin:8px 0">Copy this and keep it somewhere safe (Notes works). Your API keys aren't included.</p><textarea class="field" rows="6" readonly>${esc(d)}</textarea><button class="btn" data-act="copyBackup">Copy</button><button class="btn ghost" style="margin-top:8px" data-act="closeSheet">Close</button>`);},
+  exportData:()=>{const d=JSON.stringify({...S,settings:{...S.settings,apiKey:"",azKey:"",questKey:"",elKey:""}});sheet(`<div class="h2">Backup</div><p class="sub" style="margin:8px 0">Copy this and keep it somewhere safe (Notes works). Your API keys aren't included.</p><textarea class="field" rows="6" readonly>${esc(d)}</textarea><button class="btn" data-act="copyBackup">Copy</button><button class="btn ghost" style="margin-top:8px" data-act="closeSheet">Close</button>`);},
   copyBackup:()=>{const t=document.querySelector("#sheet textarea");if(navigator.clipboard)navigator.clipboard.writeText(t.value).then(()=>toast("Copied"),()=>{t.select();toast("Select all and copy");});else{t.select();toast("Select all and copy");}},
   importData:()=>sheet(`<div class="h2">Restore</div><p class="sub" style="margin:8px 0">Paste a backup below.</p><textarea id="impT" class="field" rows="6"></textarea><button class="btn" data-act="doImport">Restore</button><button class="btn ghost" style="margin-top:8px" data-act="closeSheet">Cancel</button>`),
-  doImport:()=>{try{const d=JSON.parse($("#impT").value);const key=S.settings.apiKey,az=S.settings.azKey,qk=S.settings.questKey;S=migrate(merge(JSON.parse(JSON.stringify(DEFAULT)),d));S.settings.apiKey=key;S.settings.azKey=az;S.settings.questKey=qk;linkChat();save();closeSheet();toast("Restored ✅");render();}catch(e){toast("That doesn't look like a backup");}},
+  doImport:()=>{try{const d=JSON.parse($("#impT").value);const key=S.settings.apiKey,az=S.settings.azKey,qk=S.settings.questKey,ek=S.settings.elKey;S=migrate(merge(JSON.parse(JSON.stringify(DEFAULT)),d));S.settings.apiKey=key;S.settings.azKey=az;S.settings.questKey=qk;S.settings.elKey=ek;linkChat();save();closeSheet();toast("Restored ✅");render();}catch(e){toast("That doesn't look like a backup");}},
   clearChat:()=>{if(confirm("Clear the chat? Your progress and what Yuki knows about you stay.")){S.chat.length=0;S.currentLesson=null;save();toast("Chat cleared");}},
-  resetAll:()=>{if(confirm("Erase EVERYTHING — progress, cards, memory, chat?")){const key=S.settings.apiKey,az=S.settings.azKey,qk=S.settings.questKey;S=JSON.parse(JSON.stringify(DEFAULT));S.settings.apiKey=key;S.settings.azKey=az;S.settings.questKey=qk;linkChat();UI.ob=0;UI.obEdit=false;UI.place=null;UI.tab="home";save();render();}},
+  resetAll:()=>{if(confirm("Erase EVERYTHING — progress, cards, memory, chat?")){const key=S.settings.apiKey,az=S.settings.azKey,qk=S.settings.questKey,ek=S.settings.elKey;S=JSON.parse(JSON.stringify(DEFAULT));S.settings.apiKey=key;S.settings.azKey=az;S.settings.questKey=qk;S.settings.elKey=ek;linkChat();UI.ob=0;UI.obEdit=false;UI.place=null;UI.tab="home";save();render();}},
   checkUpdate:()=>checkUpdate(true),
   closeSheet:()=>closeSheet()
 };
