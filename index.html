@@ -592,7 +592,7 @@ html.light #voice .btn{color:#2a1520}
 <script>
 "use strict";
 // Bump this on every change so phones can spot a new version and offer to update
-const APP_VERSION="2026.10.10-1";
+const APP_VERSION="2026.10.10-2";
 /* ============ DATA ============ */
 const LV = {
   n5:{label:"N5",name:"Beginner",color:"#9fd67c"},
@@ -996,7 +996,7 @@ function pickVoice(lang){
   if(chosen==="system")return sysVoice(lang)||list[0]||null;
   return (chosen&&list.find(v=>v.name===chosen))||list[0]||null;
 }
-const voiceNow=lang=>{const v=pickVoice(lang);return v?v.name+(isHQ(v)?" ★":""):"iPhone's own voice (Spoken Content)";};
+const voiceNow=lang=>{const v=pickVoice(lang);return v?v.name+(isHQ(v)?" ★":""):"iPhone default voice";};
 const JP=/[\u3040-\u30ff\u3400-\u9fff\uff66-\uff9f\u3005]/;
 function cleanSpeech(t){
   return stripHidden(t).replace(/<<MEM>>[\s\S]*$/,"")
@@ -3559,6 +3559,7 @@ function vMe(){
     <p class="sub" style="margin:12px 0 6px">English parts</p>${chipRow("enVoiceSet","enVoice",st.enVoice,[["ryusei",(REC_VOICES[st.jaRec]||REC_VOICES.ryusei).name.split(" ")[0]+" (Japanese accent)"],["iphone","iPhone voice"]])}
     ${st.enVoice==="iphone"?voicePicker("en","English voice",st.voiceEn):""}
     ${st.enVoice==="iphone"?`<div class="toggle" style="margin-top:6px"><span>English voice now: <b>${esc(voiceNow("en-US"))}</b></span><button class="mini" data-act="iphoneVoiceTest">🔊 Test</button></div>`:""}
+    ${st.enVoice==="iphone"?enVoiceList():""}
     <button class="btn sm ghost" style="margin-top:12px" data-act="voiceLog">🧾 Voice log (send me a screenshot if voice is wrong)</button>
     <button class="btn sm" style="margin-top:8px" data-act="questTest">🔎 Test Ryusei's live voice</button>
     <details style="margin-top:10px"><summary class="sub" style="min-height:44px;display:flex;align-items:center">Optional: free tts.quest key (faster, fewer "busy")</summary>
@@ -3644,6 +3645,14 @@ function spendCard(){
    <p class="sub" style="margin-top:10px">${avg?`At this rate, $20 is about <b>${Math.round(20/avg).toLocaleString()}</b> replies. Last reply: ${U.lastIn.toLocaleString()} tokens in, ${U.lastOut} out (${usd(U.last)}).`:"Counted from your next reply on."}</p>
    <p class="sub" style="margin-top:6px">Free, no credits: flashcards, the multiple-choice quiz, lesson Learn & Practise steps, kana charts, the level check, Ryusei & iPhone voices. Credits are only used when Yuki writes a reply.</p>
    ${S.settings.model==="claude-sonnet-5-5"?`<p class="sub" style="margin-top:6px;color:var(--gold)">You're on Smart (Sonnet): about 2–4× the cost of Fast & cheap.</p>`:""}</div>`;
+}
+// Every English voice Safari gives the app, so the owner can see whether a downloaded voice arrived
+function enVoiceList(){
+  const list=voiceList("en-US").filter(v=>!NOVELTY.test(v.name)),hq=list.filter(isHQ).length;
+  return`<details style="margin-top:6px"><summary class="sub" style="min-height:44px;display:flex;align-items:center">English voices Yuki can use: ${list.length} (${hq} ★ high quality) ›</summary>
+   <p class="sub" style="margin:4px 0 8px">Only these can be used. Siri voices never show up here (Apple keeps them for Siri). After downloading a new voice, close Yuki fully, reopen it and tap Refresh.</p>
+   ${list.slice(0,40).map(v=>`<div class="wbrow"><span class="wbe"><b>${esc(v.name)}${isHQ(v)?" ★":""}</b><small>${esc(v.lang)}${/premium/.test(vq(v))?" · Premium":/enhanced/.test(vq(v))?" · Enhanced":""}</small></span></div>`).join("")||`<p class="sub">No English voices reported yet.</p>`}
+   <button class="btn sm ghost" style="margin-top:8px" data-act="refreshVoices">🔄 Refresh voice list</button></details>`;
 }
 function englishTip(){
   const best=voiceList("en-US")[0];
@@ -3847,10 +3856,11 @@ const ACT={
     <div class="grid2"><button class="btn ghost" data-act="copyLog">📋 Copy log</button><button class="btn" data-act="closeSheet">Close</button></div>`),
   copyLog:()=>{const t="Yuki "+APP_VERSION+" · "+engineName()+" · English voice: "+voiceNow("en-US")+"\n"+VLOG.join("\n");
     (navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject()).then(()=>toast("Copied — paste it to Claude"),()=>{const ta=document.createElement("textarea");ta.value=t;document.body.appendChild(ta);ta.select();try{document.execCommand("copy");toast("Copied — paste it to Claude");}catch(e){toast("Couldn't copy — take a screenshot instead");}ta.remove();});},
+  refreshVoices:()=>{loadVoices();setTimeout(()=>{loadVoices();rerender();toast(voiceList("en-US").filter(isHQ).length?"Found a ★ voice: "+voiceNow("en-US"):"No ★ voice yet — download one, then reopen Yuki",3000);},400);},
   iphoneVoiceTest:()=>{if(!synth){toast("This browser has no built-in voice");return;}synth.cancel();stopQuest();const u=new SpeechSynthesisUtterance("Hello! This is my English voice. Let's practise Japanese together.");u.lang="en-US";const v=pickVoice("en-US");if(v)u.voice=v;
     vlog("▶ English voice test: "+(v?v.name+(isHQ(v)?" (premium/enhanced)":" (basic)"):"default"));
     let started=false;u.onstart=()=>{started=true;};u.onend=()=>toast(started?"English voice ("+(v?v.name:"default")+") worked ✓"+(v&&isHQ(v)?"":" — download Ava (Premium) for a much nicer one"):"English voice: no sound",3500);u.onerror=e=>toast("iPhone voice error: "+(e.error||"unknown"),3500);synth.speak(u);
-    setTimeout(()=>{if(!started)toast("iPhone voice didn't start — check Settings → Accessibility → Spoken Content",4000);},4000);},
+    setTimeout(()=>{if(!started)toast("iPhone voice didn't start — check Settings → Accessibility → Read &amp; Speak (Spoken Content)",4000);},4000);},
   enVoiceSet:el=>{S.settings.enVoice=el.dataset.v;save();rerender();speak("Hi! This is how I sound in English.",{forceEnglish:true,say:"ハイ！ディス イズ ハウ アイ サウンド イン イングリッシュ。"});},
   ttsSet:el=>{S.settings.tts=el.dataset.v;natFailNote=false;vvNote=false;questNote=false;save();rerender();pingVV();},
   saveAz:()=>{const v=$("#azKeyIn");S.settings.azKey=v?v.value.trim():"";natCache.clear();natFailNote=false;save();toast(S.settings.azKey?"Key saved — tap Test voice 🔊":"Key removed");rerender();},
@@ -3863,9 +3873,9 @@ const ACT={
     <button class="btn" style="margin-top:14px" data-act="closeSheet">Got it</button>`),
   voiceHelp:()=>sheet(`<div class="h2" style="margin-bottom:10px">🔊 Make Yuki sound better</div>
     <p class="sub" style="margin-bottom:10px"><b>Why changing the voice in iPhone Settings didn't change Yuki:</b> Safari doesn't tell web apps which voice you picked there, and Apple doesn't let web apps use <b>Siri</b> voices at all. What web apps <i>can</i> use is any voice you <b>download</b> in Settings. Yuki then picks the best one by itself.</p>
-    <p class="sub" style="margin-bottom:10px;display:none"><b>Siri's voice:</b> with "📱 iPhone's own voice" picked (Me → Voice), Yuki speaks English with the voice your iPhone uses for reading aloud. Choose it in <b>Settings → Accessibility → Spoken Content → Voices → English</b>. Pick a <b>Siri</b> voice there if your iPhone offers one. Apple doesn't always let websites use Siri voices; if it doesn't, pick a Premium voice instead (steps below).</p>
+    <p class="sub" style="margin-bottom:10px;display:none"><b>Siri's voice:</b> with "📱 iPhone's own voice" picked (Me → Voice), Yuki speaks English with the voice your iPhone uses for reading aloud. Choose it in <b>Settings → Accessibility → Read &amp; Speak → Voices → English</b>. Pick a <b>Siri</b> voice there if your iPhone offers one. Apple doesn't always let websites use Siri voices; if it doesn't, pick a Premium voice instead (steps below).</p>
     <p class="sub" style="margin-bottom:10px">Your iPhone has much nicer voices, but you have to download them first (free):</p><ol>
-    <li>Open <b>Settings → Accessibility → Spoken Content → Voices</b>.</li>
+    <li>Open <b>Settings → Accessibility → Read &amp; Speak → Voices</b> (on older iPhones it's called <b>Spoken Content</b>). Easiest: open Settings and type <b>Voices</b> in the search bar at the top.</li>
     <li>Tap <b>English</b> → <b>English (US)</b> (or UK/Australia), pick <b>Ava</b>, <b>Zoe</b> or <b>Evan</b>, and tap the download button next to <b>Premium</b> (best) or <b>Enhanced</b>. It's about 100–400 MB, so use Wi-Fi.</li>
     <li>Wait until the download finishes, then close Yuki fully (swipe it away) and reopen it.</li>
     <li>In <b>Me → Voice → English voice</b>, "Automatic" now shows the new voice with a <b>★</b>. Tap <b>🔊 Test</b>. (Or pick another voice from the list.)</li></ol>

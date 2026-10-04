@@ -208,6 +208,8 @@ Safari → Add to Home Screen.
   can't use Siri voices, so "system" just gave the basic voice. Better voices come from downloading a Premium/
   Enhanced voice in Settings → Accessibility → Spoken Content → Voices (then reopen the app); Automatic picks it up.
   Me → Voice shows the English voice in use (★ = Premium/Enhanced) with a 🔊 Test button.
+  Below it, `enVoiceList()` lists every English voice Safari reports (★ count) with "🔄 Refresh voice list"
+  (`ACT.refreshVoices`). Settings path on newer iOS: Accessibility → Read & Speak (was Spoken Content) → Voices.
   Voice log (`VLOG`, `vlog()`, Me → Voice → "🧾 Voice log", or tap the title on the call screen):
   every speak attempt, tts.quest request/answer, audio play/refusal/error and iPhone voice that
   didn't start, for diagnosing problems on the owner's phone. "📋 Copy log" copies it (with app version, engine and
