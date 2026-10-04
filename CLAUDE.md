@@ -80,7 +80,11 @@ Safari → Add to Home Screen.
   that appears once you scroll past a banner (`pathScroll`). N5 = the conversation course;
   other levels are built from `CUR[level]` (lessons + a 🏆 unit review). `pathNodes()` /
   `pathUnits()`; custom ⭐ lessons in `S.plan.custom` ({id,title,before,level}) from the
-  "⭐ Add a lesson" sheet or Yuki's `path` MEM field. Progress in `S.plan.done`.
+  "⭐ Add a lesson" sheet or Yuki's `path` MEM field (accepted only when the student's last message asks to add
+  a lesson / mentions the path; Yuki used to add repeats by herself, so v28 cleared all old ⭐ lessons). Progress in
+  `S.plan.done`. Locking: `nodeLocked(n)` = not done and after the first unfinished step; tapping it (path, unit sheet,
+  brief) only toasts `lockedToast()`; locked bubbles show a 🔒 badge. Finished steps can always be redone; "skip the
+  unit" in the unit sheet still marks a whole unit done.
 - **Tabs**: Path, Yuki (chat), Translate (`UI.tab="translate"`), Practice, Cards, Me (labels 10.5px). Progress (`UI.tab="progress"`) is opened from the top row of Me → You (and the Home goal ring / streak pill); it has a "‹ Me" back button and lights up the Me tab. Cards (`vCards`) lists only learned cards
   (`S.cards`), weakest first, filter chips (`UI.cardsF`), and practises them with the "mine" decks
   (`MINE`: mine / mine-words / mine-kana / mine-kanji = due first, then weakest, never new cards). Home's
@@ -361,7 +365,7 @@ Safari → Add to Home Screen.
 - Pages use `.sec` category headings: Practice (Today / Quick practice / decks…), Me (You / Yuki / App).
 
 ## Technical notes
-- State object `S` (currently `v:27`) saved to localStorage key `yuki-sensei-v3`. Keep it backward
+- State object `S` (currently `v:28`) saved to localStorage key `yuki-sensei-v3`. Keep it backward
   compatible. Saved data (and restored backups) go through `migrate()`; if the shape
   changes, bump `DEFAULT.v` and add a step there instead of wiping progress.
 - Clicks route through `data-act` attributes to the `ACT` object.
