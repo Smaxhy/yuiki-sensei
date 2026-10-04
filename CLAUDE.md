@@ -322,6 +322,14 @@ Safari → Add to Home Screen.
   → `startConvo(id,voice)`: own thread `cv:<id>`, `S.convo` = {id,title,scene,turns}; `convoPrompt()` (in `memoryPrompt`,
   only in that thread via `activeConvo()`) keeps Yuki in character, chatting naturally, and after ~10 exchanges wrapping
   up with what went well, 2 things to improve and a score /10. Turns counted in `send`.
+- **Making friends & small talk** (Practice → 🤝, top of the page): `TALK` = 6 groups (start a chat, react, keep it going,
+  topics, make friends, rescue phrases), 40 phrases `[jp spaced, romaji, en]`; cards `t:<jp without spaces>` (deck "talk",
+  `talkSay`, `cardKind` "talk", Cards filter "Phrases", `mine-talk`, ＋ 5 new phrases). Recorded in Ryusei/Himari (particle
+  は synthesised as わ). `CONVOS` entries with a 6th field "st" (stranger 🎲 / mkfriend 🤝 / roulette 🎡) get a fresh random
+  scene from `convoScene()` (`ST_PEOPLE`, `ST_PLACES`, `ST_TOPICS`, all adults) and small-talk coaching in `convoPrompt`
+  (`S.convo.st`: tip to react/ask back, wrap-up rates reactions, asking back, keeping it going). 💡 Phrase helper in any
+  convo thread: chips `PH_QUICK` + "💡 Phrases" (`phraseSheet`, `ACT.phIns` inserts into `#inp`; on a call it speaks it),
+  also a 💡 button on the call screen. `buildQz("words")` now maps to "word" (the Words quiz button was finding nothing).
 - **Quizzes**: mixed, weak spots, vocab, grammar, kanji, listening, translation, and
   roleplay, all run by Yuki in chat one question at a time.
 - **Reliability**: `apiRequest` gives up after 60 s (AbortController) so Yuki can't hang on "thinking";
