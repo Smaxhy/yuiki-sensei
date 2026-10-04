@@ -7,7 +7,6 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Yuki">
-<meta name="referrer" content="no-referrer">
 <meta name="theme-color" content="#151722">
 <title>Yuki Sensei</title>
 <link id="touchIcon" rel="apple-touch-icon" href="">
@@ -593,7 +592,7 @@ html.light #voice .btn{color:#2a1520}
 <script>
 "use strict";
 // Bump this on every change so phones can spot a new version and offer to update
-const APP_VERSION="2026.10.10-3";
+const APP_VERSION="2026.10.10-4";
 /* ============ DATA ============ */
 const LV = {
   n5:{label:"N5",name:"Beginner",color:"#9fd67c"},
@@ -1203,12 +1202,12 @@ async function sayWebEn(t,rate,g){
   let buf="";const chunks=[];parts.forEach(p=>{if((buf+p).length>170&&buf){chunks.push(buf);buf="";}buf+=p;});if(buf.trim())chunks.push(buf);
   for(let i=0;i<chunks.length;i++){if(g!==spGen)return"";const c=chunks[i].trim();if(!c)continue;
     const my=natSeq;vlog("▶ online English voice ("+webEnId()+"): "+c.slice(0,40));
-    try{await playUrl(w[1](c),my,rate);webEnFails=0;}catch(e){webEnFails++;vlog("✗ online English voice failed, iPhone voice takes over");return chunks.slice(i).join(" ");}}
+    try{await playUrl(w[1](c),my,rate,5000);webEnFails=0;}catch(e){webEnFails++;vlog("✗ online English voice failed, iPhone voice takes over (until the app is reopened)");return chunks.slice(i).join(" ");}}
   return"";
 }
 async function sayDevice(t,lang,rate){
   t=String(t).trim();if(!t)return;
-  if(/^en/i.test(lang)&&webEnId()&&navigator.onLine!==false&&webEnFails<3){const g=spGen;const left=await sayWebEn(t,rate,g);if(!left||g!==spGen)return;t=left;}
+  if(/^en/i.test(lang)&&webEnId()&&navigator.onLine!==false&&webEnFails<1){const g=spGen;const left=await sayWebEn(t,rate,g);if(!left||g!==spGen)return;t=left;}
   if(!synth){vlog("✗ iPhone voice: not available");return;}
   const g=spGen,gap=120-(Date.now()-clipEndAt);if(gap>0)await new Promise(r=>setTimeout(r,gap));
   const parts=t.match(/[^.!?。！？\n]+[.!?。！？]*\s*/g)||[t];
@@ -1317,7 +1316,7 @@ async function questUrl(text){
 // matter what happens next (an iPhone glitch near the end must never make Ryusei say it again).
 // Stalls are treated as finished, and a newer clip or Stop ends the old one cleanly.
 let playId=0,clipEndAt=0,synthEndAt=0;
-function playUrl(url,my,rate){return new Promise((res,rej)=>{
+function playUrl(url,my,rate,maxStart){return new Promise((res,rej)=>{
   if(my!==natSeq)return res();
   const a=questPlayer(),id=++playId,name=url.split("/").slice(-2).join("/");
   let done=false,started=false,lastT=-1,lastMove=Date.now();
@@ -1327,7 +1326,7 @@ function playUrl(url,my,rate){return new Promise((res,rej)=>{
   const t=setTimeout(()=>{vlog("… clip took too long, stopping it");try{if(playId===id)a.pause();}catch(e){}fin(false);},45000);
   // iPhone sometimes accepts play() and then stays silent: if nothing has started soon, give up so the
   // iPhone voice can say it instead (recordings and preloaded clips are local, so they start at once)
-  const t2=setTimeout(()=>{if(!started&&!done){vlog("✗ clip didn't start: "+name);try{if(playId===id)a.pause();}catch(e){}fin(false);}},/^(blob:|data:)/.test(url)||!/^https?:/.test(url)||url.startsWith(location.origin)?3500:9000);
+  const t2=setTimeout(()=>{if(!started&&!done){vlog("✗ clip didn't start: "+name);try{if(playId===id)a.pause();}catch(e){}fin(false);}},maxStart||(/^(blob:|data:)/.test(url)||!/^https?:/.test(url)||url.startsWith(location.origin)?3500:9000));
   const iv=setInterval(()=>{
     if(playId!==id||my!==natSeq){fin(true);return;}
     if(started){if(a.currentTime!==lastT){lastT=a.currentTime;lastMove=Date.now();}
@@ -3579,7 +3578,7 @@ function vMe(){
    <button class="btn sm ghost" style="margin-top:8px" data-act="keyHelp">How do I get a key?</button>
   </div>
   `,
-   voice:()=>`<div class="card">
+   voice:()=>`<button class="btn" style="margin-bottom:12px" data-act="voiceCheck">🩺 Run a voice check (30 seconds)</button><div class="card">
    <p class="sub" style="margin-bottom:6px">Voice engine</p>
    ${chipRow("ttsSet","tts",st.tts,[["quest","🎌 "+(REC_VOICES[st.jaRec]||REC_VOICES.ryusei).name.split(" ")[0]+" everywhere"],["device","⚡ Fast (iPhone voice)"],["azure","✨ Azure"],["voicevox","Own server"]])}
    ${st.tts==="quest"?`<p class="sub" style="margin:10px 0 0">Free, no key: all Japanese — lessons, chat, calls — is spoken by ${esc((REC_VOICES[st.jaRec]||REC_VOICES.ryusei).name.split(" ")[0])}. Words you're learning play instantly from recordings; new sentences come live from the free VOICEVOX service <b>tts.quest</b> (can take a few seconds; if it's busy, that sentence uses the iPhone voice). English parts use your iPhone's voice (or ${esc((REC_VOICES[st.jaRec]||REC_VOICES.ryusei).name.split(" ")[0])} with a Japanese accent, if you prefer).</p>
@@ -3699,7 +3698,48 @@ function voicePicker(lang,label,cur){
    ${lang==="en"?"</optgroup>":""}</select>`;
 }
 
-/* ============ VOICE CALL ============ */
+/* ---- 🩺 Voice check: tests each voice part on this phone, shows what fails, and switches to what works ---- */
+const VC={on:false,r:{}};
+const VC_STEPS=[["rec","🎌 Ryusei, recorded words","plays files from the app"],["quest","🎌 Ryusei, live sentences","free tts.quest service, needs internet"],["web","🌐 English, online voice","free Google voice, needs internet"],["iph","📱 English, iPhone voice","works offline"]];
+function vcHTML(){
+  const ic=k=>({run:"⏳",ok:"✅",bad:"❌",skip:"➖"}[VC.r[k]&&VC.r[k][0]]||"○");
+  const done=VC_STEPS.every(([k])=>VC.r[k]&&VC.r[k][0]!=="run");
+  return`<div class="h2">🩺 Voice check</div><p class="sub" style="margin:6px 0 10px">${done?"Done. Here's what works on your phone:":"Listen: each part plays a short sentence…"}</p>
+   <div class="card" style="padding:4px 14px">${VC_STEPS.map(([k,t,d])=>`<div class="urow"><i>${ic(k)}</i><span><b>${t}</b><br><small class="sub">${esc(VC.r[k]&&VC.r[k][1]||d)}</small></span></div>`).join("")}
+    <div class="urow"><i>${VC.mic?VC.mic[0]==="ok"?"✅":VC.mic[0]==="bad"?"❌":"⏳":"○"}</i><span><b>🎤 Microphone</b><br><small class="sub">${esc(VC.mic?VC.mic[1]:"tap Test mic below and say something in English")}</small></span></div></div>
+   ${done&&VC.fix?`<div class="card" style="margin-top:4px"><b>🔧 Fixed for you</b><p class="sub" style="margin-top:4px">${VC.fix}</p></div>`:""}
+   <div class="grid2" style="margin-top:6px"><button class="btn ghost" data-act="vcMic">${UI.listening?"■ Stop mic":"🎤 Test mic"}</button><button class="btn" data-act="vcClose">Done</button></div>
+   <button class="btn sm ghost" style="margin-top:8px" data-act="copyLog">📋 Copy the results for Claude</button>`;
+}
+function vcShow(){if(VC.on)sheet(vcHTML());}
+async function voiceCheck(){
+  stopSpeak();resetAudio();VC.on=true;VC.r={};VC.mic=null;VC.fix="";
+  VC_STEPS.forEach(([k])=>VC.r[k]=["run",""]);vcShow();
+  const set=(k,ok,msg)=>{VC.r[k]=[ok?"ok":"bad",msg];vlog((ok?"✓ check ":"✗ check ")+k+": "+msg);vcShow();};
+  const play=async(url,max)=>{const my=++natSeq;natBusy=true;try{await playUrl(url,my,1,max);}finally{if(my===natSeq)natBusy=false;}};
+  // 1. a recording that ships with the app
+  try{await play(recUrlFor("こんにちは"),4000);set("rec",true,"played");}catch(e){set("rec",false,"couldn't play the app's own audio file");}
+  // 2. Ryusei live
+  try{questCache.clear();const o=await Promise.race([questUrl("きょうは いい てんきですね。"),new Promise((_,rj)=>setTimeout(()=>rj(new Error("no answer in 15 s")),15000))]);
+    const my=++natSeq;natBusy=true;try{await playQuestAudio(o,my);}finally{if(my===natSeq)natBusy=false;}set("quest",true,"played");}
+  catch(e){set("quest",false,"tts.quest: "+String(e&&e.message||e).slice(0,60));}
+  // 3. English online
+  try{await play(WEB_EN.google[1]("Hello! This is the online English voice."),6000);set("web",true,"played");}catch(e){set("web",false,"the Google voice didn't play");}
+  // 4. English iPhone voice
+  await new Promise(res=>{if(!synth){set("iph",false,"no iPhone voice in this browser");return res();}
+    const u=new SpeechSynthesisUtterance("And this is the iPhone voice.");u.lang="en-US";const v=voiceList("en-US")[0];if(v)u.voice=v;let st=false;
+    u.onstart=()=>{st=true;};u.onend=()=>{set("iph",st,st?"played"+(v?" ("+v.name+")":""):"no sound");res();};u.onerror=e=>{set("iph",false,"error: "+(e.error||"?"));res();};
+    try{synth.cancel();synth.speak(u);}catch(e){set("iph",false,e.message);res();}
+    setTimeout(()=>{if(!st&&VC.r.iph[0]==="run"){try{synth.cancel();}catch(e){}set("iph",false,"didn't start in 6 s");res();}},6000);});
+  // Switch to what works
+  const ok=k=>VC.r[k][0]==="ok",fix=[];
+  if(!ok("web")&&webEnId()){S.settings.voiceEn="";fix.push("English now uses the iPhone voice (the online voice didn't play).");}
+  if(ok("web")&&!webEnId()&&!voiceList("en-US").some(isHQ)){S.settings.voiceEn="web:google";webEnFails=0;fix.push("English now uses the natural online voice.");}
+  if(ok("web"))webEnFails=0;
+  if(!ok("quest")&&S.settings.tts==="quest"){S.settings.tts="device";fix.push("Live Ryusei didn't work, so Yuki switched to ⚡ Fast voice (Ryusei still says every word you've learned). You can switch back in Me → Voice.");}
+  save();VC.fix=fix.join(" ");vcShow();
+}
+
 function openVoice(){if(UI.listening)stopMic(true);UI.voice=true;UI.vstate="idle";UI.vyou="";$("#voice").classList.remove("hidden");renderVoice();
   if(!S.chat.length||S.chat[S.chat.length-1].role!=="assistant"){/* nothing */}}
 function closeVoice(){UI.voice=false;stopMic(true);stopSpeak();$("#voice").classList.add("hidden");if(UI.tab==="chat")render();}
@@ -3746,7 +3786,7 @@ function afterYukiSpoke(){const c=activeCourse();if(c&&c.used.length>=c.targets.
 
 /* ============ SHEET ============ */
 function sheet(html){const s=$("#sheet");s.innerHTML=`<div class="sh">${html}</div>`;s.classList.remove("hidden");}
-function closeSheet(){$("#sheet").classList.add("hidden");$("#sheet").innerHTML="";}
+function closeSheet(){if(typeof VC!=="undefined")VC.on=false;$("#sheet").classList.add("hidden");$("#sheet").innerHTML="";}
 $("#sheet").addEventListener("click",e=>{if(e.target.id==="sheet")closeSheet();});
 
 /* ============ ACTIONS ============ */
@@ -3884,7 +3924,12 @@ const ACT={
   voiceLog:()=>sheet(`<div class="h2">🧾 Voice log</div><p class="sub" style="margin:6px 0 10px">Voice: <b>${esc(engineName())}</b> · app ${APP_VERSION}<br>Newest at the bottom. Take a screenshot right after the voice goes wrong.</p>
     <div class="card" style="font-family:ui-monospace,Menlo,monospace;font-size:12px;line-height:1.5;max-height:50vh;overflow:auto;white-space:pre-wrap">${VLOG.length?esc(VLOG.join("\n")):"Nothing yet — let Yuki speak first."}</div>
     <div class="grid2"><button class="btn ghost" data-act="copyLog">📋 Copy log</button><button class="btn" data-act="closeSheet">Close</button></div>`),
-  copyLog:()=>{const t="Yuki "+APP_VERSION+" · "+engineName()+" · English voice: "+voiceNow("en-US")+"\n"+VLOG.join("\n");
+  voiceCheck:()=>voiceCheck(),
+  vcClose:()=>{VC.on=false;if(UI.listening)stopMic(true);closeSheet();if(UI.tab==="me")rerender();},
+  vcMic:()=>{if(UI.listening){stopMic();return;}VC.mic=["run","listening… say something, then tap Stop mic"];vcShow();
+    startMic(t=>{VC.mic=["run","heard: "+t];vcShow();},final=>{VC.mic=final?["ok","heard: \""+final+"\""]:["bad","heard nothing. See the mic tips (Settings → Safari → Microphone, Dictation on)"];vlog((final?"✓":"✗")+" check mic: "+(final||"nothing"));vcShow();},"en-US");vcShow();},
+  copyLog:()=>{const vc=VC_STEPS.map(([k,t])=>t+": "+(VC.r[k]?VC.r[k].join(" "):"not run")).join("\n")+"\nMic: "+(VC.mic?VC.mic.join(" "):"not run");
+    const t="Yuki "+APP_VERSION+" · "+engineName()+" · English voice: "+voiceNow("en-US")+"\n"+vc+"\n"+VLOG.join("\n");
     (navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject()).then(()=>toast("Copied — paste it to Claude"),()=>{const ta=document.createElement("textarea");ta.value=t;document.body.appendChild(ta);ta.select();try{document.execCommand("copy");toast("Copied — paste it to Claude");}catch(e){toast("Couldn't copy — take a screenshot instead");}ta.remove();});},
   refreshVoices:()=>{loadVoices();setTimeout(()=>{loadVoices();rerender();toast(voiceList("en-US").filter(isHQ).length?"Found a ★ voice: "+voiceNow("en-US"):"No ★ voice yet — download one, then reopen Yuki",3000);},400);},
   iphoneVoiceTest:()=>{if(webEnId()){stopSpeak();resetAudio();webEnFails=0;vlog("▶ English voice test (online "+webEnId()+")");sayDevice("Hello! This is my English voice. Let's practise Japanese together.","en-US",1);return;}

@@ -207,12 +207,16 @@ Safari → Add to Home Screen.
   no key or AI credits: Google Translate's `translate_tts` (client=tw-ob, US/UK) and StreamElements (Amazon Polly
   Joanna/Matthew/Amy/Brian). `sayDevice` sends English to `sayWebEn` (≤170-char sentence chunks on the shared player
   via `playUrl`, without bumping `natSeq`); offline, a failure, or 3 failures in a row → the iPhone voice. `speakDevice`
-  routes through `sayDevice` when one is chosen. `<meta name="referrer" content="no-referrer">` so these accept the
-  requests. Reason: the owner's iPhone only gives web apps the basic voices (Samantha), even after downloading Premium.
+  routes through `sayDevice` when one is chosen (5 s to start; after one failure, the iPhone voice for the rest of
+  the session). Reason: the owner's iPhone only gives web apps the basic voices (Samantha), even after downloading Premium.
   `voiceEn=""` = Automatic: the best-ranked iPhone voice (Premium > Enhanced > rest).
   v24 moved everyone off the old "system" value: Safari can't see the voice picked in iPhone Settings and web apps
   can't use Siri voices, so "system" just gave the basic voice. Better voices come from downloading a Premium/
   Enhanced voice in Settings → Accessibility → Spoken Content → Voices (then reopen the app); Automatic picks it up.
+  🩺 Voice check (`voiceCheck()`, big button at the top of Me → Voice): plays a recording, Ryusei live (tts.quest),
+  the online English voice and the iPhone voice one after another, plus a 🎤 Test mic, with ✅/❌ and the reason
+  for each; then switches to what works (online voice failed → iPhone voice; live Ryusei failed → ⚡ Fast voice) and
+  "📋 Copy the results for Claude" (results + voice log).
   Me → Voice shows the English voice in use (★ = Premium/Enhanced) with a 🔊 Test button.
   Below it, `enVoiceList()` lists every English voice Safari reports (★ count) with "🔄 Refresh voice list"
   (`ACT.refreshVoices`). Settings path on newer iOS: Accessibility → Read & Speak (was Spoken Content) → Voices.
