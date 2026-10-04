@@ -279,6 +279,10 @@ Safari → Add to Home Screen.
   Yuki is told English via the Japanese mic arrives as katakana and English-mode Japanese as
   look-alikes ("Ohio"). Captions toggle sits top-right on the call screen.
   Has "🔁 Say it again" (under the captions) and Slower buttons. If the mic is blocked, it shows iPhone fix-it steps.
+  Mic permission is iPhone's decision (a web app can't grant itself permanent access): `micAllowSheet()` (Me → Voice →
+  "🎤 Allow the mic for good") explains Settings → Apps → Safari → Settings for Websites → Microphone → Allow (or per site
+  via aA → Website Settings). `micPermTip()` runs on each mic start: if `navigator.permissions` says "prompt", a toast
+  points there (at most once per 3 days, localStorage `yuki-mictip`).
 - **Listening**: Japanese wrapped in [[double brackets]] in AI replies shows as a hidden,
   tap-to-play audio clip.
 - **Flashcards**: decks for hiragana, katakana, 80 core words, and 50 kanji, using

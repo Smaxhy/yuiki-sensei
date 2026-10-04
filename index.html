@@ -655,7 +655,7 @@ html.light #voice .btn{color:#2a1520}
 <script>
 "use strict";
 // Bump this on every change so phones can spot a new version and offer to update
-const APP_VERSION="2026.10.12-9";
+const APP_VERSION="2026.10.12-10";
 /* ============ DATA ============ */
 const LV = {
   n5:{label:"N5",name:"Beginner",color:"#9fd67c"},
@@ -1620,7 +1620,31 @@ function startMic(onText,onDone,lang){
   Object.assign(MIC,{retried:false,on:true,paused:false,lang:lang||S.settings.micLang,base:"",sess:"",stopReq:false,cancel:false,onText,onDone,heardAt:Date.now(),audioOk:false});
   UI.micLang=MIC.lang;UI.listening=true;refreshMic();
   micRun();   // right here, inside the tap
+  micPermTip();
   return true;
+}
+// iPhone decides mic permission, not the app. If it is still on "Ask", point to the setting that allows it for good
+// (a hint at most once every 3 days; the full steps are in micAllowSheet / Me → Voice).
+function micPermTip(){
+  try{if(!navigator.permissions||!navigator.permissions.query)return;
+    navigator.permissions.query({name:"microphone"}).then(p=>{
+      if(p.state!=="prompt")return;const last=+(localStorage.getItem("yuki-mictip")||0);if(Date.now()-last<3*864e5)return;
+      localStorage.setItem("yuki-mictip",String(Date.now()));
+      setTimeout(()=>toast("Tired of the “Allow microphone” pop-up? Me → Voice → 🎤 Allow the mic for good",4500),1500);}).catch(()=>{});}catch(e){}
+}
+function micAllowSheet(){
+  sheet(`<div class="h2" style="margin-bottom:8px">🎤 Allow the microphone for good</div>
+  <p class="sub" style="margin-bottom:12px">Your iPhone decides this, not the app (Apple doesn't let any website give itself permanent access). One setting stops the pop-up:</p>
+  <ol>
+   <li>Open the iPhone <b>Settings</b> app → <b>Apps</b> → <b>Safari</b> (older iPhones: Settings → <b>Safari</b>).</li>
+   <li>Scroll down to <b>Settings for Websites</b> → <b>Microphone</b>.</li>
+   <li>Choose <b>Allow</b>.</li>
+   <li>Close Yuki completely (swipe it away in the app switcher) and open it again.</li>
+  </ol>
+  <p class="sub" style="margin:12px 0 6px"><b>Only for this app instead:</b> open Yuki's link in Safari, tap the <b>aA</b> / page-settings button in the address bar → <b>Website Settings</b> → <b>Microphone</b> → <b>Allow</b>.</p>
+  <p class="sub" style="margin-bottom:6px">Also check <b>Settings → General → Keyboard → Enable Dictation</b> is on (Safari's speech recognition uses it).</p>
+  <p class="sub">If iPhone still asks once in a while (for example right after the app updated itself), that's an Apple rule for home-screen apps; just tap Allow.</p>
+  <button class="btn" style="margin-top:14px" data-act="closeSheet">Got it</button>`);
 }
 // Tap while paused (same language) = carry on; tap the other language = continue in that language
 function resumeMic(lang){
@@ -1651,7 +1675,7 @@ function micHelp(kind){
   <p class="sub" style="margin-bottom:12px">${kind==="unsupported"?"This browser doesn't support speech recognition.":"Your phone or browser said no to the mic."} Here's how to fix it:</p>
   <ol>
    <li><b>Open the app in Safari</b>, not inside the Claude app. Claude's preview window always blocks the mic.</li>
-   <li>iPhone <b>Settings → Apps → Safari → Microphone</b> → set to <b>Ask</b> or <b>Allow</b>.</li>
+   <li>iPhone <b>Settings → Apps → Safari → Settings for Websites → Microphone</b> → set to <b>Allow</b> (then it never asks again).</li>
    <li><b>Settings → General → Keyboard → Enable Dictation</b> must be on. Safari's speech recognition runs through it.</li>
    <li>If it still fails from the home-screen icon, open the same link in regular Safari. Some iOS versions block the mic in home-screen web apps.</li>
    <li><b>Backup that always works:</b> tap the text box and press the 🎤 on your iPhone keyboard. Switch the keyboard to 日本語 to dictate in Japanese.</li>
@@ -3843,6 +3867,7 @@ function vMe(){
    <div class="toggle" style="margin-top:8px"><span>Speaking speed</span><input type="range" min="0.5" max="1.2" step="0.05" value="${st.rate}" data-set="rate" style="width:45%"></div>
    ${sw("autoSpeakChat",st.autoSpeakChat,"Read replies aloud in chat")}
    ${sw("speakEnglish",st.speakEnglish,"Read English parts too")}
+   <button class="btn sm ghost" style="margin:6px 0" data-act="micAllow">🎤 Allow the mic for good (stop the pop-up)</button>
    <div class="toggle"><span>Mic listens for</span><div class="chips"><button class="chip${st.micLang==="ja-JP"?" on":""}" data-act="micLang" data-v="ja-JP">日本語</button><button class="chip${st.micLang==="en-US"?" on":""}" data-act="micLang" data-v="en-US">English</button></div></div>
    <div class="grid2" style="margin-top:8px"><button class="btn sm ghost" data-act="testVoice">Test voice</button><button class="btn sm ghost" data-act="voiceHelp">${"Get better voices"}</button></div>
   </div>
@@ -4123,6 +4148,7 @@ const ACT={
   recSet:el=>{S.settings.jaRec=el.dataset.v;save();rerender();if(el.dataset.v!=="off")speak("ともだち",{});},
   // tap a target word: hear it (free recording) and see what it means, without leaving the lesson
   chipWord:el=>{const jp=el.dataset.jp,w=wordInfo(jp);if(UI.listening)return;speak(wordSay(jp),{rate:0.85});if(w)toast(jp+" ("+w[1]+") = "+w[2],2200);},
+  micAllow:()=>micAllowSheet(),
   memDel:el=>{const l=S.profile[el.dataset.k];if(!Array.isArray(l))return;l.splice(+el.dataset.i,1);save();rerender();toast("Forgotten",1200);},
   saveQuestKey:()=>{const v=$("#questKeyIn");S.settings.questKey=v?v.value.trim():"";questCache.clear();save();toast(S.settings.questKey?"Key saved — tap Test Ryusei":"Key removed");},
   questTest:async()=>{
