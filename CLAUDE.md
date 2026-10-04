@@ -301,6 +301,10 @@ Safari → Add to Home Screen.
   `send`, pairs like 「日本語 (English)」/「日本語 – English」, romaji brackets skipped via `trRomaji`).
   Sentences without English get it filled in for free in the background when online (`trFill`, ≤80 per session).
   `trBankFind` (exact, then shared words / character pairs); "📚 Browse saved sentences" sheet (`trBankSheet`).
+  Screen (`vTranslate`, `.tx-*` CSS): big "Translate" layout like Google Translate — English ⇄ 日本語 bar (swap = `trDir`),
+  a large textarea `#trIn` (Enter translates, Shift+Enter new line) with ✕ clear / big 🎤 / → translate, a large result
+  card (🔊 Play, 📱 Show staff, 📋 Copy `trCopy`, "Word by word" folded), alternatives, and one small footer row:
+  🧠 N saved (bank) · ⬇️ Save voice offline · ⓘ (`trInfo` explains offline/bank). The box shrinks once there's a result.
 - **Offline helper** `sw.js` (service worker, registered on https): navigations are network-first with the
   page cached for offline (auto-update unaffected); `/audio/` is served from the cache when saved (Range
   requests answered with 206 for Safari), otherwise fetched and cached.
