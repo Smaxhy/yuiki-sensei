@@ -41,6 +41,14 @@ Safari → Add to Home Screen.
   objective and opens its brief). Lesson-player done screens and `courseDoneCard` show the objective; finishing a
   roleplay toasts "🏅 Unit goal reached". Progress → "🎯 What you can do now" (`canDoList`/`canDoHTML`: finished lesson
   goals + reached unit goals, next objective). `coursePrompt` asks Yuki to open with today's objective in one line.
+- **Lessons build on each other** (owner: "each path progressive, based off the last lesson, with quizzes and random
+  things"): `prevLessonOf(n)` = the lesson before in `CLESSONS` (a roleplay's = its unit's last lesson). A CL lesson starts
+  with "🔁 Recap" (`recapQs(n)`: 3 questions on last lesson's learned words: meaning, how-do-you-say, 👂 listening;
+  `UI.lp.recap`/`hadRecap`, then Learn). Practise adds 2 👂 listening questions (`dir:"listen"`) and one ⌨️ typed answer
+  (`dir:"type"`, `ACT.lpType`: romaji or kana, 1 typo allowed) to the usual questions. `startTalk` puts up to 2 of last
+  lesson's words first in `S.course.review` and stores `S.course.prev` (last lesson's goal); `coursePrompt` tells Yuki to
+  link back to it and to drop in 1–2 surprise mini-tasks (quiz, fill-the-gap, [[listening]]). The objective (`.tgoal`)
+  shows above the target words in the chat lesson bar and on the call screen.
 - **Roleplay warm-up**: a roleplay / the final conversation (CR node) first runs the lesson player on its 5
   target words (`rpTargets(n)`, `UI.lp.pre`: "Warm-up" → Practise, free), then `startTalk(n, lp.targets)` uses
   the same words. `coursePrompt` tells Yuki to use only Japanese the student has learned (anything else with

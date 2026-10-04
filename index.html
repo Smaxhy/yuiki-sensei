@@ -629,6 +629,8 @@ html.light #voice .btn{color:#2a1520}
 .ubanner.fold{margin:10px 0;padding:10px 14px}.ubanner.fold .ube{width:38px;height:38px;font-size:20px}.ubanner.fold .ubt b{font-size:16px}
 #unitHead+.ubanner.fold{margin-top:30px}
 .ubanner.fin{opacity:.8}.ubanner.later{filter:saturate(.55);opacity:.85}
+.tbar{flex-wrap:wrap}.tgoal{flex-basis:100%;font-size:13.5px;font-weight:800;color:var(--sky,#3487dc);margin:0 0 4px}
+.vgoal{text-align:center;color:#9ccaf7;margin:6px 0 2px;font-size:14px}
 </style>
 </head>
 <body>
@@ -650,7 +652,7 @@ html.light #voice .btn{color:#2a1520}
 <script>
 "use strict";
 // Bump this on every change so phones can spot a new version and offer to update
-const APP_VERSION="2026.10.12-5";
+const APP_VERSION="2026.10.12-6";
 /* ============ DATA ============ */
 const LV = {
   n5:{label:"N5",name:"Beginner",color:"#9fd67c"},
@@ -2001,10 +2003,26 @@ function reviewWords(exclude,n){
 }
 const wordInfo=jp=>{for(const l of CLESSONS)for(const w of l.w)if(w[0]===jp)return w;return null;};
 
-/* ---- lesson player: learn → practise → (talk) ---- */
+/* ---- lesson player: (recap) → learn → practise → (talk) ---- */
+// The lesson right before this one in the course (each lesson builds on it)
+function prevLessonOf(n){
+  if(n.t==="CL"){const i=CLESSONS.findIndex(l=>l.id===n.k);return i>0?CLESSONS[i-1]:null;}
+  if(n.t==="CR"){const ls=COURSE[n.k].ls;return ls[ls.length-1];}
+  return null;
+}
+// 3 quick questions on last lesson's words (only ones you've learned) before the new words
+function recapQs(n){
+  const pl=prevLessonOf(n);if(!pl)return[];
+  const ws=shuffle(pl.w.filter(w=>S.cards["w:"+w[0]])).slice(0,3),pool=CLESSONS.flatMap(l=>l.w);
+  return ws.map((w,i)=>{
+    if(i===1)return{it:w,q:w[2],a:w[0],opts:shuffle([w[0],...shuffle(pool.filter(x=>x[0]!==w[0])).slice(0,3).map(x=>x[0])]),dir:"en",recap:true};
+    if(i===2&&RECORDED.has(wordSay(w[0])))return{it:w,q:"",say:wordSay(w[0]),a:w[2],opts:shuffle([w[2],...shuffle(pool.filter(x=>x[2]!==w[2])).slice(0,3).map(x=>x[2])]),dir:"listen",recap:true};
+    return{it:w,q:w[0],say:wordSay(w[0]),a:w[2],opts:shuffle([w[2],...shuffle(pool.filter(x=>x[2]!==w[2])).slice(0,3).map(x=>x[2])]),dir:"jp",recap:true};});
+}
 function startCourseNode(n){
   ensurePlan();UI.planCtx=null;
-  if(n.t==="CL"){const l=clessonById(n.k);UI.lp={node:n,kind:"words",items:l.w,step:"learn",i:0};render();lpSay();return;}
+  if(n.t==="CL"){const l=clessonById(n.k),rq=recapQs(n);
+    UI.lp={node:n,kind:"words",items:l.w,step:rq.length?"quiz":"learn",i:0,recap:rq.length>0,hadRecap:rq.length>0,qs:rq,qi:0,right:0,picked:null,requeued:{}};render();lpSay();return;}
   if(n.t==="CK"){UI.lp={node:n,kind:"kana",items:[...n.k].map(ch=>{const id=(/[ァ-ン]/.test(ch)?"k:":"h:")+ch;return[ch,CARDS[id].back,"",id];}),step:"learn",i:0};render();lpSay();return;}
   if(n.t==="CR"){const targets=rpTargets(n);UI.lp={node:n,kind:"words",items:targets.map(wordInfo).filter(Boolean),step:"learn",i:0,targets,pre:true};render();lpSay();return;}
   if(n.t==="CQ")startTest(n);
@@ -2015,6 +2033,11 @@ function buildQuiz(lp){
   const others=(it,f)=>shuffle(pool.filter(x=>f(x)!==f(it))).slice(0,3).map(f);
   its.forEach(it=>{const f=lp.kind==="kana"?(x=>x[1]):(x=>x[2]);qs.push({it,q:it[0],say:lp.kind==="kana"?it[0]:wordSay(it[0]),a:f(it),opts:shuffle([f(it),...others(it,f)]),dir:"jp"});});
   shuffle(its.slice()).slice(0,3).forEach(it=>{const f=x=>x[0];const a=it[0],q=lp.kind==="kana"?it[1]:it[2];qs.push({it,q,a,opts:shuffle([a,...shuffle(pool.filter(x=>x[0]!==a)).slice(0,3).map(f)]),dir:"en"});});
+  if(lp.kind==="words"){
+    // 👂 listening: hear it, pick the meaning (recorded words only)
+    shuffle(its.filter(it=>RECORDED.has(wordSay(it[0])))).slice(0,2).forEach(it=>qs.push({it,q:"",say:wordSay(it[0]),a:it[2],opts:shuffle([it[2],...shuffle(pool.filter(x=>x[2]!==it[2])).slice(0,3).map(x=>x[2])]),dir:"listen"}));
+    // ⌨️ one typed answer: English shown, type the Japanese (romaji or kana)
+    const ti=shuffle(its.slice())[0];if(ti)qs.push({it:ti,q:ti[2],a:ti[1],dir:"type",opts:[]});}
   if(lp.kind==="words")reviewWords(its.map(x=>x[0]),2).forEach(jp=>{const w=wordInfo(jp);if(w)qs.push({it:w,q:w[0],say:wordSay(w[0]),a:w[2],opts:shuffle([w[2],...shuffle(pool.filter(x=>x[2]!==w[2])).slice(0,3).map(x=>x[2])]),dir:"jp",review:true});});
   return qs;
 }
@@ -2022,16 +2045,18 @@ const KANA_POOL=()=>{const o={};COURSE.forEach(u=>[...u.kana].forEach(ch=>{const
 function lpNext(){
   const lp=UI.lp;
   if(lp.step==="learn"){if(lp.i<lp.items.length-1){lp.i++;render();lpSay();}else{lp.step="quiz";lp.qs=buildQuiz(lp);lp.qi=0;lp.right=0;lp.picked=null;lp.requeued={};render();lpSay();}return;}
-  if(lp.step==="quiz"){lp.picked=null;lp.qi++;if(lp.qi>=lp.qs.length){lp.step="done";lp.items.forEach(it=>{if(!S.cards[itemId(lp,it)])bumpWord(itemId(lp,it),true);});save();
+  if(lp.step==="quiz"){lp.picked=null;lp.qi++;
+    if(lp.recap&&lp.qi>=lp.qs.length){lp.recapRight=lp.right;lp.recap=false;lp.step="learn";lp.i=0;render();lpSay();return;}
+    if(lp.qi>=lp.qs.length){lp.step="done";lp.items.forEach(it=>{if(!S.cards[itemId(lp,it)])bumpWord(itemId(lp,it),true);});save();
     if(lp.kind==="kana")markNode(lp.node.key,true);render();}else{render();lpSay();}}
 }
 function lpSay(){const lp=UI.lp;if(!lp)return;
   if(lp.step==="learn"){const it=lp.items[lp.i];speak(lp.kind==="kana"?it[0]:wordSay(it[0]),{rate:0.85});}
-  else if(lp.step==="quiz"){const q=lp.qs[lp.qi];if(q&&q.dir==="jp")speak(q.say,{rate:0.85});}}
+  else if(lp.step==="quiz"){const q=lp.qs[lp.qi];if(q&&(q.dir==="jp"||q.dir==="listen"))speak(q.say,{rate:0.85});}}
 function vLesson(){
   const lp=UI.lp,n=lp.node,u=COURSE[n.unit];
-  const steps=lp.kind==="words"?[lp.pre?"Warm-up":"Learn","Practise",n.t==="CR"?"🎭 Roleplay":isSpeakingKey(n.key)?"🎙️ Speak":"💬 Chat"]:["Learn","Practise"];
-  const si=lp.step==="learn"?0:lp.step==="quiz"?1:steps.length-1;
+  const steps=(lp.hadRecap?["🔁 Recap"]:[]).concat(lp.kind==="words"?[lp.pre?"Warm-up":"Learn","Practise",n.t==="CR"?"🎭 Roleplay":isSpeakingKey(n.key)?"🎙️ Speak":"💬 Chat"]:["Learn","Practise"]);
+  const off=lp.hadRecap?1:0,si=lp.recap?0:(lp.step==="learn"?0:lp.step==="quiz"?1:steps.length-1-off)+off;
   const prog=lp.step==="learn"?(lp.i+1)/lp.items.length:lp.step==="quiz"?(lp.qi)/lp.qs.length:1;
   const head=`<div class="lphead"><button class="iconbtn" data-act="lpClose" aria-label="Close">✕</button><div class="lpsteps">${steps.map((t,i)=>`<span class="${i<si?"ok":i===si?"on":""}">${i<si?"✓ ":""}${t}</span>`).join("")}</div></div>
     <div class="bar" style="margin:10px 0 0"><i style="width:${Math.round(prog*100)}%;background:${ucol(u.c)}"></i></div>`;
@@ -2043,12 +2068,14 @@ function vLesson(){
   }
   if(lp.step==="quiz"){
     const q=lp.qs[lp.qi],picked=lp.picked;
-    const ask=q.dir==="jp"?(lp.kind==="kana"?"What sound is this?":"What does this mean?"):(lp.kind==="kana"?"Which one is this sound?":"How do you say this?");
-    return`<div class="pad lp">${head}<p class="sub lpk">${q.review?"🔁 From an earlier lesson":ask}</p>
-     <div class="qcard"><div class="${q.dir==="jp"?"wjp":"qen2"}">${esc(q.q)}</div>${q.dir==="jp"?`<button class="mini" data-act="lpQSay" style="margin-top:8px">🔊</button>`:""}</div>
+    const ask=q.dir==="listen"?"👂 Listen: what does it mean?":q.dir==="type"?"⌨️ Type it in Japanese (romaji or kana)":q.dir==="jp"?(lp.kind==="kana"?"What sound is this?":"What does this mean?"):(lp.kind==="kana"?"Which one is this sound?":"How do you say this?");
+    const pl=lp.recap&&prevLessonOf(n);
+    return`<div class="pad lp">${head}<p class="sub lpk">${lp.recap?"🔁 Quick recap from last lesson"+(pl?": "+esc(pl.t):"")+" · "+ask:q.review?"🔁 From an earlier lesson":ask}</p>
+     <div class="qcard">${q.dir==="listen"?`<button class="btn sm ghost" data-act="lpQSay" style="width:auto;padding:12px 22px;font-size:18px">🔊 Play again</button>`:`<div class="${q.dir==="jp"?"wjp":"qen2"}">${esc(q.q)}</div>${q.dir==="jp"?`<button class="mini" data-act="lpQSay" style="margin-top:8px">🔊</button>`:""}`}</div>
+     ${q.dir==="type"?(picked==null?`<div class="typein"><input id="lpIn" class="field" inputmode="text" autocapitalize="off" autocorrect="off" spellcheck="false" autocomplete="off" enterkeyhint="done" placeholder="romaji or kana"><button class="btn" data-act="lpType">Check</button></div>`:`<div class="opt ${picked===q.a?"right":"wrong"}"><b>${esc(picked)}</b></div>`):""}
      <div class="opts">${q.opts.map(o=>{const st=picked==null?"":o===q.a?" right":o===picked?" wrong":" dim";const ro=q.dir==="en"&&lp.kind==="words"?((wordInfo(o)||[])[1]||""):"";
        return`<button class="opt${st}" data-act="lpPick" data-v="${esc(o)}"${picked!=null?" disabled":""}><b>${esc(o)}</b>${ro?`<span>${esc(ro)}</span>`:""}</button>`;}).join("")}</div>
-     ${picked!=null?`<div class="fb ${picked===q.a?"ok":"no"}">${picked===q.a?"✓ Correct!":"✗ It's <b>"+esc(q.a)+"</b>"+(q.dir==="jp"&&lp.kind==="words"?"":"")}</div><button class="btn" data-act="lpNext">Continue</button>`:""}</div>`;
+     ${picked!=null?`<div class="fb ${picked===q.a?"ok":"no"}">${picked===q.a?"✓ Correct!":"✗ It's <b>"+esc(q.a)+"</b>"}${(q.dir==="listen"||q.dir==="type")&&lp.kind==="words"?` · ${esc(q.it[0])} (${esc(q.it[1])}) = ${esc(q.it[2])}`:""}</div><button class="btn" data-act="lpNext">Continue</button>`:""}</div>`;
   }
   // done
   const og=`<div class="bfgoal${lp.kind==="kana"?" ok":""}" style="text-align:left;margin:14px 0;--uc:${ucol(u.c)}"><small>🎯 Objective</small><b>${esc(nodeGoal(n))}</b><span>${lp.kind==="kana"?"✓ Achieved":lp.pre?"✓ Warm-up done · now the conversation":"✓ Words learned · one step left: the "+(isSpeakingKey(n.key)?"call":"chat")}</span></div>`;
@@ -2075,7 +2102,10 @@ function startTalk(n,preset){
     targets=preset&&preset.length?preset:rpTargets(n);
     kind=final?"final":"roleplay";title=final?"Your big conversation":"Roleplay: "+u.t;goal=final?"Hold a real conversation using everything you've learned":"Use this unit's words in a real situation";scen=final?"":u.rp;}
   const speaking=isSpeakingKey(n.key);
-  S.course={key:n.key,kind,title,goal,scen,targets,used:[],review:reviewWords(targets,kind==="lesson"?2:3),speaking};
+  // older words to bring back: last lesson's first (lessons build on each other), then whatever is due
+  const pl=prevLessonOf(n),plw=pl?shuffle(pl.w.map(w=>w[0]).filter(jp=>S.cards["w:"+jp]&&!targets.includes(jp))).slice(0,2):[];
+  const review=[...plw,...reviewWords([...targets,...plw],kind==="lesson"?1:2)];
+  S.course={key:n.key,kind,title,goal,scen,targets,used:[],review,speaking,prev:pl&&n.t==="CL"?pl.g:""};
   S.settings.micLang="ja-JP";
   openThread(n.key,(speaking?"🎙️ ":"💬 ")+title,speaking?"speak":"chat",true);
   S.currentLesson=null;UI.lp=null;UI.planCtx=null;save();UI.tab="chat";render();
@@ -2091,7 +2121,9 @@ function coursePrompt(){
   return`\nCONVERSATION PRACTICE: "${c.title}". Goal: ${c.goal}.${c.scen?" Scenario: "+c.scen+" You play the other person.":""}
 TARGET WORDS the student must use: ${wl}.
 Still not used: ${left.length?left.join(", "):"all used!"}.
-${rv?`OLDER WORDS to bring back (ask about them or work them in, early on): ${rv}.`:""}
+${c.prev?`This lesson builds on the last one ("${c.prev}"): link back to it early.
+`:""}${rv?`OLDER WORDS to bring back (ask about them or work them in, early on): ${rv}.`:""}
+Mix it up: once or twice, drop in a quick surprise task (a mini quiz, fill-the-gap, or a [[listening]] line) with target or older words, then keep talking.
 Use only Japanese the student has learned (target, older and recently learned words); any other word needs its English in brackets.
 Open by stating today's objective in one short English line. Rules: have a REAL back-and-forth conversation (at least ${TALK_MIN} exchanges; now ${talkTurns(c)}): react to what they say, share a little about yourself, ask follow-up questions, and set up moments where the student HAS to say each target word. Don't just drill words. One small step per message. If they're stuck, give a hint (the English meaning or the first sound), not the answer. Keep your Japanese very simple, using mostly the target and older words, with English help as their style needs. They may type romaji; that counts. When every target word has been used, congratulate them warmly and ask 2 quick recap questions (one about an older word).${c.kind==="final"?" This is the end-of-course test: about 10 turns, light corrections only, and at the end give friendly scores out of 10 for understanding, speaking, vocabulary and grammar plus what to work on next.":""}
 ${c.speaking?"This is a SPEAKING lesson on a voice call: keep each message to 1-2 short spoken sentences, and invite them to answer out loud.":"This is a typed CHAT lesson."}
@@ -3374,7 +3406,7 @@ function vChat(){
   <div class="chathead"><div class="av">ゆ</div><button class="ct ctbtn" data-act="chatsSheet"><b>${esc(th.title)} <span class="caret">▾</span></b><small>${C?(C.speaking?"🎙️ Speaking lesson":"💬 Chat lesson"):les?"📖 Lesson":"Yuki · "+LV[S.level].label}</small></button>
    ${C?`<button class="mini ok" data-act="courseDone">${S.plan&&S.plan.done[C.key]?"Finish":"✓ Done"}</button><button class="iconbtn" data-act="courseExit" aria-label="Leave practice">✕</button>`:les?`${S.done.includes(les.id)?"":`<button class="mini ok" data-act="lessonDone">✓ Done</button>`}<button class="iconbtn" data-act="lessonExit" aria-label="Leave lesson">✕</button>`:UI.planCtx?`<button class="mini ok" data-act="ctxDone">✓ Done</button>`:""}
    <button class="iconbtn call" data-act="voice" aria-label="Voice call">📞</button></div>
-  ${C?`<div class="tbar"><span class="sub">Use these words:</span>${talkChips()}</div>${courseDoneCard(false)}`:""}
+  ${C?`<div class="tbar"><div class="tgoal">🎯 ${esc(C.goal)}</div><span class="sub">Use these words:</span>${talkChips()}</div>${courseDoneCard(false)}`:""}
   <div id="msgs" class="msgs">${S.chat.length?S.chat.map(msgHTML).join(""):emptyChat()}</div>
   <div class="chatfoot"><div class="chips">${V?`<button class="chip on" data-act="phrases">💡 Phrases</button>`+PH_QUICK.map(t=>`<button class="chip" data-act="phIns" data-t="${esc(t)}">${esc(t)}</button>`).join(""):""}${chips.map(c=>`<button class="chip" data-act="chip" data-t="${esc(c)}">${esc(c)}</button>`).join("")}</div>
   <div class="inputbar"><button id="micBtn" class="iconbtn micja${UI.listening&&UI.micLang==="ja-JP"?" live":""}" data-act="mic" data-v="ja-JP" aria-label="Speak Japanese">🎤<small>あ</small></button><button class="iconbtn micen${UI.listening&&UI.micLang==="en-US"?" live":""}" data-act="mic" data-v="en-US" aria-label="Speak English">🎤<small>EN</small></button>
@@ -3908,7 +3940,7 @@ function renderVoice(){
    <div class="vopts"><button class="vopt${S.settings.tts==="device"||questPaused()?" on":""}" data-act="vFast">${S.settings.tts==="device"?"⚡ Fast voice":questPaused()?"⚡ Fast · tap for 🎌":"🎌 Ryusei"}</button><button class="vopt${S.settings.handsFree?" on":""}" data-act="vHands">${S.settings.handsFree?"🙌 Hands-free":"✋ Tap to talk"}</button>
     ${activeConvo()?`<button class="vopt" data-act="phrases">💡 Phrases</button>`:""}<span class="vlen">${[["tiny","Very short"],["short","Short"],["normal","Normal"]].map(([v,t])=>`<button class="vopt${len===v?" on":""}" data-act="vLen" data-v="${v}">${t}</button>`).join("")}</span></div>
    <div class="orbwrap${activeCourse()||(!UI.listening&&(()=>{const lu=[...S.chat].reverse().find(m=>m.role==="user");return lu&&lu.fix;})())?" compact":""}"><div class="orb ${st}">ゆ</div><div class="vstat">${label}</div>
-    ${activeCourse()?`<div class="vchips">${talkChips()}</div>${courseDoneCard(true)}${activeCourse().keep?`<button class="vopt on" data-act="courseDone" style="margin-top:6px">✓ Finish lesson</button>`:""}`:""}
+    ${activeCourse()?`<div class="tgoal vgoal">🎯 ${esc(activeCourse().goal)}</div><div class="vchips">${talkChips()}</div>${courseDoneCard(true)}${activeCourse().keep?`<button class="vopt on" data-act="courseDone" style="margin-top:6px">✓ Finish lesson</button>`:""}`:""}
     <div class="vcap">${UI.listening?`<div class="vtext vlive">${UI.vyou?esc(tidySpeech(UI.vyou)):"…"}</div>`:`<div class="vtext${cc?"":" off"}">${cap}</div>${last&&!last.err?`<button class="vopt again" data-act="vRepeat">🔁 Say it again</button>`:""}${(()=>{const lu=[...S.chat].reverse().find(m=>m.role==="user");return lu&&lu.fix&&UI.vstate!=="thinking"?(()=>{const f=lu.fix,en=!JP.test(lu.text);return`<div class="vfix${f.ok?" ok":""}">${f.ok?"":`<div class="vsaid">You said: ${esc(lu.text)}</div>`}<b>${f.ok?"✓ You said it right":en?"✏️ Better English":"✏️ Better"}</b> ${esc(en?f.en:f.ja)}<small>${en?"🇯🇵 "+esc(f.ja):"🇬🇧 "+esc(f.en)}${!f.ok&&f.why?" · 💡 "+esc(f.why):""}</small></div>`;})():`<div class="vyou">${UI.vyou?"You: "+esc(UI.vyou):""}</div>`;})()}`}</div></div>
    ${UI.listening?`<div class="vctrl">
     <button class="vbtn" data-act="vCancel"><i>✕</i>Cancel</button>
@@ -4123,6 +4155,9 @@ const ACT={
   lpNext:()=>lpNext(),
   lpSay:()=>lpSay(),
   lpQSay:()=>{const q=UI.lp&&UI.lp.qs[UI.lp.qi];if(q)speak(q.say,{rate:0.85});},
+  lpType:()=>{const lp=UI.lp,q=lp&&lp.qs[lp.qi],inp=$("#lpIn");if(!q||lp.picked!=null||!inp)return;const v=inp.value.trim();
+    const a=normR(v),b=normR(q.a),ok=!!v&&(a===b||normJ(v)===normJ(q.it[0])||(b.length>=4&&editDist(a,b)<=1));
+    ACT.lpPick({dataset:{v:ok?q.a:(v||"(empty)")}});},
   lpPick:el=>{const lp=UI.lp,q=lp.qs[lp.qi];if(lp.picked!=null)return;lp.picked=el.dataset.v;const ok=lp.picked===q.a;
     if(ok)lp.right++;bumpWord(lp.kind==="kana"?q.it[3]:"w:"+q.it[0],ok);
     if(!ok&&!lp.requeued[lp.qi]){lp.requeued[lp.qi]=1;lp.qs.push({...q,opts:shuffle(q.opts.slice())});}
