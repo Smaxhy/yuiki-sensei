@@ -605,6 +605,30 @@ html.light #voice .btn{color:#2a1520}
 @keyframes spin{to{transform:rotate(360deg)}}
 @keyframes talk{from{transform:scale(1)}to{transform:scale(1.05)}}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+/* Tutor structure: next assignment, lesson brief, objectives, skills */
+.nextcard{display:flex;flex-direction:column;gap:4px;width:100%;text-align:left;margin:12px 0 4px;padding:16px 18px;border-radius:20px;background:var(--ink2);border:2px solid var(--uc);border-bottom-width:5px;color:inherit;font:inherit}
+.nextcard small{font-size:12px;font-weight:800;color:var(--uc);letter-spacing:.02em}
+.nextcard b{font-size:20px;font-weight:900}.nextcard span{font-size:14.5px;color:var(--dim)}
+.nextcard em{display:flex;justify-content:space-between;align-items:center;font-style:normal;font-size:13px;font-weight:800;color:var(--dim);margin-top:6px}
+.nextcard em i{font-style:normal;background:var(--uc);color:#fff;padding:9px 16px;border-radius:12px;font-size:15px}
+.ubt em{display:block;font-style:normal;font-size:12.5px;font-weight:700;opacity:.92;margin-top:3px;line-height:1.3}
+.brief .lphead{display:flex;align-items:center;gap:12px}
+.bfhead{display:flex;align-items:center;gap:14px;margin:18px 0 14px}.bfhead small{font-size:13px;font-weight:800;color:var(--uc)}
+.bfic{width:64px;height:64px;flex-shrink:0;border-radius:50%;background:var(--uc);color:#fff;display:flex;align-items:center;justify-content:center;font-size:30px;box-shadow:0 4px 0 color-mix(in srgb,var(--uc) 68%,#000)}
+.bfgoal{display:flex;flex-direction:column;gap:4px;padding:14px 16px;border-radius:18px;background:color-mix(in srgb,var(--uc,#3487dc) 12%,var(--ink2));border:2px solid color-mix(in srgb,var(--uc,#3487dc) 45%,transparent)}
+.bfgoal small{font-size:12px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:var(--uc,#3487dc)}.bfgoal b{font-size:17px;line-height:1.35}.bfgoal span{font-size:13.5px;color:var(--dim)}
+.bfgoal.ok{--uc:#4fae42}
+.bfplan{padding:4px 14px}.bfstep{display:flex;gap:12px;align-items:center;padding:11px 0;border-bottom:1px solid var(--line)}.bfstep:last-child{border-bottom:none}
+.bfstep i{width:30px;height:30px;flex-shrink:0;border-radius:50%;background:var(--uc);color:#fff;font-style:normal;font-weight:900;display:flex;align-items:center;justify-content:center}
+.bfstep div{flex:1;min-width:0}.bfstep b{display:block;font-size:15.5px}.bfstep span{font-size:13.5px;color:var(--dim)}.bfstep em{font-style:normal;font-size:12.5px;font-weight:800;color:var(--dim);white-space:nowrap}
+.bfpass{margin:0 4px;font-size:15px;line-height:1.45}
+.cando{padding:8px 14px}.cdrow{display:flex;gap:10px;align-items:flex-start;padding:7px 0;font-size:14.5px;line-height:1.35}
+.cdrow i{font-style:normal;width:22px;flex-shrink:0;text-align:center;color:#4fae42;font-weight:900}.cdrow.big{font-weight:800}.cdrow.next{color:var(--dim)}.cdrow.next i{color:var(--dim)}
+.urow.ubtn{width:100%;text-align:left;background:none;border:0;border-bottom:1px solid var(--line);color:inherit;font:inherit;min-height:52px}
+.urow.ubtn i{font-style:normal;width:24px;text-align:center;font-weight:900;color:var(--dim)}.urow.ubtn b{display:block;font-size:14.5px}.urow.ubtn small{display:block;font-size:12.5px;color:var(--dim)}
+.ubanner.fold{margin:10px 0;padding:10px 14px}.ubanner.fold .ube{width:38px;height:38px;font-size:20px}.ubanner.fold .ubt b{font-size:16px}
+#unitHead+.ubanner.fold{margin-top:30px}
+.ubanner.fin{opacity:.8}.ubanner.later{filter:saturate(.55);opacity:.85}
 </style>
 </head>
 <body>
@@ -626,7 +650,7 @@ html.light #voice .btn{color:#2a1520}
 <script>
 "use strict";
 // Bump this on every change so phones can spot a new version and offer to update
-const APP_VERSION="2026.10.12-1";
+const APP_VERSION="2026.10.12-2";
 /* ============ DATA ============ */
 const LV = {
   n5:{label:"N5",name:"Beginner",color:"#9fd67c"},
@@ -705,7 +729,7 @@ const KANJI=[
 ["手","hand","しゅ・て"],["足","foot, leg","そく・あし"],["山","mountain","さん・やま"],["川","river","せん・かわ"],["上","up, above","じょう・うえ"],["下","down, below","か・した"],["左","left","さ・ひだり"],["右","right","う・みぎ"],["中","middle, inside","ちゅう・なか"],["大","big","だい・おお(きい)"],
 ["小","small","しょう・ちい(さい)"],["食","eat","しょく・た(べる)"],["飲","drink","いん・の(む)"],["見","see","けん・み(る)"],["行","go","こう・い(く)"],["来","come","らい・く(る)"],["話","talk","わ・はな(す)"],["読","read","どく・よ(む)"],["書","write","しょ・か(く)"],["学","study","がく・まな(ぶ)"]
 ];
-// Conversation course for beginners: 12 topic units. Each unit = 3 word lessons (max 5 words each,
+// Conversation course for beginners: 14 topic units. Each unit = 3 word lessons (max 5 words each,
 // [japanese, romaji, english]), a 5-kana bite, and a roleplay that uses the unit's words.
 const COURSE=[
  {t:"Hello!",e:"👋",c:"#f4a3c0",kana:"あいうえお",rp:"You meet your friendly neighbour in the morning and again in the evening.",ls:[
@@ -752,11 +776,21 @@ const COURSE=[
   {id:"c11a",t:"At the hotel",g:"Check in at a hotel",w:[["りょこう","ryokou","trip, travel"],["ホテル","hoteru","hotel"],["よやく","yoyaku","reservation"],["へや","heya","room"],["なんぱく","nanpaku","how many nights?"]]},
   {id:"c11b",t:"What I want to do",g:"Say what you want to do",w:[["いきたい","ikitai","want to go"],["みたい","mitai","want to see"],["たべたい","tabetai","want to eat"],["おすすめ","osusume","recommendation"],["どこがいいですか","doko ga ii desu ka","where is good?"]]},
   {id:"c11c",t:"Asking politely",g:"Ask for permission and help",w:[["しゃしん","shashin","photo"],["～てもいいですか","te mo ii desu ka","may I ~?"],["だめ","dame","not allowed, no good"],["わかりません","wakarimasen","I don't understand"],["たすけて","tasukete","help!"]]}]},
- {t:"Real conversations",e:"💬",c:"#7cb8f4",kana:"カキクケコ",rp:"FINAL",ls:[
+ {t:"Small talk",e:"☕",c:"#9fd67c",kana:"カキクケコ",rp:"You're sitting next to a friendly stranger at a ramen counter and start chatting.",ls:[
+  {id:"c13a",t:"Starting a chat",g:"Start a conversation with a stranger",w:[["すみません、ここいいですか","sumimasen, koko ii desu ka","excuse me, is this seat free?"],["いいてんきですね","ii tenki desu ne","nice weather, isn't it?"],["このへん","kono hen","around here"],["すんでいます","sunde imasu","I live (there)"],["はじめて","hajimete","for the first time"]]},
+  {id:"c13b",t:"Reacting",g:"React so people enjoy talking to you",w:[["そうなんですか","sou nan desu ka","is that so!"],["すごい","sugoi","amazing!"],["わたしも","watashi mo","me too"],["たのしそう","tanoshisou","sounds fun!"],["ほんとうに","hontou ni","really?"]]},
+  {id:"c13c",t:"Keeping it going",g:"Ask follow-up questions and ask back",w:[["そちらは","sochira wa","and you?"],["どんな","donna","what kind of"],["たとえば","tatoeba","for example?"],["それで","sorede","and then?"],["もっとおしえてください","motto oshiete kudasai","tell me more"]]}]},
+ {t:"Making friends",e:"🤝",c:"#c59cf4",kana:"サシスセソ",rp:"You've been chatting with someone fun at a language exchange. Become friends: swap LINE and make a plan to meet.",ls:[
+  {id:"c14a",t:"Finding common ground",g:"Find things you have in common",w:[["さいきん","saikin","recently, lately"],["よく","yoku","often"],["いつも","itsumo","always"],["おなじ","onaji","the same"],["～もすきです","mo suki desu","I like ~ too"]]},
+  {id:"c14b",t:"Swapping contacts",g:"Swap LINE and stay in touch",w:[["ライン","rain","LINE (the chat app)"],["こうかん","koukan","swap, exchange"],["インスタ","insuta","Instagram"],["あとで","ato de","later"],["れんらくします","renraku shimasu","I'll get in touch"]]},
+  {id:"c14c",t:"Making plans",g:"Suggest a day and a plan to meet",w:[["こんど","kondo","next time, sometime"],["ひま","hima","free (time)"],["いつがいいですか","itsu ga ii desu ka","when is good for you?"],["のみにいきましょう","nomi ni ikimashou","let's go for a drink"],["じゃあ","jaa","well then, OK then"]]}]},
+ {t:"Real conversations",e:"💬",c:"#7cb8f4",kana:"タチツテト",rp:"FINAL",ls:[
   {id:"c12a",t:"Keeping a chat going",g:"React naturally in conversation",w:[["そうですね","sou desu ne","that's right / let me see"],["へえ","hee","oh really?"],["なるほど","naruhodo","I see"],["ちょっとまって","chotto matte","wait a moment"],["もういちど","mou ichido","once more"]]},
   {id:"c12b",t:"When you don't understand",g:"Ask people to help you understand",w:[["ゆっくり","yukkuri","slowly"],["～てください","te kudasai","please ~"],["えいごで","eigo de","in English"],["にほんご","nihongo","Japanese (language)"],["すこし","sukoshi","a little"]]},
   {id:"c12c",t:"Saying goodbye",g:"End a conversation and stay in touch",w:[["またあいましょう","mata aimashou","let's meet again"],["れんらく","renraku","contact"],["たのしかった","tanoshikatta","it was fun"],["がんばって","ganbatte","good luck!"],["きをつけて","ki o tsukete","take care"]]}]}
 ];
+// What each unit lets you do by the end (shown as the unit goal and in "What you can do now")
+["Greet people at any time of day and ask how they are","Introduce yourself: your name, where you're from and what you do","Count to 10, say your age and swap phone numbers","Say what you like and order food and drinks","Tell the time and talk about your day","Talk about your hobbies and invite someone out","Talk about your family and describe people","Shop for clothes: colours, prices and paying","Ask the way and catch the right train","Talk about the weather, how you feel and why","Check in at a hotel and ask for things politely","Start a chat with a stranger and keep it going","Find common ground, swap LINE and make plans","Hold a whole conversation and get help when you're lost"].forEach((g,i)=>{if(COURSE[i])COURSE[i].cd=g;});
 const CLESSONS=COURSE.flatMap((u,ui)=>u.ls.map(l=>({...l,unit:ui})));
 const clessonById=id=>CLESSONS.find(l=>l.id===id);
 const wordSay=jp=>jp.replace(/～/g,"");
@@ -836,7 +870,7 @@ const KANJI_LV={none:"none yet",few:"under 50",some:"50–300",many:"300+"};
 /* ============ STATE ============ */
 const KEY="yuki-sensei-v3";
 const DEFAULT={
-  v:25,onboarded:false,name:"",level:"n5",goal:"",
+  v:26,onboarded:false,name:"",level:"n5",goal:"",
   about:{done:false,focus:[],hira:"",kata:"",kanji:"",location:"",native:"English",minutes:15,notes:""},
   placement:null,plan:null,course:null,
   profile:{facts:[],weak:[],strong:[],learned:[]},
@@ -1007,6 +1041,13 @@ function migrate(st){
   // v8 → v9: conversation course (active talk is S.course)
   if(st.course&&(typeof st.course!=="object"||!Array.isArray(st.course.targets)))st.course=null;
   if(![6,12,24].includes(+st.settings.history))st.settings.history=6;else st.settings.history=+st.settings.history;
+  // v25 → v26: "Small talk" and "Making friends" units go in before "Real conversations" (unit index 11 → 13).
+  // Its kana bite (カキクケコ) stays at index 11, which now teaches the same kana.
+  if((st.v||0)<26){const mv=k=>({"cr:11":"cr:13","cq:11:m":"cq:13:m","cq:11:t":"cq:13:t"})[k]||k;
+    if(st.plan&&st.plan.done){const d=st.plan.done;["cr:11","cq:11:m","cq:11:t"].forEach(k=>{if(d[k]){delete d[k];d[mv(k)]=true;}});}
+    if(st.plan&&Array.isArray(st.plan.custom))st.plan.custom.forEach(c=>{if(c&&c.before)c.before=mv(c.before);});
+    if(st.course&&st.course.key)st.course.key=mv(st.course.key);
+    if(st.threads&&st.threads["cr:11"]&&!st.threads["cr:13"]){st.threads["cr:13"]=st.threads["cr:11"];delete st.threads["cr:11"];if(st.chatId==="cr:11")st.chatId="cr:13";}}
   // v22 → v23: tests & recaps on the path; ones in units already finished count as done
   if((st.v||0)<23&&st.plan&&st.plan.done){const d=st.plan.done;
     COURSE.forEach((u,ui)=>{if(d["cr:"+ui]){d["cq:"+ui+":m"]=d["cq:"+ui+":t"]=true;if(ui%3===2)d["cq:"+ui+":r"]=true;}else if(d["ck:"+ui]||d["cl:"+u.ls[2].id])d["cq:"+ui+":m"]=true;});
@@ -1951,7 +1992,8 @@ function markNode(key,quiet){
   ensurePlan();if(S.plan.done[key])return;
   S.plan.done[key]=true;save();
   const nd=pathNodes().find(n=>n.key===key);addXP(key.startsWith("ck:")?10:15,null,nd?nodeLabel(nd):"Lesson");
-  if(!quiet)toast("✓ Done! Next step unlocked",1800);
+  const cr=/^cr:(\d+)$/.exec(key),cu=cr&&COURSE[+cr[1]];
+  if(cu&&cu.cd)toast("🏅 Unit goal reached: "+cu.cd,3200);else if(!quiet)toast("✓ Done! Next step unlocked",1800);
 }
 function planAuto(t,k){
   if(!S.plan)return;
@@ -1979,6 +2021,81 @@ function nodeIcon(n){
 }
 const modeTag=n=>(n.t==="CL"||n.t==="CR")?(isSpeakingKey(n.key)?"🎙️ Speaking":"💬 Chat"):n.t==="CQ"?"📝 Free test":"";
 const nodeSub=n=>n.t==="CL"?"5 new words · learn, practise, "+(isSpeakingKey(n.key)?"then a call":"then chat"):n.t==="CK"?"5 new characters":n.t==="CR"?"A spoken roleplay with this unit's words":n.t==="CQ"?{m:"8 questions on your first 10 words",t:"12 questions on this unit · pass with 70%",r:"15 questions mixing the last 3 units",f:"25 questions on the whole course",c:"12 questions on cards you've learned"}[n.k]+" · free":"";
+
+/* ---- Tutor-style structure: an objective for every step, a lesson brief before it, and skills that grow ---- */
+function nodeGoal(n){
+  const u=COURSE[n.unit];
+  if(n.t==="CL")return clessonById(n.k).g;
+  if(n.t==="CK")return"Read and say "+[...n.k].join(" ");
+  if(n.t==="CR")return COURSE[n.k].rp==="FINAL"?"Hold a whole conversation using everything from the course":"Use this unit's words in a real conversation";
+  if(n.t==="CQ")return{m:"Show you know this unit's first 10 words",t:"Prove you've mastered "+(u?"“"+u.t+"”":"this unit"),r:"Remember everything from the last 3 units",f:"Pass the N5 conversation course",c:"Keep the cards you've learned fresh"}[n.k];
+  if(n.t==="L"){const l=lessonById(n.k);return l?l.desc:"";}
+  if(n.t==="Q")return"Check everything from this unit";
+  return"Learn: "+n.title;
+}
+const nodeMin=n=>n.t==="CL"||n.t==="CR"?8:n.t==="CK"?3:n.t==="CQ"?{m:3,t:5,r:6,f:10,c:4}[n.k]:n.t==="L"?10:6;
+const nodeKind=n=>n.t==="CL"?(isSpeakingKey(n.key)?"🎙️ Speaking lesson":"💬 Chat lesson"):n.t==="CK"?"あ Kana lesson":n.t==="CR"?(COURSE[n.k].rp==="FINAL"?"🎓 Final conversation":"🎭 Roleplay"):n.t==="CQ"?"📝 Test · free":n.t==="L"?"📖 Lesson":n.t==="Q"?"🏆 Review":"⭐ Your lesson";
+function unitStep(n){const ns=pathNodes().filter(x=>x.unit===n.unit);return[ns.findIndex(x=>x.key===n.key)+1,ns.length];}
+// The lesson plan: what you'll do, step by step, and what counts as passing
+function nodePlan(n){
+  const sp=isSpeakingKey(n.key);
+  if(n.t==="CL")return{steps:[["Learn","5 new words, one at a time, with audio","2 min"],["Practise","A quick quiz on them, plus 2 words from earlier lessons","2 min"],[sp?"Speak":"Chat",sp?"A voice call with Yuki: answer out loud and use all 5 words":"A text chat with Yuki where you use all 5 words","5 min"]],
+    pass:`Use all 5 words in a real back-and-forth with at least ${TALK_MIN} replies`,credits:true};
+  if(n.t==="CK")return{steps:[["Learn","5 new characters with their sounds","1 min"],["Practise","Match each character to its sound","2 min"]],pass:"Finish the practice round"};
+  if(n.t==="CR"){const fin=COURSE[n.k].rp==="FINAL";return{steps:[["Warm-up","Refresh the 5 words you'll need","2 min"],[fin?"Final conversation":"Roleplay",fin?"A real conversation with Yuki about anything you've learned. You get scores at the end":"The scene: "+COURSE[n.k].rp+" Yuki plays the other person","6 min"]],
+    pass:`Use all 5 words with at least ${TALK_MIN} replies`,credits:true};}
+  if(n.t==="CQ"){const sp2=testSpec(n);return{steps:[["Recap","Look over the words first and tap to hear them","1 min"],["Test",sp2.count+" questions: multiple choice, typing and listening",nodeMin(n)-1+" min"]],pass:`Score ${Math.round(sp2.pass*100)}% or more. You can retry as often as you like`};}
+  return{steps:[["Lesson","Yuki teaches it step by step in chat",nodeMin(n)+" min"]],pass:"Tap ✓ Done when you've got it",credits:true};
+}
+// What you've already learned that this step builds on: the last finished lesson goal before it
+function nodeBuilds(n){
+  const ns=pathNodes(),i=ns.findIndex(x=>x.key===n.key);
+  for(let j=i-1;j>=0;j--){const p=ns[j];if(p.t==="CL"&&nodeDone(p))return clessonById(p.k).g;}
+  return"";
+}
+// Skills: every finished lesson goal, plus each unit goal once its roleplay is done
+function canDoList(){
+  if(!isN5Path())return(CUR[S.level]||[]).flatMap(([,ls])=>ls.filter(l=>S.done.includes(l[0])).map(l=>({t:l[2],unit:true})));
+  const out=[];
+  COURSE.forEach((u,ui)=>{
+    u.ls.forEach(l=>{if(doneMap()["cl:"+l.id])out.push({t:l.g,unit:false,ui});});
+    if(doneMap()["cr:"+ui])out.push({t:u.cd,unit:true,ui});
+  });
+  return out;
+}
+function canDoHTML(max){
+  const L=canDoList(),units=L.filter(x=>x.unit),cur=curNode(),next=cur?nodeGoal(cur):"";
+  const show=L.slice().reverse().slice(0,max||99);
+  return`<div class="card cando">${show.length?show.map(x=>`<div class="cdrow${x.unit?" big":""}"><i>${x.unit?"🏅":"✓"}</i><span>I can ${esc(x.t.charAt(0).toLowerCase()+x.t.slice(1))}</span></div>`).join(""):`<p class="sub">Finish your first lesson and your skills start growing here.</p>`}
+   ${next?`<div class="cdrow next"><i>→</i><span>Next: ${esc(next)}</span></div>`:""}
+   <p class="sub" style="margin-top:8px">${L.length} skill${L.length===1?"":"s"}${units.length?" · "+units.length+" unit goal"+(units.length===1?"":"s")+" reached":""}</p></div>`;
+}
+// The brief: shown before every step, like a tutor handing you the assignment
+function vBrief(){
+  const n=pathNodes().find(x=>x.key===UI.brief);if(!n){UI.brief=null;return vHome();}
+  const U=pathUnits()[n.unit]||{title:"",sub:"",c:"#888",e:""},[si,sn]=unitStep(n),P=nodePlan(n),done=nodeDone(n),b=nodeBuilds(n);
+  const words=n.t==="CL"?clessonById(n.k).w:n.t==="CR"?rpTargets(n).map(wordInfo).filter(Boolean):[];
+  const cu=isN5Path()?COURSE[n.unit]:null;
+  return`<div class="pad brief" style="--uc:${U.c}"><div class="lphead"><button class="iconbtn" data-act="briefClose" aria-label="Close">✕</button><span class="sub" style="font-weight:800">${esc(U.title.toUpperCase())} · STEP ${si} OF ${sn}</span></div>
+   <div class="bfhead"><span class="bfic">${nodeIcon(n)}</span><div><small>${nodeKind(n)} · about ${nodeMin(n)} min</small><div class="h1">${esc(nodeLabel(n))}</div></div></div>
+   <div class="bfgoal"><small>🎯 Objective</small><b>By the end you can ${esc(nodeGoal(n).charAt(0).toLowerCase()+nodeGoal(n).slice(1))}.</b>${cu&&cu.cd?`<span>Part of the unit goal: ${esc(cu.cd)}</span>`:""}</div>
+   <div class="sec">📋 Lesson plan</div>
+   <div class="card bfplan">${P.steps.map(([t,d,m],i)=>`<div class="bfstep"><i>${i+1}</i><div><b>${esc(t)}</b><span>${esc(d)}</span></div><em>${m}</em></div>`).join("")}</div>
+   ${words.length?`<div class="sec">${n.t==="CR"?"🔥 Words you'll use":"🆕 New words"}</div><div class="tags">${words.map(w=>`<button class="tg${S.cards["w:"+w[0]]?" s":""}" data-act="sayText" data-text="${esc(wordSay(w[0]))}">${esc(w[0])} · ${esc(w[2])}</button>`).join("")}</div>`:""}
+   ${n.t==="CK"?`<div class="sec">🆕 New characters</div><div class="tags">${[...n.k].map(ch=>`<button class="tg" data-act="sayText" data-text="${ch}">${ch}</button>`).join("")}</div>`:""}
+   <div class="sec">✅ To pass</div><p class="bfpass">${esc(P.pass)}.</p>
+   ${b?`<div class="sec">🧱 Builds on</div><p class="bfpass">You can already ${esc(b.charAt(0).toLowerCase()+b.slice(1))}.</p>`:""}
+   ${P.credits?`<p class="sub" style="margin:10px 2px 0">The conversation part uses a few AI credits. Learning and practice are free.</p>`:""}
+   <button class="btn" style="margin-top:18px" data-act="briefGo">${done?"↻ Do it again":"Start lesson"}</button>
+   <button class="btn ghost" style="margin-top:8px" data-act="briefClose">Back to path</button></div>`;
+}
+// Home: one clear "next assignment" card at the top
+function nextCard(){
+  const n=curNode();if(!n)return"";
+  const U=pathUnits()[n.unit]||{title:"",c:"#888"},[si,sn]=unitStep(n);
+  return`<button class="nextcard" data-act="brief" data-key="${esc(n.key)}" style="--uc:${U.c}"><small>📋 Your next assignment · ${esc(U.title)}, step ${si} of ${sn}</small>
+   <b>${nodeIcon(n)} ${esc(nodeLabel(n))}</b><span>🎯 ${esc(nodeGoal(n))}</span><em>${nodeKind(n)} · about ${nodeMin(n)} min <i>Start ›</i></em></button>`;
+}
 
 /* ---- word memory (spaced repetition shared with flashcards) ---- */
 function bumpWord(id,ok){
@@ -2045,9 +2162,10 @@ function vLesson(){
      ${picked!=null?`<div class="fb ${picked===q.a?"ok":"no"}">${picked===q.a?"✓ Correct!":"✗ It's <b>"+esc(q.a)+"</b>"+(q.dir==="jp"&&lp.kind==="words"?"":"")}</div><button class="btn" data-act="lpNext">Continue</button>`:""}</div>`;
   }
   // done
-  if(lp.kind==="kana")return`<div class="pad lp" style="text-align:center">${head}<div style="font-size:64px;margin-top:40px">🎉</div><div class="h1">5 new characters!</div><p class="sub" style="margin:8px 0 20px">${lp.right}/${lp.qs.length} right. They're now in your Hiragana/Katakana flashcards.</p><button class="btn" data-act="lpClose">Back to path</button></div>`;
+  const og=`<div class="bfgoal${lp.kind==="kana"?" ok":""}" style="text-align:left;margin:14px 0;--uc:${ucol(u.c)}"><small>🎯 Objective</small><b>${esc(nodeGoal(n))}</b><span>${lp.kind==="kana"?"✓ Achieved":lp.pre?"✓ Warm-up done · now the conversation":"✓ Words learned · one step left: the "+(isSpeakingKey(n.key)?"call":"chat")}</span></div>`;
+  if(lp.kind==="kana")return`<div class="pad lp" style="text-align:center">${head}<div style="font-size:64px;margin-top:40px">🎉</div><div class="h1">5 new characters!</div>${og}<p class="sub" style="margin:8px 0 20px">${lp.right}/${lp.qs.length} right. They're now in your Hiragana/Katakana flashcards.</p><button class="btn" data-act="lpClose">Back to path</button></div>`;
   return`<div class="pad lp" style="text-align:center">${head}<div style="font-size:64px;margin-top:30px">${lp.pre?"🎭":u.e}</div><div class="h1">${lp.pre?"Ready for the conversation!":"Words learned!"}</div>
-   <p class="sub" style="margin:8px 0 6px">${lp.right}/${lp.qs.length} right in practice.</p>
+   <p class="sub" style="margin:8px 0 6px">${lp.right}/${lp.qs.length} right in practice.</p>${og}
    <div class="tags" style="justify-content:center;margin:12px 0 18px">${lp.items.map(it=>`<span class="tg">${esc(it[0])} · ${esc(it[2])}</span>`).join("")}</div>
    ${lp.pre?`<div class="card" style="text-align:left"><b>🎭 Now use them for real</b><p class="sub" style="margin-top:6px">${COURSE[n.k].rp==="FINAL"?"Your big end-of-course conversation with Yuki.":"The scene: "+esc(COURSE[n.k].rp)+" Yuki plays the other person."} Answer out loud with 🎤 日本語 and use all 5 words; they tick off as you say them.</p></div>
    <button class="btn" data-act="lpTalk">📞 Start the conversation</button>`:isSpeakingKey(n.key)?`<div class="card" style="text-align:left"><b>🎙️ Last step: a speaking lesson</b><p class="sub" style="margin-top:6px">Yuki calls you. Answer out loud with the 🎤 日本語 button and use all 5 words; they tick off as you say them.</p></div>
@@ -2086,7 +2204,7 @@ TARGET WORDS the student must use: ${wl}.
 Still not used: ${left.length?left.join(", "):"all used!"}.
 ${rv?`OLDER WORDS to bring back (ask about them or work them in, early on): ${rv}.`:""}
 Use only Japanese the student has learned (target, older and recently learned words); any other word needs its English in brackets.
-Rules: have a REAL back-and-forth conversation (at least ${TALK_MIN} exchanges; now ${talkTurns(c)}): react to what they say, share a little about yourself, ask follow-up questions, and set up moments where the student HAS to say each target word. Don't just drill words. One small step per message. If they're stuck, give a hint (the English meaning or the first sound), not the answer. Keep your Japanese very simple, using mostly the target and older words, with English help as their style needs. They may type romaji; that counts. When every target word has been used, congratulate them warmly and ask 2 quick recap questions (one about an older word).${c.kind==="final"?" This is the end-of-course test: about 10 turns, light corrections only, and at the end give friendly scores out of 10 for understanding, speaking, vocabulary and grammar plus what to work on next.":""}
+Open by stating today's objective in one short English line. Rules: have a REAL back-and-forth conversation (at least ${TALK_MIN} exchanges; now ${talkTurns(c)}): react to what they say, share a little about yourself, ask follow-up questions, and set up moments where the student HAS to say each target word. Don't just drill words. One small step per message. If they're stuck, give a hint (the English meaning or the first sound), not the answer. Keep your Japanese very simple, using mostly the target and older words, with English help as their style needs. They may type romaji; that counts. When every target word has been used, congratulate them warmly and ask 2 quick recap questions (one about an older word).${c.kind==="final"?" This is the end-of-course test: about 10 turns, light corrections only, and at the end give friendly scores out of 10 for understanding, speaking, vocabulary and grammar plus what to work on next.":""}
 ${c.speaking?"This is a SPEAKING lesson on a voice call: keep each message to 1-2 short spoken sentences, and invite them to answer out loud.":"This is a typed CHAT lesson."}
 In the memory line, put target words they used correctly this turn in "used" (exact spelling from the list).`;
 }
@@ -2198,7 +2316,7 @@ function markUsed(list){
 // When every word has been used: a clear "lesson complete" card with Finish / Keep practising
 function courseDoneCard(inCall){
   const c=activeCourse();if(!c||!talkDone(c)||c.keep)return"";
-  return`<div class="donecard${inCall?" incall":""}"><b>🎉 Lesson complete!</b><span>All ${c.targets.length} words used in a real conversation. Finish whenever you're ready.</span>
+  return`<div class="donecard${inCall?" incall":""}"><b>🎉 Lesson complete!</b><span>🎯 Objective reached: ${esc(c.goal)}. All ${c.targets.length} words used in a real conversation. Finish whenever you're ready.</span>
    <div class="donebtns"><button class="btn sm" data-act="courseDone">✓ Finish lesson</button><button class="btn sm ghost" data-act="keepPractising">Keep practising</button></div></div>`;
 }
 function talkChips(){
@@ -2237,14 +2355,16 @@ function unitSheet(u){
   const U=pathUnits()[u];if(!U)return;
   const ns=pathNodes().filter(n=>n.unit===u),dn=ns.filter(nodeDone).length;
   const words=isN5Path()?COURSE[u].ls.flatMap(l=>l.w):[];
-  sheet(`<div class="sub" style="font-weight:800">${esc(U.title)} · ${dn}/${ns.length} done</div><div class="h2" style="margin:4px 0 12px">${U.e} ${esc(U.sub)}</div>
-   <div class="card" style="padding:4px 14px">${ns.map(n=>`<div class="urow"><i>${nodeDone(n)?"✓":"○"}</i><span style="flex:1">${nodeIcon(n)} ${esc(nodeLabel(n))}</span></div>`).join("")}</div>
+  const cd=isN5Path()&&COURSE[u].cd;
+  sheet(`<div class="sub" style="font-weight:800">${esc(U.title)} · ${dn}/${ns.length} done</div><div class="h2" style="margin:4px 0 10px">${U.e} ${esc(U.sub)}</div>
+   ${cd?`<div class="bfgoal${nodeDone(ns.find(n=>n.t==="CR")||{key:""})?" ok":""}" style="margin-bottom:12px;--uc:${U.c}"><small>🎯 Unit goal</small><b>By the end of this unit you can ${esc(cd.charAt(0).toLowerCase()+cd.slice(1))}.</b></div>`:""}
+   <div class="card" style="padding:4px 14px">${ns.map((n,i)=>`<button class="urow ubtn" data-act="brief" data-key="${esc(n.key)}"><i>${nodeDone(n)?"✓":i+1}</i><span style="flex:1"><b>${nodeIcon(n)} ${esc(nodeLabel(n))}</b><small>${esc(nodeGoal(n))}</small></span></button>`).join("")}</div>
    ${words.length?`<div class="sec" style="margin-top:6px">Words in this unit</div><div class="tags" style="margin-bottom:12px">${words.map(w=>`<button class="tg${S.cards["w:"+w[0]]?" s":""}" data-act="sayText" data-text="${esc(wordSay(w[0]))}">${esc(w[0])} · ${esc(w[2])}</button>`).join("")}</div>`:""}
    ${dn<ns.length?`<button class="btn ghost" data-act="unitSkip" data-u="${u}">I already know this, skip the unit</button>`:""}
    <button class="btn" style="margin-top:8px" data-act="closeSheet">Close</button>`);
 }
 function levelSheet(){
-  sheet(`<div class="h2" style="margin-bottom:6px">Your path follows your level</div><p class="sub" style="margin-bottom:12px">N5 is the beginner conversation course: 12 topic units, 5 words per lesson, and real chats with Yuki. Higher levels build the path from that level's lessons. Progress on each path is kept.</p>
+  sheet(`<div class="h2" style="margin-bottom:6px">Your path follows your level</div><p class="sub" style="margin-bottom:12px">N5 is the beginner conversation course: 14 topic units, 5 words per lesson, and real chats with Yuki. Higher levels build the path from that level's lessons. Progress on each path is kept.</p>
    <div class="tags" style="margin-bottom:14px">${Object.entries(LV).map(([k,v])=>`<button class="chip${S.level===k?" on":""}" data-act="setLevel" data-v="${k}">${v.label} ${v.name}</button>`).join("")}</div>
    <button class="btn ghost" data-act="placeStart">🎯 Take the 3-minute level check</button>
    <button class="btn ghost" style="margin-top:8px" data-act="allLessons">📚 Browse all lessons</button>
@@ -2382,6 +2502,7 @@ function vProgress(){
     <div class="tcside"><div><b>🔥 ${st.n}</b><span>day streak${st.n&&!st.today?" · study today!":""}</span></div><div><b>❄️ ${D.freeze}</b><span>streak freeze${D.freeze===1?"":"s"}</span></div><div><b>⏱️ ${fmtMin(d.sec)}</b><span>studied today</span></div></div></div>
   <div class="sec">🎯 Daily goal</div><div class="goalgrid">${GOALS.map(([v,t,m])=>`<button class="gopt${g===v?" on":""}" data-act="goalSet" data-v="${v}"><b>${t}</b><span>${v} XP · ${m}</span></button>`).join("")}</div>
   <details class="howxp"><summary class="sub">How XP and streaks work ›</summary><p class="sub" style="margin:6px 2px 0">XP is points, not time: flashcard or quiz answer 1–2 · word used in a talk 5 · message 2 (spoken 3) · lesson 15. Your real study time is the ⏱️ number (counted from your taps). A freeze is earned every 7 streak days (max 2) and covers one missed day by itself.</p></details>
+  <div class="sec">🎯 What you can do now</div>${canDoHTML()}
   <div class="sec">📅 Study calendar</div><div class="card">${calendarHTML()}</div>
   <div class="sec">📊 Last 7 days</div><div class="card">${weekHTML()}</div>
   <div class="sec">🎌 Countdown</div><div class="card">
@@ -3232,13 +3353,14 @@ function render(){
   const main=$("#main");
   if(UI.place){main.innerHTML=vPlace();main.scrollTop=0;return;}
   if(UI.lp){$("#tabs").classList.add("hidden");main.innerHTML=vLesson();main.onscroll=null;return;}
+  if(UI.brief&&UI.tab==="home"){$("#tabs").classList.add("hidden");main.innerHTML=vBrief();main.onscroll=null;main.scrollTop=0;return;}
   if(UI.qz&&UI.qz.test){$("#tabs").classList.add("hidden");main.innerHTML=vQuiz();main.onscroll=null;main.scrollTop=0;return;}
   if(!S.onboarded||UI.obEdit){main.innerHTML=vOnboard();main.scrollTop=0;return;}
   main.innerHTML=({home:vHome,chat:vChat,learn:vLearn,practice:vPractice,cards:vCards,progress:vProgress,me:vMe,translate:vTranslate}[UI.tab]||vHome)();
   main.scrollTop=0;
   if(UI.tab==="chat")afterChat();
   main.onscroll=UI.tab==="home"?pathScroll:null;
-  if(UI.tab==="home"){const c=$(".node.cur");if(c)main.scrollTop+=c.getBoundingClientRect().top-main.getBoundingClientRect().top-main.clientHeight/2+60;pathScroll();}
+  if(UI.tab==="home")pathScroll();
 }
 
 // Re-render without jumping back to the top (for taps on chips and toggles)
@@ -3322,15 +3444,19 @@ function vHome(){
   const units=pathUnits(),nodes=pathNodes(),cur=nodes.find(n=>!nodeDone(n));
   const OFF=[0,-58,-90,-58,0,58,90,58];
   let g=0,html="";
+  const cuI=cur?cur.unit:-1;
   units.forEach((U,u)=>{
     const ns=nodes.filter(n=>n.unit===u);if(!ns.length)return;
     const dn=ns.filter(nodeDone).length;
-    html+=`<button class="ubanner" data-u="${u}" data-act="unitSheet" style="--uc:${U.c}"><span class="ube">${U.e}</span><span class="ubt"><small>${esc(U.title)}</small><b>${esc(U.sub)}</b></span><span class="ubp">${dn}/${ns.length}</span></button>`;
+    // calmer path: finished units fold into a slim bar, later units show just their banner (tap for the steps)
+    if(u!==cuI&&(dn===ns.length||u>cuI+1||cuI<0)){const fin=dn===ns.length;
+      html+=`<button class="ubanner fold${fin?" fin":" later"}" data-u="${u}" data-act="unitSheet" style="--uc:${U.c}"><span class="ube">${fin?"✓":U.e}</span><span class="ubt"><small>${esc(U.title)}${fin?" · complete":""}</small><b>${esc(U.sub)}</b>${!fin&&isN5Path()&&COURSE[u].cd?`<em>🎯 ${esc(COURSE[u].cd)}</em>`:""}</span><span class="ubp">${fin?"🏅":"🔒 "+ns.length}</span></button>`;return;}
+    html+=`<button class="ubanner" data-u="${u}" data-act="unitSheet" style="--uc:${U.c}"><span class="ube">${U.e}</span><span class="ubt"><small>${esc(U.title)}</small><b>${esc(U.sub)}</b>${isN5Path()&&COURSE[u].cd?`<em>🎯 ${esc(COURSE[u].cd)}</em>`:""}</span><span class="ubp">${dn}/${ns.length}</span></button>`;
     ns.forEach(n=>{
       const done=nodeDone(n),isCur=cur&&cur.key===n.key;
       html+=`<div class="nwrap${isCur?" cur":""}" style="transform:translateX(${OFF[g++%8]}px)">${isCur?`<div class="tip">START</div>`:""}
         <button class="node${done?" done":""}${isCur?" cur":""}${!done&&!isCur?" todo":""}${n.t==="X"?" star":""}${n.t==="CK"?" kana":""}" style="--uc:${U.c}" data-act="node" data-key="${esc(n.key)}" aria-label="${esc(nodeLabel(n))}">${nodeIcon(n)}${done?`<span class="bd">✓</span>`:""}</button>
-        <div class="nlab">${esc(nodeLabel(n))}${modeTag(n)?`<span class="mtag${n.t==="CQ"?" ts":isSpeakingKey(n.key)?" sp":""}">${modeTag(n)}</span>`:""}${isCur&&nodeSub(n)?`<small>${esc(nodeSub(n))}</small>`:""}</div></div>`;
+        <div class="nlab">${esc(nodeLabel(n))}${isCur&&modeTag(n)?`<span class="mtag${n.t==="CQ"?" ts":isSpeakingKey(n.key)?" sp":""}">${modeTag(n)}</span>`:""}</div></div>`;
     });
   });
   const cu=cur?cur.unit:units.length-1;
@@ -3339,6 +3465,7 @@ function vHome(){
   return`<div class="ptop"><button class="pill" data-act="levelSheet">🇯🇵 ${LV[S.level].label} <span class="caret">▾</span></button><button class="pill" data-act="tab" data-tab="cards">🃏 ${Object.keys(S.cards).length}</button><button class="pill${stI.n?" fire":""}" data-act="tab" data-tab="progress">🔥 ${stI.n}</button></div>
   <div class="pathwrap">
   ${todayStrip()}
+  ${nextCard()}
   ${!S.about.done?`<button class="row" data-act="aboutEdit" style="margin-top:8px"><span class="ri">✍️</span><span class="rt"><b>Help Yuki get to know you</b><span>2 minutes · makes your lessons fit you</span></span></button>`:""}
   ${S.course&&!(S.plan&&S.plan.done[S.course.key])&&S.threads[S.course.key]?`<button class="row" data-act="resumeCourse" style="margin-top:8px"><span class="ri">${S.course.speaking?"🎙️":"💬"}</span><span class="rt"><b>Continue: ${esc(S.course.title)}</b><span>${S.course.used.length}/${S.course.targets.length} words used · ${S.course.speaking?"speaking lesson":"chat lesson"}</span></span></button>`:""}
   <button id="unitHead" data-act="unitSheet" data-u="${cu}">${unitHeadInner(cu)}</button>
@@ -3969,7 +4096,7 @@ function startQuiz(q){
   send(`🧩 ${t?t[2]:"Quiz"}`,p);
 }
 const ACT={
-  tab:el=>{const t=el.dataset.tab;if(t!==UI.tab)stopSpeak();if(t!=="me"||UI.tab==="me")UI.me=null;if(t!==UI.tab){UI.fc=null;UI.qz=null;}UI.tab=t;if(t!=="practice")UI.chart=null;render();if(t==="translate")trFillSoon(3000);},
+  tab:el=>{const t=el.dataset.tab;UI.brief=null;if(t!==UI.tab)stopSpeak();if(t!=="me"||UI.tab==="me")UI.me=null;if(t!==UI.tab){UI.fc=null;UI.qz=null;}UI.tab=t;if(t!=="practice")UI.chart=null;render();if(t==="translate")trFillSoon(3000);},
   cardsF:el=>{UI.cardsF=el.dataset.v;rerender();},
   translate:()=>{stopSpeak();UI.tab="translate";render();trFillSoon(3000);},
   trClear:()=>{const T=UI.tr;if(T){T.q="";T.res=[];}rerender();const i=$("#trIn");if(i)i.focus();},
@@ -4164,7 +4291,10 @@ const ACT={
   chatsSheet:()=>chatsSheet(),
   openChat:el=>{if(S.chatId!==el.dataset.id)stopSpeak();S.chatId=el.dataset.id;linkChat();S.threads[S.chatId].at=Date.now();save();UI.tab="chat";render();},
   resumeCourse:()=>{const c=S.course;if(!c)return;S.chatId=c.key;linkChat();save();UI.tab="chat";render();if(c.speaking)openVoice();},
-  node:el=>{const n=pathNodes().find(x=>x.key===el.dataset.key);if(n)startNode(n);},
+  node:el=>{const n=pathNodes().find(x=>x.key===el.dataset.key);if(n){UI.brief=n.key;UI.tab="home";render();}},
+  brief:el=>{UI.brief=el.dataset.key;UI.tab="home";render();},
+  briefClose:()=>{UI.brief=null;render();},
+  briefGo:()=>{const n=pathNodes().find(x=>x.key===UI.brief);UI.brief=null;if(n)startNode(n);else render();},
   ctxDone:()=>{if(UI.planCtx){markNode(UI.planCtx.key);UI.planCtx=null;}UI.tab="home";render();},
   unitSheet:el=>unitSheet(+el.dataset.u),
   unitSkip:el=>{const u=+el.dataset.u;if(!confirm("Mark this whole unit as done?"))return;ensurePlan();
