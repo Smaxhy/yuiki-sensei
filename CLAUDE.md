@@ -24,7 +24,8 @@ Safari → Add to Home Screen.
   ({key, kind, title, goal, scen, targets, used, review}); `coursePrompt()` tells Yuki to make
   the student use every target word and to bring back older words; words tick off via
   `detectUsed()` on what the student types (kana, kanji spellings via `KANJI_ALT`, digits turned back into Japanese via `jaDigits()` — the Japanese mic also converts digits — romaji, or English voice-typing look-alikes like "Ohio" via `soundsLike()`; everyday English words in `EN_COMMON` never count) and the `used` MEM field; all used
-  AND at least `TALK_MIN` (6) messages from the student in that talk (`c.turns`, `courseTurn()`, `talkDone()`; chip
+  AND at least `TALK_MIN` (6) messages from the student in that talk (`talkTurns(c)` counts the student's messages in the whole thread, opening excluded; `courseTurn()`, `talkDone()`;
+  `courseResync()` in `vChat` re-ticks target words from everything already said; chip
   "💬 n/6"; `coursePrompt` asks for a real back-and-forth with follow-up questions, not word drilling)
   → node done and a "Lesson complete" card (`courseDoneCard`) with ✓ Finish lesson / Keep practising
   appears in chat and on the call (hands-free stops auto-listening until "keep practising"). Course words are flashcards `w:<jp>` ("My words" deck) and share spaced

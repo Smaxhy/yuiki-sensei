@@ -624,7 +624,7 @@ html.light #voice .btn{color:#2a1520}
 <script>
 "use strict";
 // Bump this on every change so phones can spot a new version and offer to update
-const APP_VERSION="2026.10.11-3";
+const APP_VERSION="2026.10.11-4";
 /* ============ DATA ============ */
 const LV = {
   n5:{label:"N5",name:"Beginner",color:"#9fd67c"},
@@ -2052,7 +2052,7 @@ TARGET WORDS the student must use: ${wl}.
 Still not used: ${left.length?left.join(", "):"all used!"}.
 ${rv?`OLDER WORDS to bring back (ask about them or work them in, early on): ${rv}.`:""}
 Use only Japanese the student has learned (target, older and recently learned words); any other word needs its English in brackets.
-Rules: have a REAL back-and-forth conversation (at least ${TALK_MIN} exchanges; now ${c.turns||0}): react to what they say, share a little about yourself, ask follow-up questions, and set up moments where the student HAS to say each target word. Don't just drill words. One small step per message. If they're stuck, give a hint (the English meaning or the first sound), not the answer. Keep your Japanese very simple, using mostly the target and older words, with English help as their style needs. They may type romaji; that counts. When every target word has been used, congratulate them warmly and ask 2 quick recap questions (one about an older word).${c.kind==="final"?" This is the end-of-course test: about 10 turns, light corrections only, and at the end give friendly scores out of 10 for understanding, speaking, vocabulary and grammar plus what to work on next.":""}
+Rules: have a REAL back-and-forth conversation (at least ${TALK_MIN} exchanges; now ${talkTurns(c)}): react to what they say, share a little about yourself, ask follow-up questions, and set up moments where the student HAS to say each target word. Don't just drill words. One small step per message. If they're stuck, give a hint (the English meaning or the first sound), not the answer. Keep your Japanese very simple, using mostly the target and older words, with English help as their style needs. They may type romaji; that counts. When every target word has been used, congratulate them warmly and ask 2 quick recap questions (one about an older word).${c.kind==="final"?" This is the end-of-course test: about 10 turns, light corrections only, and at the end give friendly scores out of 10 for understanding, speaking, vocabulary and grammar plus what to work on next.":""}
 ${c.speaking?"This is a SPEAKING lesson on a voice call: keep each message to 1-2 short spoken sentences, and invite them to answer out loud.":"This is a typed CHAT lesson."}
 In the memory line, put target words they used correctly this turn in "used" (exact spelling from the list).`;
 }
@@ -2132,14 +2132,24 @@ function detectUsed(text){
   });
 }
 const TALK_MIN=6;
-const talkDone=c=>c.used.length>=c.targets.length&&(c.turns||0)>=TALK_MIN;
+// Your replies in a lesson talk, counted from the whole thread (so talks started before the counter existed,
+// or messages sent while the counter wasn't updated, still count). The opening "Let's practise" isn't one.
+function talkTurns(c){const t=S.threads[c.key];if(!t)return c.turns||0;
+  const n=t.msgs.filter(m=>m.role==="user"&&(!m.api||String(m.api).startsWith(String(m.text||"").slice(0,20)))).length;
+  return Math.max(c.turns||0,n);}
+const talkDone=c=>c.used.length>=c.targets.length&&talkTurns(c)>=TALK_MIN;
+// Re-check everything you've said in this talk for target words that weren't ticked yet
+function courseResync(){const c=activeCourse();if(!c||c.synced===S.chat.length)return;c.synced=S.chat.length;
+  const found=new Set();S.chat.forEach(m=>{if(m.role==="user"&&m.text)detectUsed(kanaize(m.text)).forEach(w=>found.add(w));});
+  c.turns=talkTurns(c);
+  if(found.size)markUsed([...found]);else courseFinishCheck(c);}
 function courseFinishCheck(c){
   if(talkDone(c)&&!(S.plan&&S.plan.done[c.key])){markNode(c.key,true);toast("🎉 Real conversation done! Tap Finish lesson when you're ready",3000);
     if(UI.voice)setTimeout(renderVoice,50);else if(UI.tab==="chat")setTimeout(rerenderChatHead,50);return true;}
   return false;
 }
 // each message you send in a lesson talk counts as one turn of the conversation
-function courseTurn(){const c=activeCourse();if(!c)return;c.turns=(c.turns||0)+1;save();
+function courseTurn(){const c=activeCourse();if(!c)return;c.turns=talkTurns(c);save();
   if(!courseFinishCheck(c)&&UI.tab==="chat"&&!UI.voice){const h=$("#tchips");if(h)h.outerHTML=talkChips();}}
 function markUsed(list){
   const c=activeCourse();if(!c||!list||!list.length)return;
@@ -2147,7 +2157,7 @@ function markUsed(list){
   list.forEach(jp=>{if(c.targets.includes(jp)&&!c.used.includes(jp)){c.used.push(jp);bumpWord("w:"+jp,true);added++;addXP(5,"words");}});
   if(!added)return;
   save();
-  if(!courseFinishCheck(c)){const left=TALK_MIN-(c.turns||0);
+  if(!courseFinishCheck(c)){const left=TALK_MIN-talkTurns(c);
     toast("✓ "+list.filter(x=>c.targets.includes(x)).join(", ")+" ("+c.used.length+"/"+c.targets.length+")"+(c.used.length>=c.targets.length&&left>0?" · keep talking: "+left+" more":""),1800);}
   if(UI.tab==="chat"&&!UI.voice){const h=$("#tchips");if(h)h.outerHTML=talkChips();}
 }
@@ -2159,7 +2169,7 @@ function courseDoneCard(inCall){
 }
 function talkChips(){
   const c=activeCourse();if(!c)return"";
-  const t=Math.min(c.turns||0,TALK_MIN);
+  const t=Math.min(talkTurns(c),TALK_MIN);
   return`<div id="tchips" class="tchips">${c.targets.map(jp=>`<span class="tchip${c.used.includes(jp)?" ok":""}">${c.used.includes(jp)?"✓ ":""}${esc(jp)}</span>`).join("")}<span class="tchip${t>=TALK_MIN?" ok":""}">💬 ${t}/${TALK_MIN}</span></div>`;
 }
 
@@ -3305,6 +3315,7 @@ function vHome(){
 }
 
 function vChat(){
+  try{courseResync();}catch(e){}
   const les=S.currentLesson&&lessonById(S.currentLesson);
   const C=activeCourse(),th=S.threads[S.chatId]||{title:"Chat with Yuki"};
   const chips=C?["Give me a hint","What does that mean?","Say it slower 🔊","Can we do it in English first?"]:les?["I don't get it","Give me an example","Quiz me on this","Next step","Say it slower 🔊"]:["Quiz me","Teach me something new","Let's practice talking","Explain simpler","Say it slower 🔊"];
