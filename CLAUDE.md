@@ -203,7 +203,13 @@ Safari → Add to Home Screen.
   cancelled so it can't start late over Ryusei.
   iPhone speech (`sayDevice`/`sayChunk`): short sentence chunks (≤180 chars), resume if paused,
   120 ms gap after an audio clip, safety timer if "end" never fires, voice assignment guarded.
-  English voice default `voiceEn=""` = Automatic: the best-ranked voice on the phone (Premium > Enhanced > rest).
+  🌐 Online English voices (`WEB_EN`, `voiceEn="web:<id>"`, default "web:google" since v25): free text-to-speech with
+  no key or AI credits: Google Translate's `translate_tts` (client=tw-ob, US/UK) and StreamElements (Amazon Polly
+  Joanna/Matthew/Amy/Brian). `sayDevice` sends English to `sayWebEn` (≤170-char sentence chunks on the shared player
+  via `playUrl`, without bumping `natSeq`); offline, a failure, or 3 failures in a row → the iPhone voice. `speakDevice`
+  routes through `sayDevice` when one is chosen. `<meta name="referrer" content="no-referrer">` so these accept the
+  requests. Reason: the owner's iPhone only gives web apps the basic voices (Samantha), even after downloading Premium.
+  `voiceEn=""` = Automatic: the best-ranked iPhone voice (Premium > Enhanced > rest).
   v24 moved everyone off the old "system" value: Safari can't see the voice picked in iPhone Settings and web apps
   can't use Siri voices, so "system" just gave the basic voice. Better voices come from downloading a Premium/
   Enhanced voice in Settings → Accessibility → Spoken Content → Voices (then reopen the app); Automatic picks it up.
@@ -313,7 +319,7 @@ Safari → Add to Home Screen.
 - Pages use `.sec` category headings: Practice (Today / Quick practice / decks…), Me (You / Yuki / App).
 
 ## Technical notes
-- State object `S` (currently `v:24`) saved to localStorage key `yuki-sensei-v3`. Keep it backward
+- State object `S` (currently `v:25`) saved to localStorage key `yuki-sensei-v3`. Keep it backward
   compatible. Saved data (and restored backups) go through `migrate()`; if the shape
   changes, bump `DEFAULT.v` and add a step there instead of wiping progress.
 - Clicks route through `data-act` attributes to the `ACT` object.

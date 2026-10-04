@@ -7,6 +7,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Yuki">
+<meta name="referrer" content="no-referrer">
 <meta name="theme-color" content="#151722">
 <title>Yuki Sensei</title>
 <link id="touchIcon" rel="apple-touch-icon" href="">
@@ -592,7 +593,7 @@ html.light #voice .btn{color:#2a1520}
 <script>
 "use strict";
 // Bump this on every change so phones can spot a new version and offer to update
-const APP_VERSION="2026.10.10-2";
+const APP_VERSION="2026.10.10-3";
 /* ============ DATA ============ */
 const LV = {
   n5:{label:"N5",name:"Beginner",color:"#9fd67c"},
@@ -791,7 +792,7 @@ const KANJI_LV={none:"none yet",few:"under 50",some:"50–300",many:"300+"};
 /* ============ STATE ============ */
 const KEY="yuki-sensei-v3";
 const DEFAULT={
-  v:24,onboarded:false,name:"",level:"n5",goal:"",
+  v:25,onboarded:false,name:"",level:"n5",goal:"",
   about:{done:false,focus:[],hira:"",kata:"",kanji:"",location:"",native:"English",minutes:15,notes:""},
   placement:null,plan:null,course:null,
   profile:{facts:[],weak:[],strong:[],learned:[]},
@@ -801,7 +802,7 @@ const DEFAULT={
   done:[],cards:{},chat:[],currentLesson:null,
   threads:{main:{title:"Chat with Yuki",kind:"free",msgs:[],at:0}},chatId:"main",
   settings:{apiKey:"",model:"claude-haiku-4-5-20251001",rate:0.9,autoSpeakChat:false,speakEnglish:true,micLang:"ja-JP",
-    style:{length:"short",english:"balanced",script:"auto",simple:false},history:6,voiceEn:"",voiceJa:"",handsFree:false,jaRec:"ryusei",vvUrl:"",enVoice:"iphone",questKey:"",
+    style:{length:"short",english:"balanced",script:"auto",simple:false},history:6,voiceEn:"web:google",voiceJa:"",handsFree:false,jaRec:"ryusei",vvUrl:"",enVoice:"iphone",questKey:"",
     tts:"quest",azKey:"",azRegion:"eastus",azEn:"en-US-AvaMultilingualNeural",azJa:"ja-JP-NanamiNeural",ttsChars:{month:"",n:0},captions:true}
 };
 let S=JSON.parse(JSON.stringify(DEFAULT));
@@ -928,6 +929,9 @@ function migrate(st){
   // v23 → v24: "iPhone's own voice" never followed the voice picked in iPhone Settings (Safari can't see it) and
   // fell back to the basic voice. Automatic = the best voice downloaded on the phone (Premium/Enhanced first).
   if((st.v||0)<24&&st.settings.voiceEn==="system")st.settings.voiceEn="";
+  // v24 → v25: the owner's iPhone only gives web apps Samantha; use the natural online English voice instead
+  // (falls back to the iPhone voice offline or if the service fails)
+  if((st.v||0)<25&&!st.settings.voiceEn)st.settings.voiceEn="web:google";
   // v21 → v22: the owner wants credits to last: Light history (6) by default, spending meter
   if((st.v||0)<22)st.settings.history=6;
   st.usage=obj(st.usage);["cost","n","total","allN","last","lastIn","lastOut"].forEach(k=>st.usage[k]=num(st.usage[k]));if(typeof st.usage.month!=="string")st.usage.month="";
@@ -996,7 +1000,7 @@ function pickVoice(lang){
   if(chosen==="system")return sysVoice(lang)||list[0]||null;
   return (chosen&&list.find(v=>v.name===chosen))||list[0]||null;
 }
-const voiceNow=lang=>{const v=pickVoice(lang);return v?v.name+(isHQ(v)?" ★":""):"iPhone default voice";};
+const voiceNow=lang=>{if(/^en/i.test(lang)&&webEnId())return"🌐 "+WEB_EN[webEnId()][0];const v=pickVoice(lang);return v?v.name+(isHQ(v)?" ★":""):"iPhone default voice";};
 const JP=/[\u3040-\u30ff\u3400-\u9fff\uff66-\uff9f\u3005]/;
 function cleanSpeech(t){
   return stripHidden(t).replace(/<<MEM>>[\s\S]*$/,"")
@@ -1181,9 +1185,31 @@ function sayChunkOnce(t,lang,rate){return new Promise(res=>{
 });}
 // Wait until the iPhone voice has really stopped (iOS sometimes reports "end" late or early)
 async function synthIdle(max){if(!synth)return;const t0=Date.now();while((synth.speaking||synth.pending)&&Date.now()-t0<(max||6000))await new Promise(r=>setTimeout(r,50));}
+// Natural English voices from free online text-to-speech (no key, no AI credits). Newer iOS only gives web apps
+// the basic voices (Samantha…) and hides downloaded Premium ones, so these are the way to a better English voice.
+// voiceEn = "web:<id>". Played on the shared audio player; any failure or no internet → the iPhone voice.
+const WEB_EN={
+  google:["Google · natural (US)",t=>"https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=en-US&q="+encodeURIComponent(t)],
+  googleuk:["Google · natural (UK)",t=>"https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=en-GB&q="+encodeURIComponent(t)],
+  Joanna:["Joanna · US woman",t=>"https://api.streamelements.com/kappa/v2/speech?voice=Joanna&text="+encodeURIComponent(t)],
+  Matthew:["Matthew · US man",t=>"https://api.streamelements.com/kappa/v2/speech?voice=Matthew&text="+encodeURIComponent(t)],
+  Amy:["Amy · UK woman",t=>"https://api.streamelements.com/kappa/v2/speech?voice=Amy&text="+encodeURIComponent(t)],
+  Brian:["Brian · UK man",t=>"https://api.streamelements.com/kappa/v2/speech?voice=Brian&text="+encodeURIComponent(t)]};
+const webEnId=()=>{const v=S.settings.voiceEn||"";return v.startsWith("web:")&&WEB_EN[v.slice(4)]?v.slice(4):"";};
+let webEnFails=0;
+// Says English with the online voice, sentence by sentence. Returns what's left unsaid if it failed (or "").
+async function sayWebEn(t,rate,g){
+  const w=WEB_EN[webEnId()],parts=t.match(/[^.!?\n]+[.!?]*\s*/g)||[t];
+  let buf="";const chunks=[];parts.forEach(p=>{if((buf+p).length>170&&buf){chunks.push(buf);buf="";}buf+=p;});if(buf.trim())chunks.push(buf);
+  for(let i=0;i<chunks.length;i++){if(g!==spGen)return"";const c=chunks[i].trim();if(!c)continue;
+    const my=natSeq;vlog("▶ online English voice ("+webEnId()+"): "+c.slice(0,40));
+    try{await playUrl(w[1](c),my,rate);webEnFails=0;}catch(e){webEnFails++;vlog("✗ online English voice failed, iPhone voice takes over");return chunks.slice(i).join(" ");}}
+  return"";
+}
 async function sayDevice(t,lang,rate){
-  if(!synth){vlog("✗ iPhone voice: not available");return;}
   t=String(t).trim();if(!t)return;
+  if(/^en/i.test(lang)&&webEnId()&&navigator.onLine!==false&&webEnFails<3){const g=spGen;const left=await sayWebEn(t,rate,g);if(!left||g!==spGen)return;t=left;}
+  if(!synth){vlog("✗ iPhone voice: not available");return;}
   const g=spGen,gap=120-(Date.now()-clipEndAt);if(gap>0)await new Promise(r=>setTimeout(r,gap));
   const parts=t.match(/[^.!?。！？\n]+[.!?。！？]*\s*/g)||[t];
   let buf="";const chunks=[];parts.forEach(p=>{if((buf+p).length>180&&buf){chunks.push(buf);buf="";}buf+=p;});if(buf.trim())chunks.push(buf);
@@ -1447,6 +1473,8 @@ function speakDevice(text,opts){
   synth.cancel();
   const segs=segments(cleanSpeech(text)).filter(s=>s.k==="ja"||S.settings.speakEnglish||opts.forceEnglish);
   const rate=(opts.rate||S.settings.rate);
+  // with a 🌐 online English voice, go sentence by sentence through sayDevice (it plays English online)
+  if(webEnId()&&segs.some(x=>x.k!=="ja")){const g=spGen;(async()=>{for(const x of segs){if(g!==spGen)return;await sayDevice(x.t.trim(),x.k==="ja"?"ja-JP":"en-US",x.k==="ja"?rate:1);}})();return;}
   segs.forEach(s=>{
     const u=new SpeechSynthesisUtterance(s.t.trim());
     u.lang=s.k==="ja"?"ja-JP":"en-US";
@@ -3655,18 +3683,20 @@ function enVoiceList(){
    <button class="btn sm ghost" style="margin-top:8px" data-act="refreshVoices">🔄 Refresh voice list</button></details>`;
 }
 function englishTip(){
+  if(webEnId())return"";
   const best=voiceList("en-US")[0];
   if(!best||isHQ(best))return"";
-  return`<button class="row" data-act="voiceHelp" style="margin-top:4px"><span class="ri">💡</span><span class="rt"><b>Get a much better English voice (free)</b><span>Download "Ava (Premium)" on your iPhone in 1 minute</span></span></button>`;
+  return`<button class="row" data-act="voiceHelp" style="margin-top:4px"><span class="ri">💡</span><span class="rt"><b>Want a nicer English voice?</b><span>Pick a 🌐 natural online voice in the list above (free, works on every iPhone)</span></span></button>`;
 }
 function voicePicker(lang,label,cur){
   const list=voiceList(lang);
-  if(!list.length)return"";
-  const best=list[0];
+  if(!list.length&&lang!=="en")return"";
+  const best=list[0]||{name:"iPhone default"};
   return`<label class="sub" style="display:block;margin-top:10px">${label}</label><select class="field" data-set="voice.${lang}">
+   ${lang==="en"?`<optgroup label="🌐 Natural online voices (free, need internet)">${Object.entries(WEB_EN).map(([k,[n]])=>`<option value="web:${k}"${cur==="web:"+k?" selected":""}>🌐 ${esc(n)}</option>`).join("")}</optgroup><optgroup label="📱 Voices on this iPhone">`:""}
    <option value=""${cur&&cur!=="system"?"":" selected"}>Automatic · best on this iPhone: ${esc(best.name)}${isHQ(best)?" ★":""}</option>
    ${list.filter(v=>!NOVELTY.test(v.name)).slice(0,25).map(v=>`<option value="${esc(v.name)}"${cur===v.name?" selected":""}>${esc(v.name)} · ${esc(v.lang)}${isHQ(v)?" ★ "+(/premium/.test(vq(v))?"Premium":/enhanced/.test(vq(v))?"Enhanced":"Siri"):""}</option>`).join("")}
-  </select>`;
+   ${lang==="en"?"</optgroup>":""}</select>`;
 }
 
 /* ============ VOICE CALL ============ */
@@ -3857,7 +3887,8 @@ const ACT={
   copyLog:()=>{const t="Yuki "+APP_VERSION+" · "+engineName()+" · English voice: "+voiceNow("en-US")+"\n"+VLOG.join("\n");
     (navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject()).then(()=>toast("Copied — paste it to Claude"),()=>{const ta=document.createElement("textarea");ta.value=t;document.body.appendChild(ta);ta.select();try{document.execCommand("copy");toast("Copied — paste it to Claude");}catch(e){toast("Couldn't copy — take a screenshot instead");}ta.remove();});},
   refreshVoices:()=>{loadVoices();setTimeout(()=>{loadVoices();rerender();toast(voiceList("en-US").filter(isHQ).length?"Found a ★ voice: "+voiceNow("en-US"):"No ★ voice yet — download one, then reopen Yuki",3000);},400);},
-  iphoneVoiceTest:()=>{if(!synth){toast("This browser has no built-in voice");return;}synth.cancel();stopQuest();const u=new SpeechSynthesisUtterance("Hello! This is my English voice. Let's practise Japanese together.");u.lang="en-US";const v=pickVoice("en-US");if(v)u.voice=v;
+  iphoneVoiceTest:()=>{if(webEnId()){stopSpeak();resetAudio();webEnFails=0;vlog("▶ English voice test (online "+webEnId()+")");sayDevice("Hello! This is my English voice. Let's practise Japanese together.","en-US",1);return;}
+    if(!synth){toast("This browser has no built-in voice");return;}synth.cancel();stopQuest();const u=new SpeechSynthesisUtterance("Hello! This is my English voice. Let's practise Japanese together.");u.lang="en-US";const v=pickVoice("en-US");if(v)u.voice=v;
     vlog("▶ English voice test: "+(v?v.name+(isHQ(v)?" (premium/enhanced)":" (basic)"):"default"));
     let started=false;u.onstart=()=>{started=true;};u.onend=()=>toast(started?"English voice ("+(v?v.name:"default")+") worked ✓"+(v&&isHQ(v)?"":" — download Ava (Premium) for a much nicer one"):"English voice: no sound",3500);u.onerror=e=>toast("iPhone voice error: "+(e.error||"unknown"),3500);synth.speak(u);
     setTimeout(()=>{if(!started)toast("iPhone voice didn't start — check Settings → Accessibility → Read &amp; Speak (Spoken Content)",4000);},4000);},
