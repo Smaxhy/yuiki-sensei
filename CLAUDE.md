@@ -142,7 +142,12 @@ Safari → Add to Home Screen.
   (`UI.spoken`).
 - **Memory**: every AI reply ends with a hidden line `<<MEM>>{json}` containing facts,
   weak, strong, learned, right, wrong, lessonDone, used, path. The app strips it (`parseMem`), saves it
-  to the profile (`applyMem`), and feeds the profile back into `systemPrompt()`.
+  to the profile (`applyMem`), and feeds the profile back into `systemPrompt()`. No repeats (owner: "a lot of it is
+  repetitive"): `addMem` drops near-duplicates before adding (`memSame` = word/kana-pair overlap after removing filler like
+  "the student", "lives in japan now" = "Lives in Japan"; learned items match by the Japanese word via `learnKey`); new
+  "strong" removes it from "weak" and vice versa; caps facts 30 / weak 20 / strong 20 / learned 300. The prompt asks for
+  only things not already in YOU REMEMBER. v29 runs `cleanMemory()` once on old saves. Me → What Yuki remembers: tap ✕
+  (`ACT.memDel`) to make her forget an item.
   Don't break this format.
 - **Lessons**: 100+ lessons in the `CUR` object, grouped by level (n5–n1) → unit →
   [id, title, description]. Tapping one starts a step-by-step lesson in chat, and
@@ -365,7 +370,7 @@ Safari → Add to Home Screen.
 - Pages use `.sec` category headings: Practice (Today / Quick practice / decks…), Me (You / Yuki / App).
 
 ## Technical notes
-- State object `S` (currently `v:28`) saved to localStorage key `yuki-sensei-v3`. Keep it backward
+- State object `S` (currently `v:29`) saved to localStorage key `yuki-sensei-v3`. Keep it backward
   compatible. Saved data (and restored backups) go through `migrate()`; if the shape
   changes, bump `DEFAULT.v` and add a step there instead of wiping progress.
 - Clicks route through `data-act` attributes to the `ACT` object.

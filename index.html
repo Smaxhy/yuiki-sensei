@@ -632,6 +632,7 @@ html.light #voice .btn{color:#2a1520}
 .tbar{flex-wrap:wrap}.tgoal{flex-basis:100%;font-size:13.5px;font-weight:800;color:var(--sky,#3487dc);margin:0 0 4px}
 .vgoal{text-align:center;color:#9ccaf7;margin:6px 0 2px;font-size:14px}
 #main .node .bd.lk{background:var(--ink2,#1d2030);font-size:13px;filter:none}
+.memtg{min-height:36px}.memtg b{opacity:.55;margin-left:4px;font-weight:900}
 </style>
 </head>
 <body>
@@ -653,7 +654,7 @@ html.light #voice .btn{color:#2a1520}
 <script>
 "use strict";
 // Bump this on every change so phones can spot a new version and offer to update
-const APP_VERSION="2026.10.12-7";
+const APP_VERSION="2026.10.12-8";
 /* ============ DATA ============ */
 const LV = {
   n5:{label:"N5",name:"Beginner",color:"#9fd67c"},
@@ -873,7 +874,7 @@ const KANJI_LV={none:"none yet",few:"under 50",some:"50–300",many:"300+"};
 /* ============ STATE ============ */
 const KEY="yuki-sensei-v3";
 const DEFAULT={
-  v:28,onboarded:false,name:"",level:"n5",goal:"",
+  v:29,onboarded:false,name:"",level:"n5",goal:"",
   about:{done:false,focus:[],hira:"",kata:"",kanji:"",location:"",native:"English",minutes:15,notes:""},
   placement:null,plan:null,course:null,
   profile:{facts:[],weak:[],strong:[],learned:[]},
@@ -1045,6 +1046,8 @@ function migrate(st){
     if(st.course&&st.course.key)st.course.key=mv(st.course.key);
     if(st.threads&&st.threads["cr:11"]&&!st.threads["cr:13"]){st.threads["cr:13"]=st.threads["cr:11"];delete st.threads["cr:11"];if(st.chatId==="cr:11")st.chatId="cr:13";}}
   // v26 → v27: the owner's credits went too fast: very short replies for everyone (changeable again in Me)
+  // v28 → v29: memory had many near-repeats; cleaned once after loading (cleanMemory)
+  if((st.v||0)<29)st.memClean=true;
   // v27 → v28: Yuki had been adding ⭐ lessons to the path by herself (often repeats of real lessons); clear them
   if((st.v||0)<28&&st.plan&&Array.isArray(st.plan.custom)){const gone=new Set(st.plan.custom.map(c=>"c:"+c.id));st.plan.custom=[];if(st.plan.done)Object.keys(st.plan.done).forEach(k=>{if(gone.has(k))delete st.plan.done[k];});}
   if((st.v||0)<27&&st.settings.style)st.settings.style.length="tiny";
@@ -1079,6 +1082,25 @@ const dayStr=d=>{d=d||new Date();return d.getFullYear()+"-"+(d.getMonth()+1)+"-"
 
 function toast(t,ms){const el=$("#toast");el.textContent=t;el.classList.add("on");clearTimeout(el._t);el._t=setTimeout(()=>el.classList.remove("on"),ms||2200);}
 function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+// Memory without repeats: "Lives in Japan" / "The student lives in Japan now" / "lives in japan" count as one
+const MEM_FILL=/\b(the|a|an|student|user|learner|they|he|she|is|are|am|has|have|was|were|to|of|and|their|his|her|at|in|on|for|with|now|really|very|currently|still|wants?)\b/g;
+function memToks(t){
+  const n=String(t).toLowerCase().replace(/[（(][^)）]*[)）]/g," ").replace(/['’]s\b/g,"").replace(MEM_FILL," ").replace(/[^\p{L}\p{N}]+/gu," ").trim();
+  const out=new Set();n.split(" ").forEach(w=>{if(!w)return;if(/[\u3040-\u9fff]/.test(w)){if(w.length<3)out.add(w);else for(let i=0;i<w.length-1;i++)out.add(w.slice(i,i+2));}else out.add(w.replace(/s$/,""));});
+  return out;
+}
+function memSame(a,b){const A=memToks(a),B=memToks(b);if(!A.size||!B.size)return String(a).trim().toLowerCase()===String(b).trim().toLowerCase();
+  let h=0;A.forEach(x=>{if(B.has(x))h++;});return h/Math.min(A.size,B.size)>=0.75&&h/Math.max(A.size,B.size)>=0.5;}
+// learned items are "word = meaning": the same word counts once, however it's written
+const learnKey=t=>String(t).split(/=|：|:| - | – /)[0].replace(/[（(][^)）]*[)）]/g,"").replace(/[\s「」『』~～、。!！?？]/g,"").toLowerCase();
+function addMem(list,items,cap,learned){(items||[]).forEach(x=>{x=String(x).trim().replace(/\s+/g," ");if(!x||x.length>120)return;
+  const k=learned&&learnKey(x);for(let i=list.length-1;i>=0;i--)if(learned?learnKey(list[i])===k:memSame(list[i],x))list.splice(i,1);list.push(x);});
+  while(list.length>cap)list.shift();}
+const memTag=(k,f,i,c)=>`<button class="tg ${c} memtg" data-act="memDel" data-k="${k}" data-i="${i}" aria-label="Forget ${esc(f)}">${esc(f)} <b>✕</b></button>`;
+function cleanMemory(){const p=S.profile;
+  ["facts","strong","weak"].forEach(k=>{const old=p[k].slice();p[k]=[];addMem(p[k],old,30);});
+  const l=p.learned.slice();p.learned=[];addMem(p.learned,l,300,true);
+  p.weak=p.weak.filter(w=>!p.strong.some(s=>memSame(s,w)));}
 function addUnique(list,items,cap){(items||[]).forEach(x=>{x=String(x).trim();if(!x)return;const i=list.findIndex(y=>y.toLowerCase()===x.toLowerCase());if(i>=0)list.splice(i,1);list.push(x);});while(list.length>cap)list.shift();}
 function greeting(){const h=new Date().getHours();return h<11?"おはよう":h<18?"こんにちは":"こんばんは";}
 function nextLesson(){return LESSONS.find(l=>l.level===S.level&&!S.done.includes(l.id));}
@@ -1676,7 +1698,7 @@ ${voice?`- CALL: they hear you via text-to-speech. 1 short spoken sentence, 2 at
 ${sayWanted()?`- SPOKEN VERSION: a Japanese-only voice reads your reply. Before the memory line add <<SAY>> + the whole reply with English words in katakana (Great job! → グレート ジョブ！), no emojis, romaji or symbols.
 `:""}HIDDEN LINES at the very end, each on its own line, never mentioned:
 <<FIX>>{"ja":"","en":"","ok":true,"why":""} when their latest message is their own sentence (not a command like "quiz me"). Japanese: ja = correct natural Japanese with 、。？ at their level, en = English translation, properly punctuated. English: en = their English fixed, ja = how to say it in Japanese. ok = already correct (voice-typing punctuation doesn't count); why = main fix, a few words. The app shows it under their message, so mention the fix only briefly${voice?" (say it in a few words)":""}.
-<<MEM>>{} always last, with only what's NEW: "facts" (about them), "weak", "strong", "learned" ("word = meaning"), "right"/"wrong" (quiz counts), "lessonDone" (true when the current lesson's core is mastered), "used" (target words used correctly, exact spelling), "path" (1 topic, ONLY when the student asks you to add a lesson to their path).`;
+<<MEM>>{} always last, with only what's NEW (never repeat anything already in YOU REMEMBER; leave a field out when nothing is new): "facts" (about them), "weak", "strong", "learned" ("word = meaning"), "right"/"wrong" (quiz counts), "lessonDone" (true when the current lesson's core is mastered), "used" (target words used correctly, exact spelling), "path" (1 topic, ONLY when the student asks you to add a lesson to their path).`;
 }
 function memoryPrompt(){
   const p=S.profile,les=S.currentLesson&&lessonById(S.currentLesson);
@@ -1792,10 +1814,11 @@ function asList(x){
 function applyMem(mem){
   const p=S.profile;
   ["facts","learned","strong","weak","used","path"].forEach(k=>{if(k in mem)mem[k]=asList(mem[k]);});
-  addUnique(p.facts,mem.facts,30);
-  addUnique(p.learned,mem.learned,300);
-  if(mem.strong&&mem.strong.length){addUnique(p.strong,mem.strong,30);p.weak=p.weak.filter(w=>!mem.strong.some(s=>s.toLowerCase()===w.toLowerCase()));}
-  addUnique(p.weak,mem.weak,30);
+  addMem(p.facts,mem.facts,30);
+  addMem(p.learned,mem.learned,300,true);
+  // got better at something → it leaves "weak"; struggling again → it leaves "strong"
+  if(mem.strong&&mem.strong.length){addMem(p.strong,mem.strong,20);p.weak=p.weak.filter(w=>!mem.strong.some(s=>memSame(s,w)));}
+  if(mem.weak&&mem.weak.length){addMem(p.weak,mem.weak,20);p.strong=p.strong.filter(w=>!mem.weak.some(s=>memSame(s,w)));}
   if(+mem.right)S.stats.quizRight+=+mem.right;
   if(+mem.wrong)S.stats.quizWrong+=+mem.wrong;
   if(Array.isArray(mem.used))markUsed(mem.used.map(String));
@@ -3817,9 +3840,10 @@ function vMe(){
   </div>
   `,
    memory:()=>`<div class="card">
-   ${S.profile.facts.length?`<div class="tags">${S.profile.facts.map(f=>`<span class="tg">${esc(f)}</span>`).join("")}</div>`:`<p class="sub">Nothing yet — chat with her and she'll pick things up.</p>`}
-   ${S.profile.strong.length?`<p class="sub" style="margin:12px 0 6px">Strong at</p><div class="tags">${S.profile.strong.slice(-12).map(f=>`<span class="tg s">${esc(f)}</span>`).join("")}</div>`:""}
-   ${S.profile.weak.length?`<p class="sub" style="margin:12px 0 6px">Working on</p><div class="tags">${S.profile.weak.slice(-12).map(f=>`<span class="tg w">${esc(f)}</span>`).join("")}</div>`:""}
+   <p class="sub" style="margin-bottom:8px">Tap ✕ to make Yuki forget something. Repeats are merged automatically.</p>
+   ${S.profile.facts.length?`<p class="sub" style="margin:0 0 6px">About you</p><div class="tags">${S.profile.facts.map((f,i)=>memTag("facts",f,i,"")).join("")}</div>`:`<p class="sub">Nothing yet — chat with her and she'll pick things up.</p>`}
+   ${S.profile.strong.length?`<p class="sub" style="margin:12px 0 6px">Strong at</p><div class="tags">${S.profile.strong.map((f,i)=>memTag("strong",f,i,"s")).join("")}</div>`:""}
+   ${S.profile.weak.length?`<p class="sub" style="margin:12px 0 6px">Working on</p><div class="tags">${S.profile.weak.map((f,i)=>memTag("weak",f,i,"w")).join("")}</div>`:""}
    <p class="sub" style="margin-top:12px">${S.profile.learned.length} words & patterns taught · ${S.stats.msgs} messages · ${S.stats.cards} cards reviewed</p>
   </div>
   `,
@@ -4089,6 +4113,7 @@ const ACT={
   sayText:el=>speak(el.dataset.text,{rate:0.8}),
   reveal:el=>el.classList.toggle("show"),
   recSet:el=>{S.settings.jaRec=el.dataset.v;save();rerender();if(el.dataset.v!=="off")speak("ともだち",{});},
+  memDel:el=>{const l=S.profile[el.dataset.k];if(!Array.isArray(l))return;l.splice(+el.dataset.i,1);save();rerender();toast("Forgotten",1200);},
   saveQuestKey:()=>{const v=$("#questKeyIn");S.settings.questKey=v?v.value.trim():"";questCache.clear();save();toast(S.settings.questKey?"Key saved — tap Test Ryusei":"Key removed");},
   questTest:async()=>{
     const step=(a,b,c)=>sheet(`<div class="h2">🔎 Testing Ryusei's live voice</div><div class="card" style="margin-top:10px;padding:6px 14px">
@@ -4293,7 +4318,7 @@ if("serviceWorker" in navigator&&location.protocol==="https:")navigator.serviceW
 try{matchMedia("(prefers-color-scheme: light)").addEventListener("change",()=>{if(S.settings&&S.settings.theme==="auto"){applyTheme();rerender();}});}catch(e){}
 // ElevenLabs was removed: free the space its saved clips used on the phone
 try{if(window.caches)caches.delete("yuki-eleven");localStorage.removeItem("yuki-elvoices");}catch(e){}
-loadState().then(()=>{applyTheme();if(S.onboarded){checkFreeze();if(!S.daily.init){checkBadges(true);S.daily.init=true;save();}}fitViewport();render();setTimeout(()=>checkUpdate(false),1500);});
+loadState().then(()=>{if(S.memClean){try{cleanMemory();}catch(e){}delete S.memClean;save();}applyTheme();if(S.onboarded){checkFreeze();if(!S.daily.init){checkBadges(true);S.daily.init=true;save();}}fitViewport();render();setTimeout(()=>checkUpdate(false),1500);});
 </script>
 </body>
 </html>
