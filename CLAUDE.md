@@ -48,7 +48,12 @@ Safari → Add to Home Screen.
   (`dir:"type"`, `ACT.lpType`: romaji or kana, 1 typo allowed) to the usual questions. `startTalk` puts up to 2 of last
   lesson's words first in `S.course.review` and stores `S.course.prev` (last lesson's goal); `coursePrompt` tells Yuki to
   link back to it and to drop in 1–2 surprise mini-tasks (quiz, fill-the-gap, [[listening]]). The objective (`.tgoal`)
-  shows above the target words in the chat lesson bar and on the call screen.
+  shows above the target words in the chat lesson bar and on the call screen. (`.tbar .tgoal` takes the full row; on the call
+  screen `.vgoal` must stay `flex:0 0 auto`, an unscoped flex-basis:100% once pushed the chips and captions off screen).
+  Target-word chips show the English meaning under each word; tapping one (`ACT.chipWord`) plays it and toasts the
+  meaning. `KANJI_ALT` also covers the small-talk/making-friends words and the polite phrases the mic writes in kanji
+  (初めて, 凄い, 私も, 最近, 今度, 連絡します, お願いします…; Latin "line" for ライン); `detectUsed` looks it up by the
+  hiragana key or the original spelling.
 - **Roleplay warm-up**: a roleplay / the final conversation (CR node) first runs the lesson player on its 5
   target words (`rpTargets(n)`, `UI.lp.pre`: "Warm-up" → Practise, free), then `startTalk(n, lp.targets)` uses
   the same words. `coursePrompt` tells Yuki to use only Japanese the student has learned (anything else with
