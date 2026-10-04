@@ -631,6 +631,7 @@ html.light #voice .btn{color:#2a1520}
 .ubanner.fin{opacity:.8}.ubanner.later{filter:saturate(.55);opacity:.85}
 .tbar{flex-wrap:wrap}.tgoal{flex-basis:100%;font-size:13.5px;font-weight:800;color:var(--sky,#3487dc);margin:0 0 4px}
 .vgoal{text-align:center;color:#9ccaf7;margin:6px 0 2px;font-size:14px}
+#main .node .bd.lk{background:var(--ink2,#1d2030);font-size:13px;filter:none}
 </style>
 </head>
 <body>
@@ -652,7 +653,7 @@ html.light #voice .btn{color:#2a1520}
 <script>
 "use strict";
 // Bump this on every change so phones can spot a new version and offer to update
-const APP_VERSION="2026.10.12-6";
+const APP_VERSION="2026.10.12-7";
 /* ============ DATA ============ */
 const LV = {
   n5:{label:"N5",name:"Beginner",color:"#9fd67c"},
@@ -872,7 +873,7 @@ const KANJI_LV={none:"none yet",few:"under 50",some:"50–300",many:"300+"};
 /* ============ STATE ============ */
 const KEY="yuki-sensei-v3";
 const DEFAULT={
-  v:27,onboarded:false,name:"",level:"n5",goal:"",
+  v:28,onboarded:false,name:"",level:"n5",goal:"",
   about:{done:false,focus:[],hira:"",kata:"",kanji:"",location:"",native:"English",minutes:15,notes:""},
   placement:null,plan:null,course:null,
   profile:{facts:[],weak:[],strong:[],learned:[]},
@@ -1044,6 +1045,8 @@ function migrate(st){
     if(st.course&&st.course.key)st.course.key=mv(st.course.key);
     if(st.threads&&st.threads["cr:11"]&&!st.threads["cr:13"]){st.threads["cr:13"]=st.threads["cr:11"];delete st.threads["cr:11"];if(st.chatId==="cr:11")st.chatId="cr:13";}}
   // v26 → v27: the owner's credits went too fast: very short replies for everyone (changeable again in Me)
+  // v27 → v28: Yuki had been adding ⭐ lessons to the path by herself (often repeats of real lessons); clear them
+  if((st.v||0)<28&&st.plan&&Array.isArray(st.plan.custom)){const gone=new Set(st.plan.custom.map(c=>"c:"+c.id));st.plan.custom=[];if(st.plan.done)Object.keys(st.plan.done).forEach(k=>{if(gone.has(k))delete st.plan.done[k];});}
   if((st.v||0)<27&&st.settings.style)st.settings.style.length="tiny";
   // ElevenLabs, Azure and Own server were removed (owner's request); their keys and settings are dropped
   ["azKey","azRegion","azEn","azJa","ttsChars","vvUrl","elKey","elVoice","elVoiceName","elCap","elJaOnly","elChars","ttsBack"].forEach(k=>delete S2[k]);
@@ -1673,7 +1676,7 @@ ${voice?`- CALL: they hear you via text-to-speech. 1 short spoken sentence, 2 at
 ${sayWanted()?`- SPOKEN VERSION: a Japanese-only voice reads your reply. Before the memory line add <<SAY>> + the whole reply with English words in katakana (Great job! → グレート ジョブ！), no emojis, romaji or symbols.
 `:""}HIDDEN LINES at the very end, each on its own line, never mentioned:
 <<FIX>>{"ja":"","en":"","ok":true,"why":""} when their latest message is their own sentence (not a command like "quiz me"). Japanese: ja = correct natural Japanese with 、。？ at their level, en = English translation, properly punctuated. English: en = their English fixed, ja = how to say it in Japanese. ok = already correct (voice-typing punctuation doesn't count); why = main fix, a few words. The app shows it under their message, so mention the fix only briefly${voice?" (say it in a few words)":""}.
-<<MEM>>{} always last, with only what's NEW: "facts" (about them), "weak", "strong", "learned" ("word = meaning"), "right"/"wrong" (quiz counts), "lessonDone" (true when the current lesson's core is mastered), "used" (target words used correctly, exact spelling), "path" (≤2 topics).`;
+<<MEM>>{} always last, with only what's NEW: "facts" (about them), "weak", "strong", "learned" ("word = meaning"), "right"/"wrong" (quiz counts), "lessonDone" (true when the current lesson's core is mastered), "used" (target words used correctly, exact spelling), "path" (1 topic, ONLY when the student asks you to add a lesson to their path).`;
 }
 function memoryPrompt(){
   const p=S.profile,les=S.currentLesson&&lessonById(S.currentLesson);
@@ -1796,7 +1799,9 @@ function applyMem(mem){
   if(+mem.right)S.stats.quizRight+=+mem.right;
   if(+mem.wrong)S.stats.quizWrong+=+mem.wrong;
   if(Array.isArray(mem.used))markUsed(mem.used.map(String));
-  if(Array.isArray(mem.path)){const added=mem.path.slice(0,2).filter(t=>addCustom(t));if(added.length)toast("⭐ Yuki added to your path: "+added.join(", "),3500);}
+  // only when the student asked for it (Yuki used to add lessons by herself and filled the path with repeats)
+  const lastU=[...S.chat].reverse().find(m=>m.role==="user");
+  if(Array.isArray(mem.path)&&lastU&&/\b(path|add (a |an |the )?lessons?)\b/i.test(lastU.text||"")){const added=mem.path.slice(0,1).filter(t=>addCustom(t));if(added.length)toast("⭐ Yuki added to your path: "+added.join(", "),3500);}
   if(mem.lessonDone&&S.currentLesson&&!S.done.includes(S.currentLesson)){S.done.push(S.currentLesson);addXP(15,null,(lessonById(S.currentLesson)||{}).title);toast("✅ Lesson complete!");}
 }
 async function send(display,apiText,mode){
@@ -1879,6 +1884,9 @@ function pathNodes(){
 }
 function nodeDone(n){return !!doneMap()[n.key]||(n.t==="L"&&S.done.includes(n.k));}
 const curNode=()=>pathNodes().find(n=>!nodeDone(n))||null;
+// Steps after your next one stay locked until you get there (finished ones can always be redone)
+function nodeLocked(n,ns){ns=ns||pathNodes();if(nodeDone(n))return false;const ci=ns.findIndex(x=>!nodeDone(x)),i=ns.findIndex(x=>x.key===n.key);return ci>=0&&i>ci;}
+function lockedToast(){const c=curNode();toast("🔒 Locked · finish "+(c?"“"+nodeLabel(c)+"”":"the step before")+" first",2400);}
 function markNode(key,quiet){
   ensurePlan();if(S.plan.done[key])return;
   S.plan.done[key]=true;save();
@@ -2279,7 +2287,7 @@ function unitSheet(u){
   const cd=isN5Path()&&COURSE[u].cd;
   sheet(`<div class="sub" style="font-weight:800">${esc(U.title)} · ${dn}/${ns.length} done</div><div class="h2" style="margin:4px 0 10px">${U.e} ${esc(U.sub)}</div>
    ${cd?`<div class="bfgoal${nodeDone(ns.find(n=>n.t==="CR")||{key:""})?" ok":""}" style="margin-bottom:12px;--uc:${U.c}"><small>🎯 Unit goal</small><b>By the end of this unit you can ${esc(cd.charAt(0).toLowerCase()+cd.slice(1))}.</b></div>`:""}
-   <div class="card" style="padding:4px 14px">${ns.map((n,i)=>`<button class="urow ubtn" data-act="brief" data-key="${esc(n.key)}"><i>${nodeDone(n)?"✓":i+1}</i><span style="flex:1"><b>${nodeIcon(n)} ${esc(nodeLabel(n))}</b><small>${esc(nodeGoal(n))}</small></span></button>`).join("")}</div>
+   <div class="card" style="padding:4px 14px">${ns.map((n,i)=>`<button class="urow ubtn" data-act="brief" data-key="${esc(n.key)}"><i>${nodeDone(n)?"✓":nodeLocked(n)?"🔒":i+1}</i><span style="flex:1"><b>${nodeIcon(n)} ${esc(nodeLabel(n))}</b><small>${esc(nodeGoal(n))}</small></span></button>`).join("")}</div>
    ${words.length?`<div class="sec" style="margin-top:6px">Words in this unit</div><div class="tags" style="margin-bottom:12px">${words.map(w=>`<button class="tg${S.cards["w:"+w[0]]?" s":""}" data-act="sayText" data-text="${esc(wordSay(w[0]))}">${esc(w[0])} · ${esc(w[2])}</button>`).join("")}</div>`:""}
    ${dn<ns.length?`<button class="btn ghost" data-act="unitSkip" data-u="${u}">I already know this, skip the unit</button>`:""}
    <button class="btn" style="margin-top:8px" data-act="closeSheet">Close</button>`);
@@ -3374,9 +3382,9 @@ function vHome(){
       html+=`<button class="ubanner fold${fin?" fin":" later"}" data-u="${u}" data-act="unitSheet" style="--uc:${U.c}"><span class="ube">${fin?"✓":U.e}</span><span class="ubt"><small>${esc(U.title)}${fin?" · complete":""}</small><b>${esc(U.sub)}</b>${!fin&&isN5Path()&&COURSE[u].cd?`<em>🎯 ${esc(COURSE[u].cd)}</em>`:""}</span><span class="ubp">${fin?"🏅":"🔒 "+ns.length}</span></button>`;return;}
     html+=`<button class="ubanner" data-u="${u}" data-act="unitSheet" style="--uc:${U.c}"><span class="ube">${U.e}</span><span class="ubt"><small>${esc(U.title)}</small><b>${esc(U.sub)}</b>${isN5Path()&&COURSE[u].cd?`<em>🎯 ${esc(COURSE[u].cd)}</em>`:""}</span><span class="ubp">${dn}/${ns.length}</span></button>`;
     ns.forEach(n=>{
-      const done=nodeDone(n),isCur=cur&&cur.key===n.key;
+      const done=nodeDone(n),isCur=cur&&cur.key===n.key,lk=!done&&!isCur&&nodeLocked(n,nodes);
       html+=`<div class="nwrap${isCur?" cur":""}" style="transform:translateX(${OFF[g++%8]}px)">${isCur?`<div class="tip">START</div>`:""}
-        <button class="node${done?" done":""}${isCur?" cur":""}${!done&&!isCur?" todo":""}${n.t==="X"?" star":""}${n.t==="CK"?" kana":""}" style="--uc:${U.c}" data-act="node" data-key="${esc(n.key)}" aria-label="${esc(nodeLabel(n))}">${nodeIcon(n)}${done?`<span class="bd">✓</span>`:""}</button>
+        <button class="node${done?" done":""}${isCur?" cur":""}${!done&&!isCur?" todo":""}${n.t==="X"?" star":""}${n.t==="CK"?" kana":""}" style="--uc:${U.c}" data-act="node" data-key="${esc(n.key)}" aria-label="${esc(nodeLabel(n))}">${nodeIcon(n)}${done?`<span class="bd">✓</span>`:lk?`<span class="bd lk">🔒</span>`:""}</button>
         <div class="nlab">${esc(nodeLabel(n))}${isCur&&modeTag(n)?`<span class="mtag${n.t==="CQ"?" ts":isSpeakingKey(n.key)?" sp":""}">${modeTag(n)}</span>`:""}</div></div>`;
     });
   });
@@ -4170,10 +4178,10 @@ const ACT={
   chatsSheet:()=>chatsSheet(),
   openChat:el=>{if(S.chatId!==el.dataset.id)stopSpeak();S.chatId=el.dataset.id;linkChat();S.threads[S.chatId].at=Date.now();save();UI.tab="chat";render();},
   resumeCourse:()=>{const c=S.course;if(!c)return;S.chatId=c.key;linkChat();save();UI.tab="chat";render();if(c.speaking)openVoice();},
-  node:el=>{const n=pathNodes().find(x=>x.key===el.dataset.key);if(n){UI.brief=n.key;UI.tab="home";render();}},
-  brief:el=>{UI.brief=el.dataset.key;UI.tab="home";render();},
+  node:el=>{const n=pathNodes().find(x=>x.key===el.dataset.key);if(!n)return;if(nodeLocked(n)){lockedToast();return;}UI.brief=n.key;UI.tab="home";render();},
+  brief:el=>{const n=pathNodes().find(x=>x.key===el.dataset.key);if(n&&nodeLocked(n)){lockedToast();return;}closeSheet();UI.brief=el.dataset.key;UI.tab="home";render();},
   briefClose:()=>{UI.brief=null;render();},
-  briefGo:()=>{const n=pathNodes().find(x=>x.key===UI.brief);UI.brief=null;if(n)startNode(n);else render();},
+  briefGo:()=>{const n=pathNodes().find(x=>x.key===UI.brief);UI.brief=null;if(n&&nodeLocked(n)){render();lockedToast();return;}if(n)startNode(n);else render();},
   ctxDone:()=>{if(UI.planCtx){markNode(UI.planCtx.key);UI.planCtx=null;}UI.tab="home";render();},
   unitSheet:el=>unitSheet(+el.dataset.u),
   unitSkip:el=>{const u=+el.dataset.u;if(!confirm("Mark this whole unit as done?"))return;ensurePlan();
