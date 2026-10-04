@@ -193,6 +193,8 @@ Safari → Add to Home Screen.
   "speaking" for seconds after a line ended). `noteLat()` records live clip times; when the free service is
   slow (`questSlow()`, median of the last 3 > 4.5 s) the cut-off is shorter (3.5 s first, 2.5 s later) and a
   one-time tip suggests the free tts.quest key.
+  Two late/failed Ryusei replies (`questLate()`) pause live Ryusei for 10 min (`questPaused()`, `useQuest()` false,
+  toast once); recordings still play. The call-screen button then reads "⚡ Fast · tap for 🎌" and tapping it resumes.
   Call screen has a "🎌 Ryusei / ⚡ Fast voice" switch (`ACT.vFast`): Fast = `tts="device"` (recordings for
   learned words, the iPhone's own Japanese/English voices for everything else, no waiting).
   A mic with no sign of life retries once by itself (`MIC.retried`) before pausing.
@@ -239,6 +241,8 @@ Safari → Add to Home Screen.
   (3.5 s, 5.5 s on the first start: iOS can be slow to start dictation right after opening) the mic PAUSES keeping the words ("tap 🎤 Continue or ➤ Send").
   Tapping the other language (or the same one while paused) resumes inside the tap. Hands-free
   (`S.settings.handsFree`) is off by default since iPhone may refuse a mic start without a tap.
+  Results are joined with `joinResults`/`mergeHeard` (also base+session in `micText`): iPhone sends cumulative or
+  repeated pieces ("hello", "hello how"…), and plain concatenation had doubled/scrambled what the owner said.
   Mic events are written to the voice log. Chat mic fills the text box (no auto-send).
   Default `micLang="ja-JP"`.
   Yuki is told English via the Japanese mic arrives as katakana and English-mode Japanese as

@@ -592,7 +592,7 @@ html.light #voice .btn{color:#2a1520}
 <script>
 "use strict";
 // Bump this on every change so phones can spot a new version and offer to update
-const APP_VERSION="2026.10.10-4";
+const APP_VERSION="2026.10.11-1";
 /* ============ DATA ============ */
 const LV = {
   n5:{label:"N5",name:"Beginner",color:"#9fd67c"},
@@ -1264,7 +1264,13 @@ function speakAI(text,opts){
 }
 /* ---- Ryusei/Himari live for ANY sentence: free public VOICEVOX service tts.quest (no key needed) ---- */
 const QUEST_API="https://api.tts.quest/v3/voicevox/synthesis";
-const useQuest=()=>S.settings.tts==="quest"&&location.protocol!=="file:";
+// When the free Ryusei server is slow two replies in a row, stop waiting for it for 10 minutes:
+// learned words still play from Ryusei's recordings, sentences use the instant iPhone voice.
+let questLateN=0,questPauseUntil=0;
+const questPaused=()=>Date.now()<questPauseUntil;
+function questLate(){if(++questLateN>=2&&!questPaused()){questPauseUntil=Date.now()+10*60e3;questLateN=0;vlog("⏸ Ryusei live paused for 10 min (server slow)");
+  toast("Ryusei's free server is slow right now, so Yuki uses the instant voice for 10 minutes. Tap 🎌 on the call screen to switch back.",4500);}}
+const useQuest=()=>S.settings.tts==="quest"&&location.protocol!=="file:"&&!questPaused();
 const SILENT_MP3="data:audio/mpeg;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjYwLjE2LjEwMAAAAAAAAAAAAAAA//OEwAAAAAAAAAAAAEluZm8AAAAPAAAACQAABCAARUVFRUVFRUVFRUVdXV1dXV1dXV1dXXR0dHR0dHR0dHR0i4uLi4uLi4uLi4uioqKioqKioqKiorq6urq6urq6urq60dHR0dHR0dHR0dHo6Ojo6Ojo6Ojo6P//////////////AAAAAExhdmM2MC4zMQAAAAAAAAAAAAAAACQD8AAAAAAAAAQgDeb0IwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//NExAAAAANIAAAAAExBTUUzLjEwMFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVTEFNRTMu//NExFMAAANIAAAAADEwMFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVTEFNRTMu//NExKYAAANIAAAAADEwMFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVTEFNRTMu//NExKwAAANIAAAAADEwMFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVTEFNRTMu//NExKwAAANIAAAAADEwMFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVTEFNRTMu//NExKwAAANIAAAAADEwMFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVTEFNRTMu//NExKwAAANIAAAAADEwMFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV//NExKwAAANIAAAAAFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV//NExKwAAANIAAAAAFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV";
 let qa=null,questNote=false;
 const questCache=new Map();
@@ -1433,10 +1439,10 @@ async function speakQuest(segs,rate,text,opts){
       natLoading=true;let clip=null;
       const slow=questSlow(),wait=Math.max(slow?2000:3000,(i?0:slow?3000:5000)-(Date.now()-t0));
       try{clip=await Promise.race([jobs[i],new Promise(r=>setTimeout(()=>r(LATE),wait))]);
-        if(clip===LATE){clip=null;stay=true;noteLat(9000);vlog("… Ryusei not ready after "+(wait/1000).toFixed(1)+" s, iPhone voice says the rest of this reply (tts.quest busy)");}}catch(e){stay=true;
-        if(!questNote){questNote=true;toast("Ryusei's voice didn't answer ("+e.message+"). Tap Me → Voice → Test Ryusei for details.",4500);}}
+        if(clip===LATE){clip=null;stay=true;noteLat(9000);questLate();vlog("… Ryusei not ready after "+(wait/1000).toFixed(1)+" s, iPhone voice says the rest of this reply (tts.quest busy)");}}catch(e){stay=true;
+        questLate();if(!questNote){questNote=true;toast("Ryusei's voice didn't answer ("+e.message+"). Tap Me → Voice → Test Ryusei for details.",4500);}}
       natLoading=false;if(my!==natSeq)return;
-      if(clip){await synthIdle(1200);
+      if(clip){if(!i)questLateN=0;await synthIdle(1200);
         // iPhone keeps other sound turned down for a moment after its own voice ("ducking"); starting
         // Ryusei inside that moment made him sound quiet, so let it pass first
         const duck=300-(Date.now()-synthEndAt);if(duck>0)await new Promise(r=>setTimeout(r,duck));
@@ -1510,7 +1516,23 @@ function micSupported(){return !!(window.SpeechRecognition||window.webkitSpeechR
 // start/resume happens in the tap handler. Listening runs until you tap ➤ Send. If iPhone stops by
 // itself we try once to carry on; if that's refused we PAUSE and keep your words ("tap 🎤 to continue").
 const MIC={on:false,paused:false,lang:"ja-JP",base:"",sess:"",stopReq:false,cancel:false,onText:null,onDone:null,heardAt:0,audioOk:false};
-function micText(){return(MIC.base+" "+MIC.sess).replace(/\s+/g," ").trim();}
+// iPhone often sends each new piece of speech with everything said so far ("hello", "hello how", "hello how are
+// you"), sometimes repeats a piece, and after a restart may say the last words again. Gluing the pieces together
+// gave "hellohello howhello how are you". mergeHeard joins two pieces without repeating anything.
+const JA_END=/[\u3040-\u30ff\u3400-\u9fff]$/;
+function mergeHeard(a,b){
+  a=String(a||"").replace(/\s+/g," ").trim();b=String(b||"").replace(/\s+/g," ").trim();
+  if(!a)return b;if(!b)return a;
+  const la=a.toLowerCase(),lb=b.toLowerCase();
+  if(lb.startsWith(la))return b;                    // the new piece already contains everything so far
+  if(la.endsWith(lb)||(lb.length>=4&&la.includes(lb)))return a;   // a repeat
+  let k=Math.min(a.length,b.length);for(;k>=3;k--){if(la.endsWith(lb.slice(0,k)))break;}
+  if(k>=3)return a+b.slice(k);                      // overlapping end/start
+  const lw=la.split(" ").pop(),fw=lb.split(" ")[0];if(lw&&lw===fw&&/^[a-z']+$/.test(lw))return a+b.slice(fw.length);   // "…to" + "to go…"
+  return a+(JA_END.test(a)&&JA_END.test(b[0])?"":" ")+b;
+}
+function joinResults(res){let out="";for(let i=0;i<res.length;i++){const t=res[i]&&res[i][0]?res[i][0].transcript:"";if(t&&t.trim())out=mergeHeard(out,t);}return out;}
+function micText(){return mergeHeard(MIC.base,MIC.sess);}
 // Let go of Ryusei's audio before listening
 function releasePlayer(){if(qa){try{qa.pause();qa.removeAttribute("src");qa.load();}catch(e){}}natPlaying=false;}
 function micPause(why){
@@ -1528,7 +1550,7 @@ function micRun(){
   r.lang=MIC.lang;r.interimResults=true;r.continuous=true;r.maxAlternatives=1;
   const ok=ev=>{if(rec!==r)return;if(!MIC.audioOk)vlog("🎤 mic "+ev);MIC.audioOk=true;MIC.retried=false;const v=$(".vstat");if(v&&UI.voice)v.textContent="🎤 Hearing you · tap ➤ Send when you're done";};
   r.onstart=()=>ok("started");r.onaudiostart=()=>ok("hearing audio");r.onspeechstart=()=>ok("hearing speech");
-  r.onresult=e=>{if(rec!==r)return;let t="";for(let i=0;i<e.results.length;i++)t+=e.results[i][0].transcript;
+  r.onresult=e=>{if(rec!==r)return;const t=joinResults(e.results);
     MIC.sess=MIC.lang==="ja-JP"?kanaize(jaDigits(t)):t;MIC.heardAt=Date.now();MIC.audioOk=true;if(MIC.onText)MIC.onText(micText());};
   r.onerror=e=>{if(rec!==r)return;vlog("✗ mic error: "+e.error);
     if((e.error==="not-allowed"||e.error==="service-not-allowed")&&!micText()&&!MIC.base){MIC.stopReq=true;MIC.cancel=true;micHelp("blocked");}};
@@ -3754,7 +3776,7 @@ function renderVoice(){
   $("#voice").innerHTML=`<div class="vtop"><button class="iconbtn" data-act="closeVoice" aria-label="Close">✕</button>
    <div class="vtitle" data-act="voiceLog" role="button" title="Voice log"><b>Yuki</b><small>${useQuest()?"🎌 "+(REC_VOICES[S.settings.jaRec]||REC_VOICES.ryusei).name.split(" ")[0]+"'s voice":useVV()?"🎌 "+(REC_VOICES[S.settings.jaRec]||REC_VOICES.himari).name.split(" ")[0]+"'s voice":useNatural()?"✨ natural voice":"voice call"}</small></div>
    <button class="iconbtn" data-act="vCaptions" aria-label="Captions" style="font-size:15px;font-weight:800">${cc?"CC":"🙈"}</button></div>
-   <div class="vopts"><button class="vopt${S.settings.tts==="device"?" on":""}" data-act="vFast">${S.settings.tts==="device"?"⚡ Fast voice":"🎌 Ryusei"}</button><button class="vopt${S.settings.handsFree?" on":""}" data-act="vHands">${S.settings.handsFree?"🙌 Hands-free":"✋ Tap to talk"}</button>
+   <div class="vopts"><button class="vopt${S.settings.tts==="device"||questPaused()?" on":""}" data-act="vFast">${S.settings.tts==="device"?"⚡ Fast voice":questPaused()?"⚡ Fast · tap for 🎌":"🎌 Ryusei"}</button><button class="vopt${S.settings.handsFree?" on":""}" data-act="vHands">${S.settings.handsFree?"🙌 Hands-free":"✋ Tap to talk"}</button>
     <span class="vlen">${[["tiny","Very short"],["short","Short"],["normal","Normal"]].map(([v,t])=>`<button class="vopt${len===v?" on":""}" data-act="vLen" data-v="${v}">${t}</button>`).join("")}</span></div>
    <div class="orbwrap${activeCourse()||(!UI.listening&&(()=>{const lu=[...S.chat].reverse().find(m=>m.role==="user");return lu&&lu.fix;})())?" compact":""}"><div class="orb ${st}">ゆ</div><div class="vstat">${label}</div>
     ${activeCourse()?`<div class="vchips">${talkChips()}</div>${courseDoneCard(true)}${activeCourse().keep?`<button class="vopt on" data-act="courseDone" style="margin-top:6px">✓ Finish lesson</button>`:""}`:""}
@@ -3964,7 +3986,7 @@ const ACT={
   vSend:()=>stopMic(),
   vCancel:()=>{stopMic(true);UI.vyou="";},
   // One tap between Ryusei (live from a free online service, can lag) and the iPhone's own Japanese voice (instant)
-  vFast:()=>{const fast=S.settings.tts!=="device";S.settings.tts=fast?"device":"quest";if(!fast&&S.settings.jaRec==="off")S.settings.jaRec="ryusei";questNote=false;save();renderVoice();
+  vFast:()=>{if(questPaused()&&S.settings.tts==="quest"){questPauseUntil=0;questLateN=0;toast("🎌 Ryusei is back",1500);renderVoice();return;}const fast=S.settings.tts!=="device";S.settings.tts=fast?"device":"quest";if(!fast&&S.settings.jaRec==="off")S.settings.jaRec="ryusei";questNote=false;save();renderVoice();
     toast(fast?"⚡ Fast voice: the iPhone's Japanese voice, no waiting (words you've learned still play in Ryusei)":"🎌 Ryusei for everything (can lag when the free service is busy)",3500);},
   vHands:()=>{S.settings.handsFree=!S.settings.handsFree;save();renderVoice();toast(S.settings.handsFree?"🙌 Yuki tries to listen after she talks (iPhone may still need a tap)":"✋ Tap 🎤 yourself to answer",2500);},
   vLen:el=>{S.settings.style.length=el.dataset.v;save();renderVoice();},
