@@ -24,6 +24,8 @@ Safari → Add to Home Screen.
   ({key, kind, title, goal, scen, targets, used, review}); `coursePrompt()` tells Yuki to make
   the student use every target word and to bring back older words; words tick off via
   `detectUsed()` on what the student types (kana, kanji spellings via `KANJI_ALT`, digits turned back into Japanese via `jaDigits()` — the Japanese mic also converts digits — romaji, or English voice-typing look-alikes like "Ohio" via `soundsLike()`; everyday English words in `EN_COMMON` never count) and the `used` MEM field; all used
+  AND at least `TALK_MIN` (6) messages from the student in that talk (`c.turns`, `courseTurn()`, `talkDone()`; chip
+  "💬 n/6"; `coursePrompt` asks for a real back-and-forth with follow-up questions, not word drilling)
   → node done and a "Lesson complete" card (`courseDoneCard`) with ✓ Finish lesson / Keep practising
   appears in chat and on the call (hands-free stops auto-listening until "keep practising"). Course words are flashcards `w:<jp>` ("My words" deck) and share spaced
   repetition in `S.cards` (`bumpWord`, `reviewWords`).
@@ -31,10 +33,13 @@ Safari → Add to Home Screen.
   target words (`rpTargets(n)`, `UI.lp.pre`: "Warm-up" → Practise, free), then `startTalk(n, lp.targets)` uses
   the same words. `coursePrompt` tells Yuki to use only Japanese the student has learned (anything else with
   its English in brackets).
-- **Path tests & recaps** (free, offline; state v23): N5 units get ⚡ Mini test after lesson b (`cq:<u>:m`,
-  8 Qs, pass 60%), 📝 Unit test after the roleplay (`cq:<u>:t`, 12 Qs incl. the unit's kana, 70%), 🔁 Big
-  recap every 3 units (`cq:<u>:r`, 15 Qs over the last 3 units) and 🏅 N5 final test (`cq:final`, 25 Qs).
-  Other levels get a 🔁 Card recap after each unit review (`<lv>:<u>:c`, learned cards). Node type "CQ";
+- **Path tests & recaps** (free, offline; state v23; made harder on the owner's request): N5 units get ⚡ Mini test
+  after lesson b (`cq:<u>:m`, 10 Qs, pass 70%), 📝 Unit test after the roleplay (`cq:<u>:t`, 16 Qs incl. the unit's
+  kana, 80%), 🔁 Big recap every 3 units (`cq:<u>:r`, 20 Qs over the last 3 units, 80%) and 🏅 N5 final test
+  (`cq:final`, 30 Qs, 80%). Other levels get a 🔁 Card recap after each unit review (`<lv>:<u>:c`, 15 Qs, 70%).
+  Test questions (`makeQ(id,true,pool)`) take wrong options from the same test first (similar words) and mix in
+  TYPED answers: `typeRo` (English shown → type the Japanese in romaji or kana), `listenRo` (hear it → type it),
+  `typeSound` (kana → type its sound); `q.typeIn="ro"`, checked in `ACT.qzType` with `normR`/`normJ`/1 typo allowed. Node type "CQ";
   `testSpec(n)` → `startTest()` → `UI.qz.test` with a recap page first (`intro`, tap to hear), questions from
   `makeQ(id,true)` (adds 👂 listening questions), full screen like a lesson, passing marks the node done,
   failing offers Try again. v23 marks tests in already-finished units as done so the path doesn't jump back.
@@ -311,6 +316,11 @@ Safari → Add to Home Screen.
 - **Study time vs XP**: XP goals no longer claim minutes (tests give XP fast); real minutes (`sec`, gaps
   between taps under 90 s) show next to XP on Home and Progress.
 - **Kana charts**: tap any character to hear it; ones missed get a red border.
+- **Real conversations** (Practice → 🗣️ Real conversations, uses credits): `CONVOS` (café, meeting someone new, izakaya,
+  lost in Tokyo, clothes shop, hotel check-in, "how was your day?", free talk). `ACT.convo` sheet → 🎙️ call or 💬 chat
+  → `startConvo(id,voice)`: own thread `cv:<id>`, `S.convo` = {id,title,scene,turns}; `convoPrompt()` (in `memoryPrompt`,
+  only in that thread via `activeConvo()`) keeps Yuki in character, chatting naturally, and after ~10 exchanges wrapping
+  up with what went well, 2 things to improve and a score /10. Turns counted in `send`.
 - **Quizzes**: mixed, weak spots, vocab, grammar, kanji, listening, translation, and
   roleplay, all run by Yuki in chat one question at a time.
 - **Reliability**: `apiRequest` gives up after 60 s (AbortController) so Yuki can't hang on "thinking";

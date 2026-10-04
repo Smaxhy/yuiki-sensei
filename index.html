@@ -624,7 +624,7 @@ html.light #voice .btn{color:#2a1520}
 <script>
 "use strict";
 // Bump this on every change so phones can spot a new version and offer to update
-const APP_VERSION="2026.10.11-2";
+const APP_VERSION="2026.10.11-3";
 /* ============ DATA ============ */
 const LV = {
   n5:{label:"N5",name:"Beginner",color:"#9fd67c"},
@@ -864,6 +864,26 @@ function openThread(id,title,kind,fresh){
   save();
 }
 const activeCourse=()=>S.course&&S.chatId===S.course.key?S.course:null;
+// Real conversations: Yuki plays a character in a scene and just talks with you (corrections still come via FIX)
+const CONVOS=[
+ ["cafe","☕","Ordering at a café","You order drinks and snacks","a friendly staff member at a small café in Kyoto; the student is a customer"],
+ ["friend","👋","Meeting someone new","Get to know each other","a Japanese university student meeting the student at a language exchange; get to know each other (name, country, work, hobbies, why Japanese)"],
+ ["food","🍜","Dinner at an izakaya","Order, ask about dishes, chat","a lively izakaya waiter; take their order, recommend dishes, small talk"],
+ ["lost","🧭","Lost in Tokyo","Ask the way to the station","a kind passer-by in Shinjuku; the student is lost and asks the way"],
+ ["shop","🛍️","Shopping for clothes","Sizes, colours, prices","a shop assistant in a clothes shop; help with sizes, colours and prices"],
+ ["hotel","🏨","Hotel check-in","Check in and ask questions","a hotel front-desk clerk; check the student in and answer questions"],
+ ["day","🗓️","How was your day?","Chat like friends","Yuki, the student's friend, chatting about their day, plans and the weekend"],
+ ["free","💬","Free conversation","Talk about anything","Yuki, chatting naturally about anything the student likes; ask about their life and share yours"]];
+const activeConvo=()=>S.convo&&S.chatId===S.convo.id?S.convo:null;
+function convoPrompt(){const v=activeConvo();if(!v)return"";
+  return`\nREAL CONVERSATION "${v.title}": you are ${v.scene}. Stay in character and talk like a real person: react, share a little about yourself, ask follow-up questions, 1-2 short sentences per turn, in Japanese at their level (new words get English in brackets). Don't teach or quiz, just converse. Exchanges so far: ${v.turns}. After about 10, wrap up naturally, then add a short English wrap-up: what went well, 2 things to improve, a score /10.`;}
+function startConvo(id,voice){
+  const c=CONVOS.find(x=>x[0]===id);if(!c)return;
+  S.currentLesson=null;UI.planCtx=null;
+  openThread("cv:"+id,c[1]+" "+c[2],"convo",true);S.convo={id:"cv:"+id,title:c[2],scene:c[4],turns:0};save();
+  UI.tab="chat";render();if(voice)openVoice();
+  send(c[1]+" "+c[2],"Start the conversation now, in character, with a short greeting and an easy question for me.");
+}
 const THREAD_ICON={free:"💬",speak:"🎙️",chat:"💬",lesson:"📖",quiz:"🧩",custom:"⭐"};
 function chatsSheet(){
   const ids=Object.keys(S.threads).sort((a,b)=>a==="main"?-1:b==="main"?1:S.threads[b].at-S.threads[a].at);
@@ -1699,7 +1719,7 @@ function memoryPrompt(){
 - Strong: ${p.strong.slice(-5).join("; ")||"-"}
 - Recently learned: ${p.learned.slice(-12).join("; ")||"-"}
 - Quiz: ${S.stats.quizRight} right, ${S.stats.quizWrong} wrong. Cards due: ${due}.
-${coursePrompt()}${les?`\nCURRENT LESSON: "${les.title}" — ${les.desc} (${LV[les.level].label}, unit "${les.unit}"). Teach it in small steps: short explanation → 2-3 examples → a quick practice question, then wait for their answer. Never dump the whole lesson at once. When they've shown they understand the core of it, congratulate them and tell them they can tap "✓ Done".`:""}`;
+${coursePrompt()}${convoPrompt()}${les?`\nCURRENT LESSON: "${les.title}" — ${les.desc} (${LV[les.level].label}, unit "${les.unit}"). Teach it in small steps: short explanation → 2-3 examples → a quick practice question, then wait for their answer. Never dump the whole lesson at once. When they've shown they understand the core of it, congratulate them and tell them they can tap "✓ Done".`:""}`;
 }
 // Calls are quick back-and-forths, so they send at most 6 recent messages (the lesson itself is in the memory part)
 function buildMessages(mode){
@@ -1820,7 +1840,8 @@ async function send(display,apiText,mode){
   const box=S.chat;  // the reply goes to the chat this was sent from, even if you switch chats meanwhile
   const um={role:"user",text:display,api:apiText||undefined};box.push(um);S.stats.msgs++;
   const said=UI.spoken&&UI.spoken.tidy===display?UI.spoken.raw:display;UI.spoken=null;
-  if(activeCourse()&&(!apiText||mode==="voice"))markUsed(detectUsed(kanaize(said)));
+  if(activeCourse()&&(!apiText||mode==="voice")){courseTurn();markUsed(detectUsed(kanaize(said)));}
+  if(activeConvo()&&(!apiText||mode==="voice")){S.convo.turns++;addXP(3,"msgs");}
   while(box.length>200)box.shift();
   save();
   if(!UI.voice&&UI.tab!=="chat"){UI.tab="chat";render();}else appendLast();
@@ -2031,7 +2052,7 @@ TARGET WORDS the student must use: ${wl}.
 Still not used: ${left.length?left.join(", "):"all used!"}.
 ${rv?`OLDER WORDS to bring back (ask about them or work them in, early on): ${rv}.`:""}
 Use only Japanese the student has learned (target, older and recently learned words); any other word needs its English in brackets.
-Rules: run a short, natural conversation built so the student HAS to say each target word (ask questions or set up moments that need it). One small step per message. If they're stuck, give a hint (the English meaning or the first sound), not the answer. Keep your Japanese very simple, using mostly the target and older words, with English help as their style needs. They may type romaji; that counts. When every target word has been used, congratulate them warmly and ask 2 quick recap questions (one about an older word).${c.kind==="final"?" This is the end-of-course test: about 10 turns, light corrections only, and at the end give friendly scores out of 10 for understanding, speaking, vocabulary and grammar plus what to work on next.":""}
+Rules: have a REAL back-and-forth conversation (at least ${TALK_MIN} exchanges; now ${c.turns||0}): react to what they say, share a little about yourself, ask follow-up questions, and set up moments where the student HAS to say each target word. Don't just drill words. One small step per message. If they're stuck, give a hint (the English meaning or the first sound), not the answer. Keep your Japanese very simple, using mostly the target and older words, with English help as their style needs. They may type romaji; that counts. When every target word has been used, congratulate them warmly and ask 2 quick recap questions (one about an older word).${c.kind==="final"?" This is the end-of-course test: about 10 turns, light corrections only, and at the end give friendly scores out of 10 for understanding, speaking, vocabulary and grammar plus what to work on next.":""}
 ${c.speaking?"This is a SPEAKING lesson on a voice call: keep each message to 1-2 short spoken sentences, and invite them to answer out loud.":"This is a typed CHAT lesson."}
 In the memory line, put target words they used correctly this turn in "used" (exact spelling from the list).`;
 }
@@ -2110,26 +2131,36 @@ function detectUsed(text){
     return nj.includes(j)||alts.some(a=>nj.includes(a))||(r.length>=4&&nr.includes(r))||(w&&soundsLike(text,w[1]));
   });
 }
+const TALK_MIN=6;
+const talkDone=c=>c.used.length>=c.targets.length&&(c.turns||0)>=TALK_MIN;
+function courseFinishCheck(c){
+  if(talkDone(c)&&!(S.plan&&S.plan.done[c.key])){markNode(c.key,true);toast("🎉 Real conversation done! Tap Finish lesson when you're ready",3000);
+    if(UI.voice)setTimeout(renderVoice,50);else if(UI.tab==="chat")setTimeout(rerenderChatHead,50);return true;}
+  return false;
+}
+// each message you send in a lesson talk counts as one turn of the conversation
+function courseTurn(){const c=activeCourse();if(!c)return;c.turns=(c.turns||0)+1;save();
+  if(!courseFinishCheck(c)&&UI.tab==="chat"&&!UI.voice){const h=$("#tchips");if(h)h.outerHTML=talkChips();}}
 function markUsed(list){
   const c=activeCourse();if(!c||!list||!list.length)return;
   let added=0;
   list.forEach(jp=>{if(c.targets.includes(jp)&&!c.used.includes(jp)){c.used.push(jp);bumpWord("w:"+jp,true);added++;addXP(5,"words");}});
   if(!added)return;
   save();
-  if(c.used.length>=c.targets.length&&!(S.plan&&S.plan.done[c.key])){markNode(c.key,true);toast("🎉 All 5 words used! Tap Finish lesson when you're ready",3000);
-    if(UI.voice)setTimeout(renderVoice,50);else if(UI.tab==="chat")setTimeout(rerenderChatHead,50);}
-  else toast("✓ "+list.filter(x=>c.targets.includes(x)).join(", ")+" ("+c.used.length+"/"+c.targets.length+")",1600);
+  if(!courseFinishCheck(c)){const left=TALK_MIN-(c.turns||0);
+    toast("✓ "+list.filter(x=>c.targets.includes(x)).join(", ")+" ("+c.used.length+"/"+c.targets.length+")"+(c.used.length>=c.targets.length&&left>0?" · keep talking: "+left+" more":""),1800);}
   if(UI.tab==="chat"&&!UI.voice){const h=$("#tchips");if(h)h.outerHTML=talkChips();}
 }
 // When every word has been used: a clear "lesson complete" card with Finish / Keep practising
 function courseDoneCard(inCall){
-  const c=activeCourse();if(!c||c.used.length<c.targets.length||c.keep)return"";
-  return`<div class="donecard${inCall?" incall":""}"><b>🎉 Lesson complete!</b><span>All ${c.targets.length} words used. Finish whenever you're ready.</span>
+  const c=activeCourse();if(!c||!talkDone(c)||c.keep)return"";
+  return`<div class="donecard${inCall?" incall":""}"><b>🎉 Lesson complete!</b><span>All ${c.targets.length} words used in a real conversation. Finish whenever you're ready.</span>
    <div class="donebtns"><button class="btn sm" data-act="courseDone">✓ Finish lesson</button><button class="btn sm ghost" data-act="keepPractising">Keep practising</button></div></div>`;
 }
 function talkChips(){
   const c=activeCourse();if(!c)return"";
-  return`<div id="tchips" class="tchips">${c.targets.map(jp=>`<span class="tchip${c.used.includes(jp)?" ok":""}">${c.used.includes(jp)?"✓ ":""}${esc(jp)}</span>`).join("")}</div>`;
+  const t=Math.min(c.turns||0,TALK_MIN);
+  return`<div id="tchips" class="tchips">${c.targets.map(jp=>`<span class="tchip${c.used.includes(jp)?" ok":""}">${c.used.includes(jp)?"✓ ":""}${esc(jp)}</span>`).join("")}<span class="tchip${t>=TALK_MIN?" ok":""}">💬 ${t}/${TALK_MIN}</span></div>`;
 }
 
 /* ---- other path nodes (higher levels, custom lessons) ---- */
@@ -3354,11 +3385,19 @@ function buildQz(kind){
   return shuffle(pick).map(id=>makeQ(id,false));
 }
 // One multiple-choice question for a card. "listen" (tests only): you hear it and pick the meaning.
-function makeQ(id,listen){
-  const c=CARDS[id],k=cardKind(id),P=Object.keys(CARDS).filter(i=>cardKind(i)===k);
+function makeQ(id,listen,pool){
+  const c=CARDS[id],k=cardKind(id),near=(pool||[]).filter(i=>i!==id&&CARDS[i]&&cardKind(i)===k);
+  // wrong options come from the same test first (similar words = harder), then from everything
+  const P=near.length>=3?near:Object.keys(CARDS).filter(i=>cardKind(i)===k);
   const types=k==="kana"?["sound","kana"]:k==="kanji"&&firstReading(c)?["meaning","reading"]:["meaning","word"];
   if(listen&&k!=="kanji"&&RECORDED.has(c.say))types.push("listen");
+  // tests (listen=true) also make you TYPE answers: no options to guess from
+  if(listen&&id.startsWith("w:")&&c.sub){types.push("typeRo","typeRo");if(RECORDED.has(c.say))types.push("listenRo");}
+  if(listen&&k==="kana")types.push("typeSound");
   const type=types[Math.floor(Math.random()*types.length)];
+  if(type==="typeRo")return{id,type,prompt:c.back,answer:c.sub,ask:"Say it in Japanese: type it (romaji or kana)",typeIn:"ro",opts:[]};
+  if(type==="listenRo")return{id,type,prompt:"",answer:c.sub,ask:"👂 Type what you hear (romaji or kana)",typeIn:"ro",listen:true,opts:[]};
+  if(type==="typeSound")return{id,type,prompt:c.front,answer:c.back,ask:"Type the sound of this character",typeIn:"ro",opts:[]};
   const val={sound:x=>CARDS[x].back,kana:x=>CARDS[x].front,meaning:x=>CARDS[x].back,word:x=>CARDS[x].front,reading:x=>firstReading(CARDS[x]),listen:x=>k==="num"?CARDS[x].front:CARDS[x].back}[type];
   const answer=val(id),others=[...new Set(shuffle(P.filter(x=>x!==id)).map(val).filter(v=>v&&v!==answer))].slice(0,3);
   const prompt=type==="listen"?"":type==="kana"||type==="word"?c.back:c.front;
@@ -3370,18 +3409,18 @@ const unitWords=ui=>COURSE[ui].ls.flatMap(l=>l.w.map(w=>"w:"+w[0]));
 const unitKana=ui=>[...COURSE[ui].kana].map(ch=>(/[ァ-ン]/.test(ch)?"k:":"h:")+ch);
 function testSpec(n){
   const u=n.unit;
-  if(n.k==="m")return{title:"Mini test · "+COURSE[u].t,ids:COURSE[u].ls.slice(0,2).flatMap(l=>l.w.map(w=>"w:"+w[0])),count:8,pass:0.6};
-  if(n.k==="t")return{title:"Unit test · "+COURSE[u].t,ids:[...unitWords(u),...unitKana(u)],count:12,pass:0.7};
-  if(n.k==="r"){const from=Math.max(0,u-2);return{title:"Big recap · units "+(from+1)+"–"+(u+1),ids:COURSE.slice(from,u+1).flatMap((_,i)=>[...unitWords(from+i),...unitKana(from+i)]),count:15,pass:0.7};}
-  if(n.k==="f")return{title:"N5 final test",ids:COURSE.flatMap((_,i)=>[...unitWords(i),...unitKana(i)]),count:25,pass:0.7};
+  if(n.k==="m")return{title:"Mini test · "+COURSE[u].t,ids:COURSE[u].ls.slice(0,2).flatMap(l=>l.w.map(w=>"w:"+w[0])),count:10,pass:0.7};
+  if(n.k==="t")return{title:"Unit test · "+COURSE[u].t,ids:[...unitWords(u),...unitKana(u)],count:16,pass:0.8};
+  if(n.k==="r"){const from=Math.max(0,u-2);return{title:"Big recap · units "+(from+1)+"–"+(u+1),ids:COURSE.slice(from,u+1).flatMap((_,i)=>[...unitWords(from+i),...unitKana(from+i)]),count:20,pass:0.8};}
+  if(n.k==="f")return{title:"N5 final test",ids:COURSE.flatMap((_,i)=>[...unitWords(i),...unitKana(i)]),count:30,pass:0.8};
   // other levels: a recap of the cards you've learned (or the core decks if you haven't learned any yet)
   const mine=Object.keys(S.cards).filter(i=>CARDS[i]);
-  return{title:"Card recap · "+(pathUnits()[u]||{sub:""}).sub,ids:mine.length>=6?mine:[...DECKS.vocab.ids,...DECKS.kanji.ids],count:12,pass:0.6};
+  return{title:"Card recap · "+(pathUnits()[u]||{sub:""}).sub,ids:mine.length>=6?mine:[...DECKS.vocab.ids,...DECKS.kanji.ids],count:15,pass:0.7};
 }
 function startTest(n,spec){
   spec=spec||testSpec(n);
   const ids=[...new Set(spec.ids)].filter(i=>CARDS[i]);
-  const qs=shuffle(ids.slice()).slice(0,spec.count).map(id=>makeQ(id,true));
+  const qs=shuffle(ids.slice()).slice(0,spec.count).map(id=>makeQ(id,true,ids));
   stopSpeak();UI.lp=null;UI.fc=null;
   UI.qz={kind:"test",qs,i:0,picked:null,right:0,missed:[],test:{key:n.key,title:spec.title,pass:spec.pass,ids,node:n},intro:true};render();
 }
@@ -3462,13 +3501,13 @@ function vQuiz(){
      ${z.missed.length?`<div class="card" style="margin-top:16px;text-align:left"><b>To review</b><div class="tags" style="margin-top:8px">${[...new Set(z.missed)].map(id=>`<button class="tg w" data-act="sayText" data-text="${esc(cardOf(id).say)}">${esc(cardOf(id).front)} · ${esc(cardOf(id).back)}</button>`).join("")}</div></div>`:""}
      <button class="btn" style="margin-top:14px" data-act="qzStart" data-k="${z.kind}">🧠 New quiz</button>
      <button class="btn ghost" style="margin-top:8px" data-act="qzClose">Done</button></div>`;}
-  const q=z.qs[z.i],c=q.card||CARDS[q.id],p=z.picked,jpPrompt=q.num?q.type==="r2n"||q.type==="kanji":q.type!=="kana"&&q.type!=="word";
+  const q=z.qs[z.i],c=q.card||CARDS[q.id],p=z.picked,jpPrompt=q.num?q.type==="r2n"||q.type==="kanji":q.type!=="kana"&&q.type!=="word"&&q.type!=="typeRo";
   const head=z.test?`📝 ${z.i+1} / ${z.qs.length}`:`🧠 ${z.i+1} / ${z.qs.length} · ${z.right} right`;
   return`<div class="pad"><div style="display:flex;justify-content:space-between;align-items:center"><button class="mini" data-act="qzClose">✕ Stop</button><span class="sub">${head}</span></div>
    <div class="bar"><i style="width:${Math.round(z.i/z.qs.length*100)}%"></i></div>
    <p class="sub lpk">${q.ask}</p>
    <div class="qcard">${q.type==="listen"||q.listen?`<button class="btn sm ghost" data-act="qzListen" style="width:auto;padding:12px 22px;font-size:18px">🔊 Play again</button>`:`<div class="${jpPrompt&&q.prompt.length<9?"wjp":"qen2"}">${esc(q.prompt)}</div>`}</div>
-   ${q.typeIn?(p==null?`<div class="typein"><input id="qzIn" class="field" inputmode="numeric" autocomplete="off" placeholder="Type the number" enterkeyhint="done"><button class="btn" data-act="qzType">Check</button></div>`:`<div class="opt ${p===q.answer?"right":"wrong"}"><b>${esc(p||"(empty)")}</b></div>`):""}
+   ${q.typeIn?(p==null?`<div class="typein"><input id="qzIn" class="field" ${q.typeIn==="ro"?`inputmode="text" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="e.g. konnichiwa"`:`inputmode="numeric" placeholder="Type the number"`} autocomplete="off" enterkeyhint="done"><button class="btn" data-act="qzType">Check</button></div>`:`<div class="opt ${p===q.answer?"right":"wrong"}"><b>${esc(p||"(empty)")}</b></div>`):""}
    <div class="opts">${(q.opts||[]).map(o=>{const st=p==null?"":o===q.answer?" right":o===p?" wrong":" dim";return`<button class="opt${st}" data-act="qzPick" data-v="${esc(o)}"${p!=null?" disabled":""}><b>${esc(o)}</b></button>`;}).join("")}</div>
    ${p!=null?`<div class="fb ${p===q.answer?"ok":"no"}">${p===q.answer?"✓ Correct!":"✗ It's <b>"+esc(q.answer)+"</b>"}</div>
     <div class="qzrev"><span>${esc(c.front)}${c.sub?` (${esc(c.sub)})`:""} = ${esc(c.back)}</span><button class="mini" data-act="sayText" data-text="${esc(c.say)}" aria-label="Hear it">🔊</button></div>
@@ -3505,6 +3544,8 @@ function vPractice(){
   <div class="card wod"><div class="wodt"><small>🌅 Word of the day</small><b>${esc(w[0])}</b><span>${w[1]!==w[0]?esc(w[1])+" · ":""}${esc(w[2])}</span></div>
    <button class="iconbtn" data-act="sayText" data-text="${esc(w[1])}" aria-label="Listen">🔊</button></div>
   <div class="grid2" style="margin:-2px 0 4px"><button class="btn sm ghost" data-act="wodAdd">${inDeck?"✓ In flashcards":"＋ Flashcards"}</button><button class="btn sm ghost" data-act="wodYuki">💬 Use it with Yuki</button></div>
+  <div class="sec">🗣️ Real conversations</div><p class="sub" style="margin:-4px 4px 10px">Yuki plays a character and you just talk. About 10 exchanges, then a score and tips (uses credits).</p>
+  ${CONVOS.map(([id,ic,t,d])=>`<button class="row" data-act="convo" data-v="${id}"><span class="ri">${ic}</span><span class="rt"><b>${t}</b><span>${d}</span></span><span class="chev">›</span></button>`).join("")}
   <div class="sec">⚡ Quick practice</div>
   ${dueIds(Object.keys(S.cards)).length?`<button class="row" data-act="review"><span class="ri">🔁</span><span class="rt"><b>Review ${dueIds(Object.keys(S.cards)).length} due cards</b><span>All decks mixed · about ${Math.max(1,Math.round(Math.min(20,dueIds(Object.keys(S.cards)).length)/4))} min</span></span></button>`:""}
   <button class="row" data-act="qzStart" data-k="all"><span class="ri">🧠</span><span class="rt"><b>Multiple-choice quiz</b><span>Test the words you've learned · no audio or hints until you answer</span></span></button>
@@ -3842,7 +3883,7 @@ function voiceMic(lang){
     final=>{if(final){const raw=final;final=tidySpeech(final);UI.spoken={tidy:final,raw};UI.vyou=final;send(final,hasKanji(final)?final+"\n(said out loud; the phone's voice typing added the kanji automatically — I can't read kanji yet, please reply in kana)":null,"voice");}else{UI.vstate="idle";renderVoice();}},lang);
 }
 // Hands-free: when Yuki finishes talking, start listening for your answer (you still tap Send)
-function afterYukiSpoke(){const c=activeCourse();if(c&&c.used.length>=c.targets.length&&!c.keep)return;if(UI.voice&&S.settings.handsFree&&!UI.listening&&!UI.busy)setTimeout(()=>{if(UI.voice&&!UI.listening&&!UI.busy&&!isSpeaking())voiceMic(S.settings.micLang);},900);
+function afterYukiSpoke(){const c=activeCourse();if(c&&talkDone(c)&&!c.keep)return;if(UI.voice&&S.settings.handsFree&&!UI.listening&&!UI.busy)setTimeout(()=>{if(UI.voice&&!UI.listening&&!UI.busy&&!isSpeaking())voiceMic(S.settings.micLang);},900);
   else if(UI.voice){const v=$(".vstat");if(v)v.textContent="Your turn · tap 🎤 日本語 or 🎤 English";}}
 
 /* ============ SHEET ============ */
@@ -3899,7 +3940,12 @@ const ACT={
   qzStart:el=>startQz(el.dataset.k),
   qzPick:el=>{const z=UI.qz;if(!z||z.picked!=null)return;const q=z.qs[z.i],ok=el.dataset.v===q.answer;z.picked=el.dataset.v;
     qzGrade(q,ok);},
-  qzType:()=>{const z=UI.qz,i=$("#qzIn");if(!z||z.picked!=null||!i)return;const v=i.value.replace(/[^0-9０-９]/g,"").replace(/[０-９]/g,c=>String.fromCharCode(c.charCodeAt(0)-0xFEE0)).replace(/^0+(?=\d)/,"");
+  qzType:()=>{const z=UI.qz,i=$("#qzIn");if(!z||z.picked!=null||!i)return;
+    if(z.qs[z.i].typeIn==="ro"){const q=z.qs[z.i],raw=i.value.trim();if(!raw){toast("Type your answer first");i.focus();return;}
+      const c=CARDS[q.id],a=normR(q.answer),g=normR(raw);
+      const ok=g===a||(/[ぁ-んァ-ン一-龯]/.test(raw)&&(normJ(raw)===normJ(c.front)||normJ(raw)===normJ(q.answer)))||(a.length>=6&&editDist(g,a)<=1);
+      z.picked=ok?q.answer:raw;qzGrade(q,ok);return;}
+    const v=i.value.replace(/[^0-9０-９]/g,"").replace(/[０-９]/g,c=>String.fromCharCode(c.charCodeAt(0)-0xFEE0)).replace(/^0+(?=\d)/,"");
     if(!v){toast("Type the number first");i.focus();return;}const q=z.qs[z.i];z.picked=v;qzGrade(q,v===q.answer);},
   qzNext:()=>{const z=UI.qz;if(!z)return;z.i++;z.picked=null;stopSpeak();
     if(z.test&&z.i>=z.qs.length&&z.right/z.qs.length>=z.test.pass){markNode(z.test.key,true);}
@@ -4046,6 +4092,9 @@ const ACT={
   chart:el=>{UI.chart=el.dataset.c;planAuto("K",UI.chart);render();},
   closeChart:()=>{UI.chart=null;render();},
   quiz:el=>{UI.planCtx=null;startQuiz(el.dataset.q);},
+  convo:el=>{const c=CONVOS.find(x=>x[0]===el.dataset.v);if(!c)return;sheet(`<div class="h2" style="margin-bottom:6px">${c[1]} ${esc(c[2])}</div><p class="sub" style="margin-bottom:14px">${esc(c[3])}. Yuki stays in character and keeps the conversation going; mistakes get corrected under your messages.</p>
+    <button class="btn" data-act="convoGo" data-v="${c[0]}" data-voice="1">🎙️ Talk out loud (call)</button><button class="btn ghost" style="margin-top:10px" data-act="convoGo" data-v="${c[0]}">💬 Type in chat</button>`);},
+  convoGo:el=>{closeSheet();startConvo(el.dataset.v,!!el.dataset.voice);},
   lpNext:()=>lpNext(),
   lpSay:()=>lpSay(),
   lpQSay:()=>{const q=UI.lp&&UI.lp.qs[UI.lp.qi];if(q)speak(q.say,{rate:0.85});},
