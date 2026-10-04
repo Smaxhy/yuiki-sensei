@@ -343,8 +343,10 @@ input,textarea,select{font:inherit;font-size:16px;color:var(--text)}
 .wod{display:flex;align-items:center;gap:12px;background:linear-gradient(150deg,#2b3350,#1d2030);border-color:#3c4670;margin-top:14px}
 .wodt{flex:1;min-width:0}.wodt small{display:block;font-size:12px;font-weight:800;color:var(--sky)}.wodt b{display:block;font-size:30px;margin:2px 0}.wodt span{font-size:14px;color:var(--dim)}
 .wbrow{display:flex;align-items:center;gap:10px;width:100%;text-align:left;padding:10px 0;border-bottom:1px solid var(--line);min-height:52px}
+.phins{display:flex;flex-direction:column;align-items:flex-start;gap:2px;flex:1;min-width:0;text-align:left;background:none;border:0;color:inherit;font:inherit;padding:0;min-height:44px}
 .wbrow:last-child{border-bottom:none}
 .wbj{font-size:19px;font-weight:700;min-width:84px;max-width:48%;overflow-wrap:anywhere}.wbe{flex:1;min-width:0;font-size:14px}.wbe small{display:block;color:var(--dim);font-size:12px}.wbd{font-size:10px;letter-spacing:1px;color:var(--matcha);flex-shrink:0}
+.phins .wbj{max-width:none;flex:none;overflow-wrap:normal;word-break:keep-all}.phins .wbe{flex:none}
 .mehead{display:flex;align-items:center;gap:14px;background:linear-gradient(150deg,#3a2433,#22243a);border-color:#5a3a4c}
 .mht{flex:1;min-width:0}.mht b{display:block;font-size:19px}.mht span{display:block;font-size:13px;color:var(--dim);margin-top:2px}.mht .mhs{color:var(--text);font-weight:700;margin-top:6px}
 .chev{font-size:22px;color:var(--dim);flex-shrink:0}
@@ -624,7 +626,7 @@ html.light #voice .btn{color:#2a1520}
 <script>
 "use strict";
 // Bump this on every change so phones can spot a new version and offer to update
-const APP_VERSION="2026.10.11-4";
+const APP_VERSION="2026.10.12-1";
 /* ============ DATA ============ */
 const LV = {
   n5:{label:"N5",name:"Beginner",color:"#9fd67c"},
@@ -772,7 +774,18 @@ const NUMS=[[0,"ゼロ","zero","零"],[1,"いち","ichi","一"],[2,"に","ni","�
  [11,"じゅういち","juuichi","十一"],[20,"にじゅう","nijuu","二十"],[30,"さんじゅう","sanjuu","三十"],[40,"よんじゅう","yonjuu","四十"],[50,"ごじゅう","gojuu","五十"],[60,"ろくじゅう","rokujuu","六十"],[70,"ななじゅう","nanajuu","七十"],[80,"はちじゅう","hachijuu","八十"],[90,"きゅうじゅう","kyuujuu","九十"],
  [100,"ひゃく","hyaku","百"],[300,"さんびゃく","sanbyaku","三百"],[600,"ろっぴゃく","roppyaku","六百"],[800,"はっぴゃく","happyaku","八百"],[1000,"せん","sen","千"],[3000,"さんぜん","sanzen","三千"],[8000,"はっせん","hassen","八千"],[10000,"いちまん","ichiman","一万"]];
 NUMS.forEach(([n,k,r,kj])=>CARDS["n:"+n]={deck:"num",front:String(n),back:k,sub:kj+" · "+r,say:k,label:n+" ("+k+")"});
+// Small talk & making friends: phrases to start, react, keep it going, swap contacts and rescue yourself
+const TALK=[
+ ["👋","Start a chat",[["すみません、ここ いいですか？","sumimasen, koko ii desu ka?","Excuse me, is this seat free?"],["はじめまして。","hajimemashite.","Nice to meet you."],["おなまえは？","onamae wa?","What's your name?"],["どこから きましたか？","doko kara kimashita ka?","Where are you from?"],["にほんは ながいですか？","nihon wa nagai desu ka?","Have you been in Japan long?"],["この へんに すんでいますか？","kono hen ni sunde imasu ka?","Do you live around here?"],["いい てんきですね。","ii tenki desu ne.","Nice weather, isn't it?"]]],
+ ["😮","React",[["へえ！","hee!","Oh, really! / Huh!"],["そうなんですか！","sou nan desu ka!","Is that so!"],["いいですね！","ii desu ne!","That's nice!"],["すごい！","sugoi!","Amazing!"],["わたしも！","watashi mo!","Me too!"],["なるほど。","naruhodo.","I see."],["ほんとうに？","hontou ni?","Really?"],["たのしそう！","tanoshisou!","Sounds fun!"]]],
+ ["➡️","Keep it going",[["どうしてですか？","doushite desu ka?","Why is that?"],["それで？","sorede?","And then?"],["もっと おしえて ください。","motto oshiete kudasai.","Tell me more."],["そちらは？","sochira wa?","And you?"],["たとえば？","tatoeba?","For example?"],["どんな かんじですか？","donna kanji desu ka?","What's it like?"]]],
+ ["🎡","Topics",[["しゅみは なんですか？","shumi wa nan desu ka?","What are your hobbies?"],["しごとは なにを していますか？","shigoto wa nani o shite imasu ka?","What do you do for work?"],["しゅうまつは なにを しましたか？","shuumatsu wa nani o shimashita ka?","What did you do at the weekend?"],["どんな おんがくを ききますか？","donna ongaku o kikimasu ka?","What music do you listen to?"],["おすすめの たべものは ありますか？","osusume no tabemono wa arimasu ka?","Any food you'd recommend?"],["さいきん、なにか おもしろい こと ありましたか？","saikin, nanika omoshiroi koto arimashita ka?","Anything fun happen lately?"],["りょこうは すきですか？","ryokou wa suki desu ka?","Do you like travelling?"]]],
+ ["🤝","Make friends",[["ライン こうかん しませんか？","rain koukan shimasen ka?","Shall we swap LINE?"],["こんど いっしょに のみに いきませんか？","kondo issho ni nomi ni ikimasen ka?","Want to go for a drink sometime?"],["いつが ひまですか？","itsu ga hima desu ka?","When are you free?"],["たのしかったです！","tanoshikatta desu!","That was fun!"],["また はなしましょう。","mata hanashimashou.","Let's talk again."],["またね！","mata ne!","See you!"]]],
+ ["🛟","Rescue phrases",[["もう いちど おねがいします。","mou ichido onegai shimasu.","Once more, please."],["ゆっくり おねがいします。","yukkuri onegai shimasu.","Slowly, please."],["にほんごで なんと いいますか？","nihongo de nan to iimasu ka?","How do you say it in Japanese?"],["すみません、わかりません。","sumimasen, wakarimasen.","Sorry, I don't understand."],["ちょっと まって ください。","chotto matte kudasai.","Wait a moment, please."],["それは どういう いみですか？","sore wa dou iu imi desu ka?","What does that mean?"]]]];
+const talkSay=jp=>jp.replace(/\s+/g,"");
+TALK.forEach(g=>g[2].forEach(([jp,ro,en])=>{CARDS["t:"+talkSay(jp)]={deck:"talk",front:jp,back:en,sub:ro,say:talkSay(jp),label:jp+" ("+en+")"};}));
 const DECKS={
+  talk:{name:"Small-talk phrases",icon:"🤝",ids:Object.keys(CARDS).filter(i=>i.startsWith("t:"))},
   num:{name:"Numbers",icon:"🔢",ids:NUMS.map(x=>"n:"+x[0])},
   words:{name:"My words",icon:"💬",get ids(){return Object.keys(S.cards).filter(i=>i.startsWith("w:"));}},
   hira:{name:"Hiragana",icon:"あ",ids:Object.keys(CARDS).filter(i=>i.startsWith('h:'))},
@@ -873,18 +886,39 @@ const CONVOS=[
  ["shop","🛍️","Shopping for clothes","Sizes, colours, prices","a shop assistant in a clothes shop; help with sizes, colours and prices"],
  ["hotel","🏨","Hotel check-in","Check in and ask questions","a hotel front-desk clerk; check the student in and answer questions"],
  ["day","🗓️","How was your day?","Chat like friends","Yuki, the student's friend, chatting about their day, plans and the weekend"],
- ["free","💬","Free conversation","Talk about anything","Yuki, chatting naturally about anything the student likes; ask about their life and share yours"]];
+ ["free","💬","Free conversation","Talk about anything","Yuki, chatting naturally about anything the student likes; ask about their life and share yours"],
+ // small talk & making friends (6th field "st" = small-talk coaching; scene built fresh each time by convoScene)
+ ["stranger","🎲","Chat with a stranger","A random person and random topics, every time","","st"],
+ ["mkfriend","🤝","Make a friend","Chat, swap LINE, make plans","","st"],
+ ["roulette","🎡","Topic roulette","Yuki jumps between random topics","","st"]];
+const ST_PEOPLE=["Haruka, 24, a barista from Osaka who loves karaoke","Kenta, 31, an office worker from Nagoya and a big baseball fan","Mei, 21, a design student who draws manga","Taro, 67, a retired teacher who loves gardening and fishing","Aya, 28, a nurse who plays bass in a band","Sho, 35, a chef who runs a small ramen shop","Rina, 22, a gamer and anime fan","Daisuke, 40, a dad who loves camping","Yui, 26, an office worker who travels whenever she can","Ken, 19, a university student who surfs","Emi, 33, a yoga teacher who loves cats","Hiro, 45, a taxi driver who knows every good restaurant"];
+const ST_PLACES=["sitting next to the student at a ramen counter","in the queue at a busy café in Shibuya","at a small bar in Golden Gai","in the next seat on a long shinkansen ride","in a hostel common room in Kyoto","under the cherry blossoms in a park","waiting at a bus stop in the rain","in the rest area of an onsen","at a language exchange meetup","at a game centre in Akihabara"];
+const ST_TOPICS=["food","weekend plans","travel","music","movies and anime","work","hometowns","sports","pets","seasons and weather","favourite places in Japan","learning languages","games","cooking","festivals","family","dreams and plans"];
+const pick1=a=>a[Math.floor(Math.random()*a.length)];
+function convoScene(c){
+  const t=shuffle(ST_TOPICS.slice());
+  if(c[0]==="stranger")return`${pick1(ST_PEOPLE)}, ${pick1(ST_PLACES)}; you're a stranger to the student and start chatting casually. Begin with ${t[0]}, then drift naturally to ${t[1]} and ${t[2]}`;
+  if(c[0]==="mkfriend")return`${pick1(ST_PEOPLE)}, meeting the student for the first time ${pick1(ST_PLACES)}. Get on well: chat about ${t[0]} and ${t[1]}, find something in common, and when it fits suggest swapping LINE and meeting again (or let the student suggest it), then agree a day and a plan`;
+  return`Yuki, the student's friend, playing topic roulette: every 2-3 exchanges switch to a new topic in this order: ${t.slice(0,5).join(", ")}. Announce each switch casually (ところで… by the way)`;
+}
 const activeConvo=()=>S.convo&&S.chatId===S.convo.id?S.convo:null;
 function convoPrompt(){const v=activeConvo();if(!v)return"";
-  return`\nREAL CONVERSATION "${v.title}": you are ${v.scene}. Stay in character and talk like a real person: react, share a little about yourself, ask follow-up questions, 1-2 short sentences per turn, in Japanese at their level (new words get English in brackets). Don't teach or quiz, just converse. Exchanges so far: ${v.turns}. After about 10, wrap up naturally, then add a short English wrap-up: what went well, 2 things to improve, a score /10.`;}
+  return`\nREAL CONVERSATION "${v.title}": you are ${v.scene}. Stay in character and talk like a real person: react, share a little about yourself, ask follow-up questions, 1-2 short sentences per turn, in Japanese at their level (new words get English in brackets). Don't teach or quiz, just converse.${v.st?" Small-talk coaching: keep it flowing and change topic naturally when one runs dry. If the student only answers and never asks back or reacts, once add a tiny English tip in brackets (e.g. Tip: react with へえ！ and ask back そちらは？).":""} Exchanges so far: ${v.turns}. After about 10, wrap up naturally, then add a short English wrap-up: what went well, 2 things to improve${v.st?", how well they reacted, asked back and kept it going":""}, a score /10.`;}
 function startConvo(id,voice){
   const c=CONVOS.find(x=>x[0]===id);if(!c)return;
   S.currentLesson=null;UI.planCtx=null;
-  openThread("cv:"+id,c[1]+" "+c[2],"convo",true);S.convo={id:"cv:"+id,title:c[2],scene:c[4],turns:0};save();
+  openThread("cv:"+id,c[1]+" "+c[2],"convo",true);S.convo={id:"cv:"+id,title:c[2],scene:c[5]?convoScene(c):c[4],turns:0,st:!!c[5]};save();
   UI.tab="chat";render();if(voice)openVoice();
   send(c[1]+" "+c[2],"Start the conversation now, in character, with a short greeting and an easy question for me.");
 }
-const THREAD_ICON={free:"💬",speak:"🎙️",chat:"💬",lesson:"📖",quiz:"🧩",custom:"⭐"};
+// 💡 Phrase helper (free, offline): tap a phrase to put it in the message box (on a call: to hear it)
+function phraseSheet(){
+  sheet(`<div class="h2" style="margin-bottom:4px">💡 Small-talk phrases</div><p class="sub" style="margin-bottom:10px">${UI.voice?"Tap to hear it, then say it yourself.":"Tap a phrase to put it in your message. 🔊 to hear it."}</p>
+   <div style="max-height:62vh;overflow:auto">${TALK.map(([ic,t,ps])=>`<div class="sec" style="margin-top:10px">${ic} ${t}</div><div class="card" style="padding:2px 12px">${ps.map(([jp,ro,en])=>`<div class="wbrow phrow"><button class="phins" data-act="phIns" data-t="${esc(jp)}"><span class="wbj">${esc(jp)}</span><span class="wbe">${esc(en)}<small>${esc(ro)}</small></span></button><button class="mini" data-act="sayText" data-text="${esc(talkSay(jp))}" aria-label="Hear it">🔊</button></div>`).join("")}</div>`).join("")}</div>
+   <button class="btn ghost" style="margin-top:12px" data-act="closeSheet">Close</button>`);
+}
+const PH_QUICK=["へえ！","そうなんですか！","いいですね！","そちらは？","もっと おしえて ください。","もう いちど おねがいします。","ゆっくり おねがいします。"];
+const THREAD_ICON={convo:"🗣️",free:"💬",speak:"🎙️",chat:"💬",lesson:"📖",quiz:"🧩",custom:"⭐"};
 function chatsSheet(){
   const ids=Object.keys(S.threads).sort((a,b)=>a==="main"?-1:b==="main"?1:S.threads[b].at-S.threads[a].at);
   sheet(`<div class="h2" style="margin-bottom:10px">Your chats</div>
@@ -3318,14 +3352,15 @@ function vChat(){
   try{courseResync();}catch(e){}
   const les=S.currentLesson&&lessonById(S.currentLesson);
   const C=activeCourse(),th=S.threads[S.chatId]||{title:"Chat with Yuki"};
-  const chips=C?["Give me a hint","What does that mean?","Say it slower 🔊","Can we do it in English first?"]:les?["I don't get it","Give me an example","Quiz me on this","Next step","Say it slower 🔊"]:["Quiz me","Teach me something new","Let's practice talking","Explain simpler","Say it slower 🔊"];
+  const V=!C&&!les&&activeConvo();
+  const chips=V?[]:C?["Give me a hint","What does that mean?","Say it slower 🔊","Can we do it in English first?"]:les?["I don't get it","Give me an example","Quiz me on this","Next step","Say it slower 🔊"]:["Quiz me","Teach me something new","Let's practice talking","Explain simpler","Say it slower 🔊"];
   return`<div class="chat">
   <div class="chathead"><div class="av">ゆ</div><button class="ct ctbtn" data-act="chatsSheet"><b>${esc(th.title)} <span class="caret">▾</span></b><small>${C?(C.speaking?"🎙️ Speaking lesson":"💬 Chat lesson"):les?"📖 Lesson":"Yuki · "+LV[S.level].label}</small></button>
    ${C?`<button class="mini ok" data-act="courseDone">${S.plan&&S.plan.done[C.key]?"Finish":"✓ Done"}</button><button class="iconbtn" data-act="courseExit" aria-label="Leave practice">✕</button>`:les?`${S.done.includes(les.id)?"":`<button class="mini ok" data-act="lessonDone">✓ Done</button>`}<button class="iconbtn" data-act="lessonExit" aria-label="Leave lesson">✕</button>`:UI.planCtx?`<button class="mini ok" data-act="ctxDone">✓ Done</button>`:""}
    <button class="iconbtn call" data-act="voice" aria-label="Voice call">📞</button></div>
   ${C?`<div class="tbar"><span class="sub">Use these words:</span>${talkChips()}</div>${courseDoneCard(false)}`:""}
   <div id="msgs" class="msgs">${S.chat.length?S.chat.map(msgHTML).join(""):emptyChat()}</div>
-  <div class="chatfoot"><div class="chips">${chips.map(c=>`<button class="chip" data-act="chip" data-t="${esc(c)}">${esc(c)}</button>`).join("")}</div>
+  <div class="chatfoot"><div class="chips">${V?`<button class="chip on" data-act="phrases">💡 Phrases</button>`+PH_QUICK.map(t=>`<button class="chip" data-act="phIns" data-t="${esc(t)}">${esc(t)}</button>`).join(""):""}${chips.map(c=>`<button class="chip" data-act="chip" data-t="${esc(c)}">${esc(c)}</button>`).join("")}</div>
   <div class="inputbar"><button id="micBtn" class="iconbtn micja${UI.listening&&UI.micLang==="ja-JP"?" live":""}" data-act="mic" data-v="ja-JP" aria-label="Speak Japanese">🎤<small>あ</small></button><button class="iconbtn micen${UI.listening&&UI.micLang==="en-US"?" live":""}" data-act="mic" data-v="en-US" aria-label="Speak English">🎤<small>EN</small></button>
   <textarea id="inp" rows="1" placeholder="Message Yuki…" enterkeyhint="send"></textarea>
   <button class="send" data-act="send" aria-label="Send">↑</button></div></div></div>`;
@@ -3386,10 +3421,10 @@ function vLearn(){
 }
 
 /* ---- Multiple-choice quiz from the cards you've learned: no audio, no reading until you answer ---- */
-const cardKind=id=>/^[hk]:/.test(id)?"kana":id.startsWith("j:")?"kanji":id.startsWith("n:")?"num":"word";
+const cardKind=id=>/^[hk]:/.test(id)?"kana":id.startsWith("j:")?"kanji":id.startsWith("n:")?"num":id.startsWith("t:")?"talk":"word";
 const firstReading=c=>String(c.sub||"").split(/[・,、/]/)[0].replace(/[()（）]/g,"").trim();
 function buildQz(kind){
-  if(kind==="nums")kind="num";
+  if(kind==="nums")kind="num";if(kind==="words")kind="word";
   const learned=Object.keys(S.cards).filter(i=>CARDS[i]&&(kind==="all"||cardKind(i)===kind));
   if(!learned.length)return null;
   const pick=shuffle(learned.slice()).sort((a,b)=>(S.cards[a].due<=Date.now()?0:1)-(S.cards[b].due<=Date.now()?0:1)).slice(0,10);
@@ -3525,7 +3560,7 @@ function vQuiz(){
     <button class="btn" data-act="qzNext">${z.i<z.qs.length-1?"Next":"See my score"}</button>`:""}</div>`;
 }
 // Cards tab: every card you've learned (not the ones still to come), with practice buttons and a list
-const CARD_KIND={kana:["Kana",i=>/^[hk]:/.test(i)],nums:["Numbers",i=>i.startsWith("n:")],all:["All",()=>true],words:["Words",i=>/^[wv]:/.test(i)],kanji:["Kanji",i=>i.startsWith("j:")]};
+const CARD_KIND={kana:["Kana",i=>/^[hk]:/.test(i)],nums:["Numbers",i=>i.startsWith("n:")],all:["All",()=>true],words:["Words",i=>/^[wv]:/.test(i)],talk:["Phrases",i=>i.startsWith("t:")],kanji:["Kanji",i=>i.startsWith("j:")]};
 function vCards(){
   if(UI.qz)return vQuiz();
   if(UI.fc)return vCard();
@@ -3533,9 +3568,9 @@ function vCards(){
   const due=dueIds(all).length,strong=all.filter(i=>S.cards[i].box>=4).length,dots=b=>"●".repeat(Math.min(6,b))+"○".repeat(6-Math.min(6,b));
   return`<div class="pad"><div class="h1">My cards</div><p class="sub" style="margin:4px 0 12px">Only what you've already learned. New cards appear here as you do lessons and decks.</p>
   <div class="card"><div class="stat3"><div class="stat"><b style="color:var(--sakura)">${all.length}</b><span>learned</span></div><div class="stat"><b style="color:var(--gold)">${due}</b><span>due now</span></div><div class="stat"><b style="color:var(--matcha)">${strong}</b><span>know well</span></div></div></div>
-  <div class="grid2" style="margin-bottom:8px"><button class="btn sm ghost" data-act="learnNew" data-d="hira">＋ 5 new hiragana</button><button class="btn sm ghost" data-act="learnNew" data-d="kata">＋ 5 new katakana</button><button class="btn sm ghost" data-act="learnNew" data-d="num" style="grid-column:1/-1">＋ 5 new numbers</button></div>
+  <div class="grid2" style="margin-bottom:8px"><button class="btn sm ghost" data-act="learnNew" data-d="hira">＋ 5 new hiragana</button><button class="btn sm ghost" data-act="learnNew" data-d="kata">＋ 5 new katakana</button><button class="btn sm ghost" data-act="learnNew" data-d="num">＋ 5 new numbers</button><button class="btn sm ghost" data-act="learnNew" data-d="talk">＋ 5 new phrases</button></div>
   ${all.length?`<button class="btn" data-act="deck" data-d="mine">${due?`▶ Review ${Math.min(due,20)} due card${due===1?"":"s"}`:"▶ Practise my weakest cards"}</button>
-  <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:8px">${["kana","nums","words","kanji"].map(k=>{const n=all.filter(CARD_KIND[k][1]).length;return n?`<button class="btn sm ghost" data-act="deck" data-d="mine-${k}">▶ ${CARD_KIND[k][0]} ${n}</button>`:`<button class="btn sm ghost" disabled style="opacity:.4">${CARD_KIND[k][0]} 0</button>`;}).join("")}</div>
+  <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:8px">${["kana","nums","words","talk","kanji"].map(k=>{const n=all.filter(CARD_KIND[k][1]).length;return n?`<button class="btn sm ghost" data-act="deck" data-d="mine-${k}">▶ ${CARD_KIND[k][0]} ${n}</button>`:`<button class="btn sm ghost" disabled style="opacity:.4">${CARD_KIND[k][0]} 0</button>`;}).join("")}</div>
   <div class="sec">🧠 Quiz yourself · multiple choice, no hints</div>
   <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px">${Object.entries(CARD_KIND).map(([k,[t,fn]])=>{const n=all.filter(fn).length;return`<button class="btn sm${k==="all"?"":" ghost"}" data-act="qzStart" data-k="${k}"${n?"":` disabled style="opacity:.4"`}>🧠 ${k==="all"?"Quiz me":t}${n?` (${n})`:""}</button>`;}).join("")}</div>
   <div class="chips" style="margin:16px 0 8px">${Object.entries(CARD_KIND).map(([k,[t,fn]])=>`<button class="chip${f===k?" on":""}" data-act="cardsF" data-v="${k}">${t} · ${all.filter(fn).length}</button>`).join("")}</div>
@@ -3555,8 +3590,14 @@ function vPractice(){
   <div class="card wod"><div class="wodt"><small>🌅 Word of the day</small><b>${esc(w[0])}</b><span>${w[1]!==w[0]?esc(w[1])+" · ":""}${esc(w[2])}</span></div>
    <button class="iconbtn" data-act="sayText" data-text="${esc(w[1])}" aria-label="Listen">🔊</button></div>
   <div class="grid2" style="margin:-2px 0 4px"><button class="btn sm ghost" data-act="wodAdd">${inDeck?"✓ In flashcards":"＋ Flashcards"}</button><button class="btn sm ghost" data-act="wodYuki">💬 Use it with Yuki</button></div>
+  <div class="sec">🤝 Making friends & small talk</div><p class="sub" style="margin:-4px 4px 10px">Learn the phrases for free, then chat with someone new. A 💡 phrase helper sits under the chat so you never freeze.</p>
+  ${(()=>{const d=DECKS.talk,learned=d.ids.filter(i=>S.cards[i]).length,due=dueIds(d.ids).length;
+    return`<div class="row kanarow"><span class="ri">💡</span><span class="rt"><b>Small-talk phrases</b><span>${learned}/${d.ids.length} learned${due?" · <b style='display:inline;color:var(--sakura)'>"+due+" due</b>":""} · free</span></span>
+     <button class="mini" data-act="deck" data-d="talk"${learned?"":" disabled style='opacity:.4'"}>Review</button><button class="mini ok" data-act="learnNew" data-d="talk">＋ 5 new</button></div>
+     <button class="row" data-act="phrases"><span class="ri">📖</span><span class="rt"><b>All the phrases</b><span>Start, react, keep it going, swap LINE, rescue yourself · tap to hear</span></span><span class="chev">›</span></button>`;})()}
+  ${CONVOS.filter(c=>c[5]).map(([id,ic,t,d])=>`<button class="row" data-act="convo" data-v="${id}"><span class="ri">${ic}</span><span class="rt"><b>${t}</b><span>${d} · uses credits</span></span><span class="chev">›</span></button>`).join("")}
   <div class="sec">🗣️ Real conversations</div><p class="sub" style="margin:-4px 4px 10px">Yuki plays a character and you just talk. About 10 exchanges, then a score and tips (uses credits).</p>
-  ${CONVOS.map(([id,ic,t,d])=>`<button class="row" data-act="convo" data-v="${id}"><span class="ri">${ic}</span><span class="rt"><b>${t}</b><span>${d}</span></span><span class="chev">›</span></button>`).join("")}
+  ${CONVOS.filter(c=>!c[5]).map(([id,ic,t,d])=>`<button class="row" data-act="convo" data-v="${id}"><span class="ri">${ic}</span><span class="rt"><b>${t}</b><span>${d}</span></span><span class="chev">›</span></button>`).join("")}
   <div class="sec">⚡ Quick practice</div>
   ${dueIds(Object.keys(S.cards)).length?`<button class="row" data-act="review"><span class="ri">🔁</span><span class="rt"><b>Review ${dueIds(Object.keys(S.cards)).length} due cards</b><span>All decks mixed · about ${Math.max(1,Math.round(Math.min(20,dueIds(Object.keys(S.cards)).length)/4))} min</span></span></button>`:""}
   <button class="row" data-act="qzStart" data-k="all"><span class="ri">🧠</span><span class="rt"><b>Multiple-choice quiz</b><span>Test the words you've learned · no audio or hints until you answer</span></span></button>
@@ -3572,7 +3613,7 @@ function vPractice(){
      <div class="numgrid">${Object.entries(NUM_MODES).map(([k,[ic,t]])=>`<button class="tile numtile" data-act="qzStart" data-k="num:${k}"${mx>=3?"":" disabled style='opacity:.45'"}><span class="ico">${ic}</span>${t}</button>`).join("")}</div>
      ${mx<3?`<p class="sub" style="margin-top:6px">Learn your first numbers with ＋ 5 new, then the exercises open up.</p>`:""}`;})()}
   <details class="moredecks"><summary class="sub">More decks (words & kanji) ›</summary>
-  ${Object.entries(DECKS).filter(([k])=>k!=="hira"&&k!=="kata"&&k!=="num").map(([k,d])=>{const learned=d.ids.filter(i=>S.cards[i]).length,due=dueIds(d.ids).length;
+  ${Object.entries(DECKS).filter(([k])=>k!=="hira"&&k!=="kata"&&k!=="num"&&k!=="talk").map(([k,d])=>{const learned=d.ids.filter(i=>S.cards[i]).length,due=dueIds(d.ids).length;
     return`<button class="row" data-act="deck" data-d="${k}"><span class="ri">${d.icon}</span><span class="rt"><b>${d.name}</b><span>${learned}/${d.ids.length} learned${due?" · <b style='display:inline;color:var(--sakura)'>"+due+" due</b>":""}</span></span></button>`;}).join("")}</details>
   <div class="sec">🔤 Kana charts · tap to hear</div>
   <div class="grid2"><button class="tile" data-act="chart" data-c="hira"><span class="ico">あ</span>Hiragana chart</button><button class="tile" data-act="chart" data-c="kata"><span class="ico">ア</span>Katakana chart</button></div>
@@ -3593,7 +3634,7 @@ function vChart(){
   <button class="btn" style="margin-top:18px" data-act="deck" data-d="${isH?"hira":"kata"}">Practice with flashcards</button></div>`;
 }
 // "mine…" decks (Cards tab) use only cards you've already learned: due ones first, then the weakest
-const MINE={mine:()=>true,"mine-words":i=>/^[wv]:/.test(i),"mine-kana":i=>/^[hk]:/.test(i),"mine-kanji":i=>i.startsWith("j:"),"mine-nums":i=>i.startsWith("n:")};
+const MINE={mine:()=>true,"mine-words":i=>/^[wv]:/.test(i),"mine-kana":i=>/^[hk]:/.test(i),"mine-kanji":i=>i.startsWith("j:"),"mine-nums":i=>i.startsWith("n:"),"mine-talk":i=>i.startsWith("t:")};
 function startDeck(d){
   const mine=MINE[d];
   const ids=d==="all"?Object.keys(S.cards):mine?Object.keys(S.cards).filter(i=>CARDS[i]&&mine(i)):DECKS[d].ids;
@@ -3617,7 +3658,7 @@ function vCard(){
   if(f.learn&&f.i>=f.q.length)return`<div class="pad" style="text-align:center;padding-top:50px"><div style="font-size:64px">🌱</div>
     <div class="h1" style="margin:10px 0">${f.q.length} new ${f.deck==="num"?"numbers":DECKS[f.deck].name.toLowerCase()} learned!</div>
     <div class="tags" style="justify-content:center;margin:12px 0 18px">${f.q.map(id=>`<button class="tg s" data-act="sayText" data-text="${esc(CARDS[id].say)}">${esc(CARDS[id].front)} · ${esc(CARDS[id].back)}</button>`).join("")}</div>
-    ${f.deck==="num"?`<button class="btn" data-act="qzStart" data-k="num:mix">🔢 Number exercises</button>`:`<button class="btn" data-act="qzStart" data-k="kana">🧠 Quiz me on my kana</button>`}
+    ${f.deck==="num"?`<button class="btn" data-act="qzStart" data-k="num:mix">🔢 Number exercises</button>`:f.deck==="talk"?`<button class="btn" data-act="qzStart" data-k="talk">🧠 Quiz me on my phrases</button>`:`<button class="btn" data-act="qzStart" data-k="kana">🧠 Quiz me on my kana</button>`}
     <button class="btn ghost" style="margin-top:8px" data-act="learnNew" data-d="${f.deck}">＋ 5 more</button>
     <button class="btn ghost" style="margin-top:8px" data-act="closeDeck">Done</button></div>`;
   if(f.i>=f.q.length){
@@ -3868,7 +3909,7 @@ function renderVoice(){
    <div class="vtitle" data-act="voiceLog" role="button" title="Voice log"><b>Yuki</b><small>${useQuest()?"🎌 "+(REC_VOICES[S.settings.jaRec]||REC_VOICES.ryusei).name.split(" ")[0]+"'s voice":useVV()?"🎌 "+(REC_VOICES[S.settings.jaRec]||REC_VOICES.himari).name.split(" ")[0]+"'s voice":useNatural()?"✨ natural voice":"voice call"}</small></div>
    <button class="iconbtn" data-act="vCaptions" aria-label="Captions" style="font-size:15px;font-weight:800">${cc?"CC":"🙈"}</button></div>
    <div class="vopts"><button class="vopt${S.settings.tts==="device"||questPaused()?" on":""}" data-act="vFast">${S.settings.tts==="device"?"⚡ Fast voice":questPaused()?"⚡ Fast · tap for 🎌":"🎌 Ryusei"}</button><button class="vopt${S.settings.handsFree?" on":""}" data-act="vHands">${S.settings.handsFree?"🙌 Hands-free":"✋ Tap to talk"}</button>
-    <span class="vlen">${[["tiny","Very short"],["short","Short"],["normal","Normal"]].map(([v,t])=>`<button class="vopt${len===v?" on":""}" data-act="vLen" data-v="${v}">${t}</button>`).join("")}</span></div>
+    ${activeConvo()?`<button class="vopt" data-act="phrases">💡 Phrases</button>`:""}<span class="vlen">${[["tiny","Very short"],["short","Short"],["normal","Normal"]].map(([v,t])=>`<button class="vopt${len===v?" on":""}" data-act="vLen" data-v="${v}">${t}</button>`).join("")}</span></div>
    <div class="orbwrap${activeCourse()||(!UI.listening&&(()=>{const lu=[...S.chat].reverse().find(m=>m.role==="user");return lu&&lu.fix;})())?" compact":""}"><div class="orb ${st}">ゆ</div><div class="vstat">${label}</div>
     ${activeCourse()?`<div class="vchips">${talkChips()}</div>${courseDoneCard(true)}${activeCourse().keep?`<button class="vopt on" data-act="courseDone" style="margin-top:6px">✓ Finish lesson</button>`:""}`:""}
     <div class="vcap">${UI.listening?`<div class="vtext vlive">${UI.vyou?esc(tidySpeech(UI.vyou)):"…"}</div>`:`<div class="vtext${cc?"":" off"}">${cap}</div>${last&&!last.err?`<button class="vopt again" data-act="vRepeat">🔁 Say it again</button>`:""}${(()=>{const lu=[...S.chat].reverse().find(m=>m.role==="user");return lu&&lu.fix&&UI.vstate!=="thinking"?(()=>{const f=lu.fix,en=!JP.test(lu.text);return`<div class="vfix${f.ok?" ok":""}">${f.ok?"":`<div class="vsaid">You said: ${esc(lu.text)}</div>`}<b>${f.ok?"✓ You said it right":en?"✏️ Better English":"✏️ Better"}</b> ${esc(en?f.en:f.ja)}<small>${en?"🇯🇵 "+esc(f.ja):"🇬🇧 "+esc(f.en)}${!f.ok&&f.why?" · 💡 "+esc(f.why):""}</small></div>`;})():`<div class="vyou">${UI.vyou?"You: "+esc(UI.vyou):""}</div>`;})()}`}</div></div>
@@ -4106,6 +4147,8 @@ const ACT={
   convo:el=>{const c=CONVOS.find(x=>x[0]===el.dataset.v);if(!c)return;sheet(`<div class="h2" style="margin-bottom:6px">${c[1]} ${esc(c[2])}</div><p class="sub" style="margin-bottom:14px">${esc(c[3])}. Yuki stays in character and keeps the conversation going; mistakes get corrected under your messages.</p>
     <button class="btn" data-act="convoGo" data-v="${c[0]}" data-voice="1">🎙️ Talk out loud (call)</button><button class="btn ghost" style="margin-top:10px" data-act="convoGo" data-v="${c[0]}">💬 Type in chat</button>`);},
   convoGo:el=>{closeSheet();startConvo(el.dataset.v,!!el.dataset.voice);},
+  phrases:()=>phraseSheet(),
+  phIns:el=>{const t=el.dataset.t;if(UI.voice){speak(talkSay(t),{rate:0.85});return;}const i=$("#inp");if(!i){speak(talkSay(t),{rate:0.85});return;}closeSheet();i.value=(i.value.trim()?i.value.trim()+" ":"")+t;i.dispatchEvent(new Event("input"));i.focus();},
   lpNext:()=>lpNext(),
   lpSay:()=>lpSay(),
   lpQSay:()=>{const q=UI.lp&&UI.lp.qs[UI.lp.qi];if(q)speak(q.say,{rate:0.85});},
