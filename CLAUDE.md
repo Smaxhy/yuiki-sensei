@@ -295,11 +295,18 @@ Safari → Add to Home Screen.
   auto-update never reloads during a lesson, flashcards or an open sheet (`canReloadNow`); call captions use
   `captionText()` (markdown removed, bullets kept); spoken answers with kanji still tick course words.
 
-## Look (v2, 2026.10.08)
-- Calm dark palette in `:root` (ink/ink2/ink3 surfaces, hairline `--line`, accents sakura/sky/matcha/gold/lav/teal), set in the
-  "Look v2" CSS block near the end of `<style>` (it overrides earlier rules). No outlines on surfaces. Consecutive `.row`s join
-  into one grouped list (rounded first/last, hairline separators) with colour-coded icon chips; tiles cycle accent colours.
-  Pages use `.sec` category headings (uppercase, small): Practice (Today / Quick practice / decks…), Me (You / Yuki / App).
+## Look (v3, 2026.10.09) — Duolingo-style
+- Theme `S.settings.theme` = "light" (default, "washi": warm paper white #faf7f2, sakura #ec5f87, indigo-blue #3487dc,
+  matcha #4fae42, yuzu #e9a120) / "dark" / "auto" (follows the iPhone), picked in Me → App & data → 🎨 Look (`ACT.setTheme`).
+  `applyTheme()` toggles `html.light`; a tiny `<script id="themeBoot">` in `<head>` sets it before first paint. The update
+  check compares `script:not([id])`, so keep the main `<script>` without an id. In light mode a sakura band sits behind the
+  status bar (the status-bar style is black-translucent = white clock). The call screen (`#voice`) stays dark in both themes.
+- Font: Nunito from Google Fonts (falls back to the system font offline); headings weight 900, body 600.
+- CSS blocks at the end of `<style>`: "Look v2" (grouped lists), then "Look v3" (both themes: chunky buttons with a pressable
+  bottom "lip", 2px outlines with a 4px bottom edge on lists/tiles/options/cards, thick shiny progress bars, round 3D path
+  bubbles coloured by unit, solid unit banners, flat bottom bar with the open tab outlined in blue), then "Light theme".
+  Unit colours go through `ucol()` (`UCOL_L`, deeper versions so white text reads). `.sec` = bold sentence-case headings.
+- Pages use `.sec` category headings: Practice (Today / Quick practice / decks…), Me (You / Yuki / App).
 
 ## Technical notes
 - State object `S` (currently `v:23`) saved to localStorage key `yuki-sensei-v3`. Keep it backward

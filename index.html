@@ -10,6 +10,9 @@
 <meta name="theme-color" content="#151722">
 <title>Yuki Sensei</title>
 <link id="touchIcon" rel="apple-touch-icon" href="">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;700;800;900&display=swap" rel="stylesheet">
+<script id="themeBoot">try{var t=(JSON.parse(localStorage.getItem("yuki-sensei-v3")||"{}").settings||{}).theme||"light";if(t==="light"||(t==="auto"&&matchMedia("(prefers-color-scheme: light)").matches))document.documentElement.classList.add("light");}catch(e){document.documentElement.classList.add("light");}</script>
 <style>
 :root{
   --ink:#151722; --ink2:#1d2030; --ink3:#272b3f; --line:#33384f;
@@ -434,6 +437,134 @@ html,body{background:var(--ink)}
 .chip.on{border-color:color-mix(in srgb,var(--sakura) 40%,transparent)}
 .howxp{margin-top:8px}.howxp summary{min-height:44px;display:flex;align-items:center;list-style:none}.howxp summary::-webkit-details-marker{display:none}
 .moredecks summary{list-style:none}.moredecks summary::-webkit-details-marker{display:none}
+/* ===== Look v3: friendly and chunky like Duolingo (both themes) ===== */
+:root{--lip:rgba(0,0,0,.35);--sakuraLip:color-mix(in srgb,var(--sakura2) 72%,#000);--edge:var(--ink3)}
+html,body,button,input,textarea,select{font-family:"Nunito",-apple-system,BlinkMacSystemFont,"Hiragino Sans","Hiragino Kaku Gothic ProN","Noto Sans JP",system-ui,sans-serif}
+body{font-weight:600;-webkit-font-smoothing:antialiased}
+b,strong{font-weight:800}
+.h1{font-size:30px;font-weight:900;letter-spacing:-.02em}
+.h2{font-weight:900}
+.sub{font-weight:600;line-height:1.5;text-wrap:pretty}
+.sec{text-transform:none;letter-spacing:-.01em;font-size:18px;font-weight:900;color:var(--text);margin:28px 4px 12px}
+button{transition:transform .12s ease,box-shadow .12s ease,background-color .2s,border-color .2s}
+button:focus-visible{outline:3px solid color-mix(in srgb,var(--sky) 70%,transparent);outline-offset:2px}
+/* buttons with a "lip" that presses down */
+.btn{border-radius:16px;font-weight:900;font-size:16px;letter-spacing:.01em;padding:14px 16px;background:var(--sakura);box-shadow:0 4px 0 var(--sakuraLip)}
+.btn:active{transform:translateY(4px);box-shadow:0 0 0 var(--sakuraLip)}
+.btn.ghost{background:var(--ink2);color:var(--text);border:2px solid var(--edge);box-shadow:0 4px 0 var(--edge)}
+.btn.ghost:active{box-shadow:0 0 0 var(--edge)}
+.btn.sm{padding:10px 12px;font-size:15px}
+.mini{border:2px solid var(--edge);background:var(--ink2);box-shadow:0 3px 0 var(--edge);font-weight:800;border-radius:12px}
+.mini:active{transform:translateY(3px);box-shadow:none}
+.mini.ok{background:var(--matcha);border-color:transparent;color:#fff;box-shadow:0 3px 0 color-mix(in srgb,var(--matcha) 70%,#000)}
+.chip{border:2px solid var(--edge);background:var(--ink2);font-weight:800;border-radius:14px}
+.chip.on{border-color:var(--sky);background:color-mix(in srgb,var(--sky) 14%,var(--ink2));color:var(--sky)}
+.field,.inputbar{border:2px solid var(--edge);background:var(--ink2);border-radius:16px}
+.field:focus,.inputbar:focus-within{border-color:var(--sky)}
+.send{box-shadow:0 3px 0 var(--sakuraLip)}.send:active{transform:translateY(3px);box-shadow:none}
+/* lists: one rounded group with an outline and a lip at the bottom */
+.row{border:2px solid var(--edge);border-top-width:0;background:var(--ink2)}
+.row:first-child,:not(.row)+.row{border-top-width:2px}
+.row:last-child,.row:has(+ :not(.row)){border-bottom-width:4px}
+.row::after{left:66px;background:var(--edge)}
+.row:active{transform:none;background:color-mix(in srgb,var(--sky) 6%,var(--ink2))}
+.row .ri{border-radius:14px;font-size:20px}
+.row .rt b{font-weight:800}
+.card{background:var(--ink2);border:2px solid var(--edge);border-radius:20px}
+.tile{border:2px solid var(--edge);border-bottom-width:4px;background:var(--ink2)}
+.tile:active{transform:translateY(2px);border-bottom-width:2px}
+.tile .ico{border-radius:14px}
+.opt{border:2px solid var(--edge);border-bottom-width:4px;background:var(--ink2);border-radius:16px}
+.opt:active{transform:translateY(2px);border-bottom-width:2px}
+.opt.right{border-color:var(--matcha)}.opt.wrong{border-color:var(--red)}
+.gopt{border:2px solid var(--edge);border-bottom-width:4px;background:var(--ink2)}
+.gopt.on{border-color:var(--sakura)}
+.kc{border:2px solid var(--edge);border-bottom-width:4px;background:var(--ink2)}
+.kc:active{transform:translateY(2px);border-bottom-width:2px}
+.fcin{border:2px solid var(--edge);border-bottom-width:6px;box-shadow:none;background:var(--ink2)}
+.bdg{border:2px solid var(--edge);border-bottom-width:4px}
+.tmain{border:2px solid var(--edge);border-bottom-width:4px;background:var(--ink2)}
+.tdue{border:2px solid color-mix(in srgb,var(--sakura) 40%,transparent);border-bottom-width:4px}
+/* thick progress bars with a shine */
+.bar{height:14px;border-radius:8px;background:var(--ink3)}
+.bar i{border-radius:8px;background:var(--matcha);position:relative}
+.bar i::after{content:"";position:absolute;left:7px;right:7px;top:3px;height:4px;border-radius:2px;background:rgba(255,255,255,.35)}
+/* path: round, chunky lesson bubbles */
+#main .node,#main .node:not(.cur):not(.star){width:78px;height:72px;border-radius:50%;background:var(--uc);color:#fff;font-size:32px;box-shadow:0 7px 0 color-mix(in srgb,var(--uc) 68%,#000)}
+#main .node.todo{background:var(--ink3);box-shadow:0 7px 0 color-mix(in srgb,var(--ink3) 78%,#000);opacity:1;filter:grayscale(1) opacity(.75)}
+#main .node.cur{background:var(--uc);box-shadow:0 7px 0 color-mix(in srgb,var(--uc) 68%,#000),0 0 0 9px color-mix(in srgb,var(--uc) 20%,transparent);animation:bob 2s ease-in-out infinite}
+#main .node:active{transform:translateY(5px);box-shadow:0 2px 0 color-mix(in srgb,var(--uc) 68%,#000)}
+#main .node.star{background:var(--gold);box-shadow:0 7px 0 color-mix(in srgb,var(--gold) 68%,#000);color:#fff}
+#main .node .bd{width:30px;height:30px;font-size:15px;right:-6px;bottom:-4px;background:var(--gold);color:#fff;border:3px solid var(--ink)}
+.nlab{font-weight:700}.nwrap.cur .nlab{font-weight:900}
+.tip{background:var(--ink2);color:var(--uc,var(--sakura));border:2px solid var(--edge);border-radius:12px;font-weight:900;letter-spacing:.06em}
+.tip::after{border-top-color:var(--edge)}
+.ubanner{background:var(--uc);border:none;border-radius:18px;box-shadow:0 5px 0 color-mix(in srgb,var(--uc) 68%,#000);color:#fff}
+.ubanner .ubt small,.ubanner .ubp{color:rgba(255,255,255,.85)}
+.ubanner .ube{background:rgba(255,255,255,.22)}
+#unitHead{border:2px solid var(--edge);border-bottom-width:4px;background:color-mix(in srgb,var(--ink2) 92%,transparent)}
+.pill{background:transparent;border:none;font-weight:900;padding:0 10px}
+.pill.fire{background:transparent;color:var(--gold)}
+/* lesson player */
+.lpsteps span{background:var(--ink2);border:2px solid var(--edge);font-weight:800}
+.lpsteps span.on{background:var(--sky);border-color:var(--sky);color:#fff}
+.wcard{border:2px solid var(--edge);border-bottom-width:6px;background:var(--ink2)}
+/* chat */
+.m.a .bub{background:var(--ink2);border:2px solid var(--edge)}
+.bub{border-radius:20px}
+/* bottom bar: flat, attached, the open tab outlined */
+#tabs{margin:0;border-radius:0;border:none;border-top:2px solid var(--edge);background:var(--ink2);box-shadow:none;padding:6px 8px calc(6px + var(--safeB));-webkit-backdrop-filter:none;backdrop-filter:none;gap:4px}
+#tabs button{font-size:11px;font-weight:800;border-radius:14px;min-height:54px}
+#tabs button .ti{font-size:24px}
+#tabs button.on{background:color-mix(in srgb,var(--sky) 12%,transparent);box-shadow:inset 0 0 0 2px color-mix(in srgb,var(--sky) 65%,transparent);color:var(--sky)}
+#sheet .sh{background:var(--ink2)}
+@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
+
+/* ===== Light theme ("washi"): warm paper white, sakura, indigo, matcha, yuzu ===== */
+html.light{color-scheme:light;
+  --ink:#faf7f2;--ink2:#ffffff;--ink3:#f1ebe3;--line:#ebe4db;--edge:#e6dfd6;
+  --text:#2c2731;--dim:#857d8a;--sakura:#ec5f87;--sakura2:#d9466f;--matcha:#4fae42;--sky:#3487dc;--gold:#e9a120;--red:#e5484d;--lav:#9466dc;--teal:#1fa596}
+html.light,html.light body{background:var(--ink)}
+html.light #app{background:radial-gradient(130% 40% at 50% -10%,#ffe4ec 0%,rgba(250,247,242,0) 70%),var(--ink)}
+html.light #app::before{content:"";position:fixed;top:0;left:0;right:0;height:var(--safeT);background:var(--sakura2);z-index:40}
+html.light .btn,html.light .send,html.light .av,html.light .iconbtn.call,html.light .play,html.light .node.cur{color:#fff}
+html.light .btn.ghost{color:var(--text)}
+html.light .iconbtn{background:var(--ink3)}
+html.light .iconbtn.call{background:linear-gradient(140deg,var(--sakura),var(--sakura2));box-shadow:0 3px 0 var(--sakuraLip)}
+html.light .inputbar .iconbtn{background:transparent}
+html.light .iconbtn.live{background:#fde8ec}
+html.light .opt.right{background:#ebf7e7}html.light .opt.wrong{background:#fdeced}
+html.light .tg{background:var(--ink3)}html.light .tg.w{background:#fde6ec;color:#b8395c}html.light .tg.s{background:#e6f5e2;color:#3b8a30}
+html.light .m.u .bub{background:var(--sakura);color:#fff}
+html.light .m.u .bub a{color:#fff}
+html.light .fix{background:#fff3f6;border:2px solid #f6d2dc}html.light .fix.ok{background:#eff8ec;border-color:#cfe7c5}
+html.light .fw{color:#b07400}
+html.light .err{background:#fdeced;border:2px solid #f5c6c8;color:#7c2427}
+html.light .hero,html.light .mehead{background:linear-gradient(135deg,#ffe2ea 0%,#fff1e4 100%);border:2px solid #f7d6de;border-bottom-width:4px}
+html.light .wod{background:linear-gradient(135deg,#e5f0ff 0%,#f5f9ff 100%);border:2px solid #d3e3f7;border-bottom-width:4px}
+html.light .wod .iconbtn{background:#fff}
+html.light .donecard{background:#ebf7e7;border:2px solid #bfe2b3}
+html.light .donecard span{color:#4e6b47}
+html.light .bdg.on{background:#fff5df;border-color:#f1d9a3}
+html.light .tdue{background:#fff0f4}
+html.light .tchip{background:var(--ink2);border:2px solid var(--edge)}html.light .tchip.ok{background:#ebf7e7;border-color:var(--matcha);color:#3b8a30}
+html.light .cd{background:var(--ink3)}html.light .cd.l3{color:#fff}html.light .cd i.dot{background:#fff}
+html.light .stat,html.light .wb{background:var(--ink3)}
+html.light .chathead,html.light .tbar{background:color-mix(in srgb,var(--ink2) 70%,transparent);border-bottom:2px solid var(--edge)}
+html.light #sheet{background:rgba(44,39,49,.35)}
+html.light #sheet .sh::before{background:#d9d1c7}
+html.light .mtag{background:#e8f1fc;color:#2b72bd}html.light .mtag.sp{background:#fde8ee;color:#c23c64}html.light .mtag.ts{background:#fdf1db;color:#a86d00}
+html.light .row.done .ri{background:#e6f5e2;color:var(--matcha)}
+html.light .qzrev{background:var(--ink2);border:2px solid var(--edge)}
+html.light .ptxt{background:var(--ink2);border:2px solid var(--edge)}
+html.light #toast{background:#2c2731}
+html.light .wjp,html.light .fcf{color:var(--text)}
+html.light .trbit{background:var(--ink3)}
+/* the call screen stays dark in both themes */
+html.light #voice{--ink:#0f1117;--ink2:#181b24;--ink3:#232733;--line:rgba(255,255,255,.07);--edge:#2a2e3b;--text:#f2f3f7;--dim:#9aa0b6;--sakura:#ff9fc0;--sakura2:#e5789f;--matcha:#8bd69b;--sky:#86b8ff;--gold:#f4c46c;--red:#ff7f88;color:var(--text)}
+html.light #voice .donecard{background:linear-gradient(140deg,#20372a,#181b24);border:none}
+html.light #voice .donecard span{color:var(--dim)}
+html.light #voice .btn{color:#2a1520}
 @keyframes dot{0%,80%,100%{opacity:.25}40%{opacity:1}}
 @keyframes throb{0%,100%{transform:scale(1)}50%{transform:scale(1.06)}}
 @keyframes breathe{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
@@ -461,7 +592,7 @@ html,body{background:var(--ink)}
 <script>
 "use strict";
 // Bump this on every change so phones can spot a new version and offer to update
-const APP_VERSION="2026.10.08-2";
+const APP_VERSION="2026.10.09-1";
 /* ============ DATA ============ */
 const LV = {
   n5:{label:"N5",name:"Beginner",color:"#9fd67c"},
@@ -1645,9 +1776,14 @@ function ensurePlan(){if(!S.plan){S.plan={start:isoDay(),done:{},custom:[]};save
 const doneMap=()=>S.plan?S.plan.done:{};
 const isN5Path=()=>S.level==="n5";
 const UCOL=["#f4a3c0","#7cb8f4","#f2c36b","#9fd67c","#c59cf4"];
+// The same unit colours, deeper, so white text and icons read well on them (both themes)
+const UCOL_L={"#f4a3c0":"#ec5f87","#7cb8f4":"#3d8fe0","#f2c36b":"#f0a92b","#9fd67c":"#58b84a","#c59cf4":"#9b6ce0"};
+const ucol=c=>UCOL_L[String(c).toLowerCase()]||c;
+function applyTheme(){const t=S.settings.theme||"light",light=t==="light"||(t==="auto"&&matchMedia("(prefers-color-scheme: light)").matches);
+  document.documentElement.classList.toggle("light",light);const m=document.querySelector('meta[name="theme-color"]');if(m)m.content=light?"#faf7f2":"#0f1117";}
 function pathUnits(){
-  if(isN5Path())return COURSE.map((u,i)=>({title:"Unit "+(i+1),sub:u.t,e:u.e,c:u.c}));
-  return(CUR[S.level]||[]).map(([u],i)=>({title:LV[S.level].label+" · Unit "+(i+1),sub:u,e:"📘",c:UCOL[i%5]}));
+  if(isN5Path())return COURSE.map((u,i)=>({title:"Unit "+(i+1),sub:u.t,e:u.e,c:ucol(u.c)}));
+  return(CUR[S.level]||[]).map(([u],i)=>({title:LV[S.level].label+" · Unit "+(i+1),sub:u,e:"📘",c:ucol(UCOL[i%5])}));
 }
 function pathNodes(){
   let nodes=[];
@@ -1753,11 +1889,11 @@ function vLesson(){
   const si=lp.step==="learn"?0:lp.step==="quiz"?1:steps.length-1;
   const prog=lp.step==="learn"?(lp.i+1)/lp.items.length:lp.step==="quiz"?(lp.qi)/lp.qs.length:1;
   const head=`<div class="lphead"><button class="iconbtn" data-act="lpClose" aria-label="Close">✕</button><div class="lpsteps">${steps.map((t,i)=>`<span class="${i<si?"ok":i===si?"on":""}">${i<si?"✓ ":""}${t}</span>`).join("")}</div></div>
-    <div class="bar" style="margin:10px 0 0"><i style="width:${Math.round(prog*100)}%;background:${u.c}"></i></div>`;
+    <div class="bar" style="margin:10px 0 0"><i style="width:${Math.round(prog*100)}%;background:${ucol(u.c)}"></i></div>`;
   if(lp.step==="learn"){
     const it=lp.items[lp.i];
     return`<div class="pad lp">${head}<p class="sub lpk">${lp.pre?"🔥 Warm-up: words for the conversation":lp.kind==="kana"?"New character":"New word"} ${lp.i+1} of ${lp.items.length} · ${esc(nodeLabel(n))}</p>
-     <button class="wcard" data-act="lpSay" style="--uc:${u.c}"><div class="wjp">${esc(it[0])}</div>${lp.kind==="words"?`<div class="wro">${esc(it[1])}</div><div class="wen">${esc(it[2])}</div>`:`<div class="wen">"${esc(it[1])}"</div>`}<div class="whear">🔊 Tap to hear again</div></button>
+     <button class="wcard" data-act="lpSay" style="--uc:${ucol(u.c)}"><div class="wjp">${esc(it[0])}</div>${lp.kind==="words"?`<div class="wro">${esc(it[1])}</div><div class="wen">${esc(it[2])}</div>`:`<div class="wen">"${esc(it[1])}"</div>`}<div class="whear">🔊 Tap to hear again</div></button>
      <button class="btn" style="margin-top:16px" data-act="lpNext">${lp.i<lp.items.length-1?"Next":"Let's practise →"}</button></div>`;
   }
   if(lp.step==="quiz"){
@@ -2959,7 +3095,7 @@ function vOnboard(){
   if(step===1)return`<div class="pad" style="padding-top:40px">
     <div class="h1">How much Japanese do you know?</div><p class="sub" style="margin:8px 0 18px">No wrong answer. You can change it anytime.</p>
     ${[["n5","🌱","Total beginner","I can't read anything yet"],["n5b","あ","I know some kana","I can read a bit of hiragana"],["n4","🌿","Basic","I know N5 stuff: です, ます, simple kanji"],["n3","🌳","Intermediate","I can hold simple conversations"],["n2","🏯","Advanced","I want polish and real-world Japanese"]].map(([v,i,t,d])=>`<button class="row" data-act="obLevel" data-v="${v}"><span class="ri">${i}</span><span class="rt"><b>${t}</b><span>${d}</span></span></button>`).join("")}
-    <button class="row" data-act="placeStart" data-ob="1" style="border-color:var(--sakura)"><span class="ri">🤔</span><span class="rt"><b>Not sure? Take a 3-minute level check</b><span>16 quick questions, works offline, uses no credits</span></span></button></div>`;
+    <button class="row" data-act="placeStart" data-ob="1" style=""><span class="ri">🤔</span><span class="rt"><b>Not sure? Take a 3-minute level check</b><span>16 quick questions, works offline, uses no credits</span></span></button></div>`;
   if(step===2)return`<div class="pad" style="padding-top:40px">
     <div class="h1">Why are you learning?</div><p class="sub" style="margin:8px 0 18px">I'll use this to pick examples you'll actually use.</p>
     ${[["✈️","Travel in Japan"],["🎌","Anime, manga & games"],["💼","Work or business"],["🏠","Moving to / living in Japan"],["❤️","Friends, partner or family"],["🧠","Just for fun"]].map(([i,t])=>`<button class="row" data-act="obGoal" data-v="${esc(t)}"><span class="ri">${i}</span><span class="rt"><b>${t}</b></span></button>`).join("")}</div>`;
@@ -3037,8 +3173,8 @@ function vHome(){
   return`<div class="ptop"><button class="pill" data-act="levelSheet">🇯🇵 ${LV[S.level].label} <span class="caret">▾</span></button><button class="pill" data-act="tab" data-tab="cards">🃏 ${Object.keys(S.cards).length}</button><button class="pill${stI.n?" fire":""}" data-act="tab" data-tab="progress">🔥 ${stI.n}</button></div>
   <div class="pathwrap">
   ${todayStrip()}
-  ${!S.about.done?`<button class="row" data-act="aboutEdit" style="margin-top:8px;border-color:#3f5a46"><span class="ri">✍️</span><span class="rt"><b>Help Yuki get to know you</b><span>2 minutes · makes your lessons fit you</span></span></button>`:""}
-  ${S.course&&!(S.plan&&S.plan.done[S.course.key])&&S.threads[S.course.key]?`<button class="row" data-act="resumeCourse" style="margin-top:8px;border-color:var(--sakura)"><span class="ri">${S.course.speaking?"🎙️":"💬"}</span><span class="rt"><b>Continue: ${esc(S.course.title)}</b><span>${S.course.used.length}/${S.course.targets.length} words used · ${S.course.speaking?"speaking lesson":"chat lesson"}</span></span></button>`:""}
+  ${!S.about.done?`<button class="row" data-act="aboutEdit" style="margin-top:8px"><span class="ri">✍️</span><span class="rt"><b>Help Yuki get to know you</b><span>2 minutes · makes your lessons fit you</span></span></button>`:""}
+  ${S.course&&!(S.plan&&S.plan.done[S.course.key])&&S.threads[S.course.key]?`<button class="row" data-act="resumeCourse" style="margin-top:8px"><span class="ri">${S.course.speaking?"🎙️":"💬"}</span><span class="rt"><b>Continue: ${esc(S.course.title)}</b><span>${S.course.used.length}/${S.course.targets.length} words used · ${S.course.speaking?"speaking lesson":"chat lesson"}</span></span></button>`:""}
   <button id="unitHead" data-act="unitSheet" data-u="${cu}">${unitHeadInner(cu)}</button>
   ${html}
   ${cur?"":`<div class="card" style="text-align:center;margin-top:20px"><div style="font-size:48px">🎓</div><b>Path complete!</b><p class="sub" style="margin-top:6px">Move up a level to get a new path.</p></div>`}
@@ -3465,7 +3601,9 @@ function vMe(){
    <p class="sub" style="margin-top:12px">${S.profile.learned.length} words & patterns taught · ${S.stats.msgs} messages · ${S.stats.cards} cards reviewed</p>
   </div>
   `,
-   app:()=>`<div class="card">
+   app:()=>`<div class="sec">🎨 Look</div><div class="card"><p class="sub" style="margin-bottom:8px">Light is the new clean look. Auto follows your iPhone's light/dark setting.</p>
+   <div class="chips">${[["light","☀️ Light"],["dark","🌙 Dark"],["auto","📱 Auto"]].map(([v,t])=>`<button class="chip${(S.settings.theme||"light")===v?" on":""}" data-act="setTheme" data-v="${v}">${t}</button>`).join("")}</div></div>
+   <div class="sec">Updates</div><div class="card">
    <p class="sub">Version ${APP_VERSION}. Your progress saves automatically on this phone after everything you do. The app updates itself: new versions load automatically when you open Yuki (or the next time you leave it, if you're in the middle of something).</p>
    <button class="btn sm ghost" style="margin-top:10px" data-act="checkUpdate">Check for updates</button>
   </div>
@@ -3508,7 +3646,7 @@ function englishTip(){
   if(S.settings.voiceEn==="system")return`<button class="row" data-act="voiceHelp" style="margin-top:4px"><span class="ri">📱</span><span class="rt"><b>Choose which voice that is</b><span>Siri or a Premium voice, in your iPhone's Settings</span></span></button>`;
   const best=voiceList("en-US")[0];
   if(!best||isHQ(best))return"";
-  return`<button class="row" data-act="voiceHelp" style="margin-top:4px;border-color:var(--gold)"><span class="ri">💡</span><span class="rt"><b>Get a much better English voice (free)</b><span>Download "Ava (Premium)" on your iPhone in 1 minute</span></span></button>`;
+  return`<button class="row" data-act="voiceHelp" style="margin-top:4px"><span class="ri">💡</span><span class="rt"><b>Get a much better English voice (free)</b><span>Download "Ava (Premium)" on your iPhone in 1 minute</span></span></button>`;
 }
 function voicePicker(lang,label,cur){
   const list=voiceList(lang);
@@ -3781,6 +3919,7 @@ const ACT={
   levelSheet:()=>levelSheet(),
   allLessons:()=>{UI.tab="learn";render();},
   planReset:()=>{if(confirm("Restart your path from today? Finished lessons stay finished.")){S.plan={start:isoDay(),done:{},custom:S.plan?S.plan.custom:[]};save();toast("Path restarted");render();}},
+  setTheme:el=>{S.settings.theme=el.dataset.v;save();applyTheme();rerender();},
   toggle:el=>{const k=el.dataset.k;S.settings[k]=!S.settings[k];save();el.classList.toggle("on",S.settings[k]);},
   saveKey:()=>{S.settings.apiKey=$("#keyIn").value.trim();save();toast(S.settings.apiKey?"Key saved on this phone 🔐":"Key removed");render();},
   testAI:async()=>{const v=$("#keyIn");if(v){S.settings.apiKey=v.value.trim();save();}toast("Calling Yuki…");
@@ -3844,7 +3983,7 @@ const norm=t=>(t||"").replace(/\r\n/g,"\n").trim();
 function liveDiffers(html){
   const js=(html.match(/<script>([\s\S]*?)<\/script>/)||[])[1],css=(html.match(/<style>([\s\S]*?)<\/style>/)||[])[1];
   if(js===undefined||css===undefined)return false;
-  return norm(js)!==norm(document.querySelector("script").textContent)||norm(css)!==norm(document.querySelector("style").textContent);
+  return norm(js)!==norm(document.querySelector("script:not([id])").textContent)||norm(css)!==norm(document.querySelector("style").textContent);
 }
 // Safe moment = nothing in progress that a reload would interrupt
 function canReloadNow(){
@@ -3879,7 +4018,8 @@ setInterval(()=>{if(document.visibilityState==="visible")checkUpdate(false);},15
 
 /* ============ START ============ */
 if("serviceWorker" in navigator&&location.protocol==="https:")navigator.serviceWorker.register("sw.js").catch(()=>{});
-loadState().then(()=>{if(S.onboarded){checkFreeze();if(!S.daily.init){checkBadges(true);S.daily.init=true;save();}}fitViewport();render();pingVV();setTimeout(()=>checkUpdate(false),1500);});
+try{matchMedia("(prefers-color-scheme: light)").addEventListener("change",()=>{if(S.settings&&S.settings.theme==="auto"){applyTheme();rerender();}});}catch(e){}
+loadState().then(()=>{applyTheme();if(S.onboarded){checkFreeze();if(!S.daily.init){checkBadges(true);S.daily.init=true;save();}}fitViewport();render();pingVV();setTimeout(()=>checkUpdate(false),1500);});
 </script>
 </body>
 </html>
