@@ -629,10 +629,11 @@ html.light #voice .btn{color:#2a1520}
 .ubanner.fold{margin:10px 0;padding:10px 14px}.ubanner.fold .ube{width:38px;height:38px;font-size:20px}.ubanner.fold .ubt b{font-size:16px}
 #unitHead+.ubanner.fold{margin-top:30px}
 .ubanner.fin{opacity:.8}.ubanner.later{filter:saturate(.55);opacity:.85}
-.tbar{flex-wrap:wrap}.tgoal{flex-basis:100%;font-size:13.5px;font-weight:800;color:var(--sky,#3487dc);margin:0 0 4px}
-.vgoal{text-align:center;color:#9ccaf7;margin:6px 0 2px;font-size:14px}
+.tbar{flex-wrap:wrap}.tbar .tgoal{flex-basis:100%}.tgoal{font-size:13.5px;font-weight:800;color:var(--sky,#3487dc);margin:0 0 4px}
+.vgoal{flex:0 0 auto;text-align:center;color:#9ccaf7;margin:6px 0 2px;font-size:14px}
 #main .node .bd.lk{background:var(--ink2,#1d2030);font-size:13px;filter:none}
 .memtg{min-height:36px}.memtg b{opacity:.55;margin-left:4px;font-weight:900}
+.tchip{display:inline-flex;flex-direction:column;align-items:center;line-height:1.15;color:inherit;font-family:inherit}.tchip small{font-size:11px;font-weight:700;opacity:.75;margin-top:1px;max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 </style>
 </head>
 <body>
@@ -654,7 +655,7 @@ html.light #voice .btn{color:#2a1520}
 <script>
 "use strict";
 // Bump this on every change so phones can spot a new version and offer to update
-const APP_VERSION="2026.10.12-8";
+const APP_VERSION="2026.10.12-9";
 /* ============ DATA ============ */
 const LV = {
   n5:{label:"N5",name:"Beginner",color:"#9fd67c"},
@@ -2198,7 +2199,14 @@ function numRomaji(k){let o="",i=0;while(i<k.length){const m=ROMA.find(([a])=>k.
 const NUM_REC=[...Array(101).keys(),...[2,3,4,5,6,7,8,9].map(x=>x*100),...[2,3,4,5,6,7,8,9].map(x=>x*1000),10000].map(jaNum);
 NUM_REC.forEach(t=>RECORDED.add(t));
 const jaDigits=t=>String(t).replace(/[0-9０-９]+/g,d=>{const n=parseInt(d.replace(/[０-９]/g,c=>String.fromCharCode(c.charCodeAt(0)-0xFEE0)),10);return n<100000?jaNum(n):d;});
-const KANJI_ALT={"こんにちは":["今日は"],"こんばんは":["今晩は"],"ありがとう":["有難う","有り難う"],"げんき":["元気"],"げんきですか":["元気ですか"],"げんきです":["元気です"],
+const KANJI_ALT={
+ // the mic often writes these in kanji / other spellings
+ "おはよう":["お早う"],"おねがいします":["お願いします"],"よろしくおねがいします":["よろしくお願いします","宜しくお願いします"],"よかった":["良かった"],"はじめまして":["初めまして"],
+ "おすすめ":["お勧め","お薦め","オススメ"],"どこがいいですか":["どこが良いですか","何処がいいですか"],"をください":["を下さい"],"てください":["て下さい"],"てもいいですか":["ても良いですか"],
+ "すみません、ここいいですか":["すいません、ここいいですか","すみません、ここ良いですか"],"いいてんきですね":["いい天気ですね","良い天気ですね"],"このへん":["この辺"],"すんでいます":["住んでいます","住んでます"],
+ "はじめて":["初めて"],"すごい":["凄い","スゴイ"],"わたしも":["私も"],"たのしそう":["楽しそう"],"ほんとうに":["本当に"],"たとえば":["例えば"],"もっとおしえてください":["もっと教えてください","もっと教えて下さい"],
+ "さいきん":["最近"],"おなじ":["同じ"],"もすきです":["も好きです"],"ライン":["line","ｌｉｎｅ"],"こうかん":["交換"],"インスタ":["instagram","insta"],"あとで":["後で"],"れんらくします":["連絡します"],
+ "こんど":["今度"],"ひま":["暇"],"いつがいいですか":["いつが良いですか"],"のみにいきましょう":["飲みに行きましょう","飲みにいきましょう"],"じゃあ":["じゃ"],"へえ":["へー","へぇ"],"なるほど":["成程"],"こんにちは":["今日は"],"こんばんは":["今晩は"],"ありがとう":["有難う","有り難う"],"げんき":["元気"],"げんきですか":["元気ですか"],"げんきです":["元気です"],
  "わたし":["私"],"なまえ":["名前"],"どこ":["何処"],"からきました":["から来ました"],"くに":["国"],"にほん":["日本"],"しごと":["仕事"],"がくせい":["学生"],"かいしゃいん":["会社員"],"なに":["何"],
  "いち":["一"],"に":["二"],"さん":["三"],"よん":["四"],"ご":["五"],"ろく":["六"],"なな":["七"],"はち":["八"],"きゅう":["九"],"じゅう":["十"],"なんさい":["何歳","何才"],"さい":["歳","才"],"でんわばんごう":["電話番号"],"なんばん":["何番"],"ゼロ":["零"],
  "みず":["水"],"おちゃ":["お茶"],"ごはん":["ご飯","御飯"],"たべます":["食べます"],"のみます":["飲みます"],"すき":["好き"],"きらい":["嫌い"],"おいしい":["美味しい"],"えん":["円"],
@@ -2230,7 +2238,7 @@ function detectUsed(text){
   return c.targets.filter(jp=>{
     if(c.used.includes(jp))return false;
     const w=wordInfo(jp),j=normJ(jp),r=w?normR(w[1]):"";
-    const alts=(KANJI_ALT[j]||[]).map(normJ);
+    const alts=(KANJI_ALT[j]||KANJI_ALT[jp.replace(/[～~]/g,"")]||[]).map(normJ);
     if(j.length<=2)return toks.includes(j)||alts.some(a=>a.length>1?nj.includes(a):toks.includes(a))||(r.length>=2&&!EN_COMMON.has(w[1].toLowerCase().trim())&&String(text).toLowerCase().split(/[^a-zāēīōū]+/).map(normR).includes(r));
     return nj.includes(j)||alts.some(a=>nj.includes(a))||(r.length>=4&&nr.includes(r))||(w&&soundsLike(text,w[1]));
   });
@@ -2274,7 +2282,7 @@ function courseDoneCard(inCall){
 function talkChips(){
   const c=activeCourse();if(!c)return"";
   const t=Math.min(talkTurns(c),TALK_MIN);
-  return`<div id="tchips" class="tchips">${c.targets.map(jp=>`<span class="tchip${c.used.includes(jp)?" ok":""}">${c.used.includes(jp)?"✓ ":""}${esc(jp)}</span>`).join("")}<span class="tchip${t>=TALK_MIN?" ok":""}">💬 ${t}/${TALK_MIN}</span></div>`;
+  return`<div id="tchips" class="tchips">${c.targets.map(jp=>{const w=wordInfo(jp);return`<button class="tchip${c.used.includes(jp)?" ok":""}" data-act="chipWord" data-jp="${esc(jp)}"><span>${c.used.includes(jp)?"✓ ":""}${esc(jp)}</span>${w?`<small>${esc(w[2])}</small>`:""}</button>`;}).join("")}<span class="tchip${t>=TALK_MIN?" ok":""}">💬 ${t}/${TALK_MIN}</span></div>`;
 }
 
 /* ---- other path nodes (higher levels, custom lessons) ---- */
@@ -4113,6 +4121,8 @@ const ACT={
   sayText:el=>speak(el.dataset.text,{rate:0.8}),
   reveal:el=>el.classList.toggle("show"),
   recSet:el=>{S.settings.jaRec=el.dataset.v;save();rerender();if(el.dataset.v!=="off")speak("ともだち",{});},
+  // tap a target word: hear it (free recording) and see what it means, without leaving the lesson
+  chipWord:el=>{const jp=el.dataset.jp,w=wordInfo(jp);if(UI.listening)return;speak(wordSay(jp),{rate:0.85});if(w)toast(jp+" ("+w[1]+") = "+w[2],2200);},
   memDel:el=>{const l=S.profile[el.dataset.k];if(!Array.isArray(l))return;l.splice(+el.dataset.i,1);save();rerender();toast("Forgotten",1200);},
   saveQuestKey:()=>{const v=$("#questKeyIn");S.settings.questKey=v?v.value.trim():"";questCache.clear();save();toast(S.settings.questKey?"Key saved — tap Test Ryusei":"Key removed");},
   questTest:async()=>{
