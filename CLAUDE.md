@@ -425,6 +425,10 @@ Safari → Add to Home Screen.
   clips (`webEnChunks`, no-cors cache warm-up); `apiRequest` retries twice by itself on a dropped connection or
   429/5xx/529; a call that still fails shows "🔁 Try again" (`UI.vretry`, `ACT.vRetry` removes the failed attempt and
   resends the same words).
+- **No "server is slow" pop-ups** (v2026.10.14-8, owner: "I always get Ryusei free server is slow, fix it"): the slow/paused/
+  failed Ryusei toasts are gone (voice log only). Instead `questSlowSeen` shows a "🔑 Make Ryusei faster (free)" button on
+  the call screen (only without a key), also in Me → Voice; it opens `questKeySheet()` (steps + link to su-shiki.com/api +
+  paste box, `ACT.saveQuestKey2` saves the key, clears the pause; it's in the click router's keep-sheet-open list).
 - **Reliability**: `apiRequest` gives up after 60 s (AbortController) so Yuki can't hang on "thinking";
   auto-update never reloads during a lesson, flashcards or an open sheet (`canReloadNow`); call captions use
   `captionText()` (markdown removed, bullets kept); spoken answers with kanji still tick course words.

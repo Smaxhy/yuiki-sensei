@@ -656,7 +656,7 @@ html.light #voice .btn{color:#2a1520}
 <script>
 "use strict";
 // Bump this on every change so phones can spot a new version and offer to update
-const APP_VERSION="2026.10.14-7";
+const APP_VERSION="2026.10.14-8";
 /* ============ DATA ============ */
 const LV = {
   n5:{label:"N5",name:"Beginner",color:"#9fd67c"},
@@ -1455,10 +1455,10 @@ const QUEST_API="https://api.tts.quest/v3/voicevox/synthesis";
 // When the free Ryusei server is slow two replies in a row, stop waiting for it for 5 minutes (a quiet check
 // brings him back sooner as soon as the server answers quickly again, see questProbe):
 // learned words still play from Ryusei's recordings, sentences use the instant iPhone voice.
-let questLateN=0,questPauseUntil=0;
+let questLateN=0,questPauseUntil=0,questSlowSeen=false;
 const questPaused=()=>Date.now()<questPauseUntil;
 function questLate(){if(++questLateN>=2&&!questPaused()){questPauseUntil=Date.now()+5*60e3;questLateN=0;vlog("⏸ Ryusei live paused for 5 min (server slow)");
-  toast("Ryusei's free server is slow right now, so Yuki uses the instant voice for a bit. He comes back by himself when the server is quick again.",4500);}}
+  questSlowSeen=true;if(UI.voice)renderVoice();}}
 const useQuest=()=>S.settings.tts==="quest"&&location.protocol!=="file:"&&!questPaused();
 const SILENT_MP3="data:audio/mpeg;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjYwLjE2LjEwMAAAAAAAAAAAAAAA//OEwAAAAAAAAAAAAEluZm8AAAAPAAAACQAABCAARUVFRUVFRUVFRUVdXV1dXV1dXV1dXXR0dHR0dHR0dHR0i4uLi4uLi4uLi4uioqKioqKioqKiorq6urq6urq6urq60dHR0dHR0dHR0dHo6Ojo6Ojo6Ojo6P//////////////AAAAAExhdmM2MC4zMQAAAAAAAAAAAAAAACQD8AAAAAAAAAQgDeb0IwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//NExAAAAANIAAAAAExBTUUzLjEwMFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVTEFNRTMu//NExFMAAANIAAAAADEwMFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVTEFNRTMu//NExKYAAANIAAAAADEwMFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVTEFNRTMu//NExKwAAANIAAAAADEwMFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVTEFNRTMu//NExKwAAANIAAAAADEwMFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVTEFNRTMu//NExKwAAANIAAAAADEwMFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVTEFNRTMu//NExKwAAANIAAAAADEwMFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV//NExKwAAANIAAAAAFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV//NExKwAAANIAAAAAFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV";
 let qa=null,questNote=false;
@@ -1574,6 +1574,22 @@ async function playQuestAudio(o,my,rate,ready){
 }
 // VOICEVOX reads English best in lower case with short forms written out ("Hi" would be spelled "H-I")
 const EN_FIX=[[/\bi'm\b/g,"i am"],[/\byou're\b/g,"you are"],[/\bwe're\b/g,"we are"],[/\bthey're\b/g,"they are"],[/\b(it|that|what|there|here|she|he)'s\b/g,"$1 is"],[/\bdon't\b/g,"do not"],[/\bdoesn't\b/g,"does not"],[/\bdidn't\b/g,"did not"],[/\bcan't\b/g,"can not"],[/\bwon't\b/g,"will not"],[/\bisn't\b/g,"is not"],[/\baren't\b/g,"are not"],[/\b(i|you|we|they)'ll\b/g,"$1 will"],[/\b(i|you|we|they)'ve\b/g,"$1 have"],[/\b(i|you|we|they)'d\b/g,"$1 would"],[/\bok\b/g,"okay"]];
+// Ryusei's free server (tts.quest) puts requests without a key at the back of a slow shared queue. A free key from
+// su-shiki.com moves him into the fast lane. The key stays on this phone only (never in the code or backups).
+function questKeySheet(){
+  sheet(`<div class="h2" style="margin-bottom:8px">🔑 Make Ryusei faster (free)</div>
+  <p class="sub" style="margin-bottom:10px">Ryusei's voice comes from a free shared server. Without a key you wait in the slow line with everyone else; a free key puts you in the fast line. Takes about a minute:</p>
+  <ol>
+   <li>Tap <b>Open su-shiki.com</b> below (opens in Safari).</li>
+   <li>Follow the steps there to get a free API key (APIキー) and copy it.</li>
+   <li>Come back here, paste it below and tap <b>Save key</b>.</li>
+  </ol>
+  <a class="btn ghost" style="margin:10px 0;text-decoration:none;display:flex;align-items:center;justify-content:center" href="https://su-shiki.com/api/" target="_blank" rel="noopener">🌐 Open su-shiki.com</a>
+  <input class="field" id="qk2" type="password" placeholder="Paste your key here" autocomplete="off" autocapitalize="off" spellcheck="false">
+  <button class="btn" data-act="saveQuestKey2">Save key</button>
+  <p class="sub" style="margin-top:10px">Free, no card. The key is only used to ask for Ryusei's voice and stays on this phone. Meanwhile, every sentence Ryusei has said once is saved and plays instantly next time.</p>
+  <button class="btn ghost" style="margin-top:8px" data-act="closeSheet">Not now</button>`);
+}
 function questFail(stepNo,msg){
   const tips={1:/connect|load failed|network|fetch|timeout/i.test(msg)?"Your phone couldn't reach tts.quest. Check your internet and turn off any VPN or content blocker (e.g. in Safari settings), then try again.":"tts.quest is busy or refused the request. Try again in a minute, or add a free tts.quest key below.",
     2:"tts.quest accepted the request but didn't finish the audio. The free service is probably overloaded. Try again in a minute, or add a free tts.quest key.",
@@ -1600,7 +1616,7 @@ const questLat=[];let slowTip=false;
 const questSlow=()=>{if(questLat.length<2)return false;const l=questLat.slice(-3).sort((a,b)=>a-b);return l[Math.floor(l.length/2)]>4500;};
 function noteLat(ms){questLat.push(ms);if(questLat.length>6)questLat.shift();
   if(questSlow()&&!slowTip&&!S.settings.questKey){slowTip=true;vlog("🐢 tts.quest is slow right now ("+Math.round(ms/100)/10+" s)");
-    toast("🐢 Ryusei's free voice service is slow right now. Tap ⚡ on the call screen for an instant voice, or add a free tts.quest key (Me → Voice).",6000);}}
+    questSlowSeen=true;if(UI.voice)renderVoice();}}
 async function prepClip(job,my){
   const t0=Date.now(),live=typeof job!=="string";
   const o=typeof job==="string"?job:await job;
@@ -1645,7 +1661,7 @@ function questProbe(segs){
   const sg=segs.find(x=>x.k==="ja");if(!sg)return;
   probeAt=Date.now();const t0=Date.now();vlog("🔎 checking if Ryusei's server is quick again");
   ryuseiClip(vvText(sg.t)).then(c=>{const ms=Date.now()-t0;
-    if(c&&c.blob&&ms<4000){if(!questPaused())return;questPauseUntil=0;questLateN=0;questLat.length=0;vlog("✓ Ryusei's server is back ("+(ms/1000).toFixed(1)+" s)");toast("🎌 Ryusei's voice is back",2000);renderVoice();}
+    if(c&&c.blob&&ms<4000){if(!questPaused())return;questPauseUntil=0;questLateN=0;questLat.length=0;vlog("✓ Ryusei's server is back ("+(ms/1000).toFixed(1)+" s)");renderVoice();}
     else vlog("… Ryusei's server still slow ("+(ms/1000).toFixed(1)+" s)");}).catch(e=>vlog("… Ryusei still unavailable ("+e.message+")"));}
 function englishForVV(t){t=t.toLowerCase().replace(/[’‘]/g,"'");EN_FIX.forEach(([a,b])=>{t=t.replace(a,b);});return t;}
 // Ryusei only ever speaks Japanese (owner's request); English always uses the English voice
@@ -1688,7 +1704,7 @@ async function speakQuest(segs,rate,text,opts){
       const slow=questSlow(),wait=Math.max(slow?2000:3000,(i?0:slow?3000:5000)-(Date.now()-t0));
       try{clip=await Promise.race([jobs[i],new Promise(r=>setTimeout(()=>r(LATE),wait))]);
         if(clip===LATE){clip=null;stay=true;noteLat(9000);questLate();vlog("… Ryusei not ready after "+(wait/1000).toFixed(1)+" s, iPhone voice says the rest of this reply (tts.quest busy)");}}catch(e){stay=true;
-        questLate();if(!questNote){questNote=true;toast("Ryusei's voice didn't answer ("+e.message+"). Tap Me → Voice → Test Ryusei for details.",4500);}}
+        questLate();questSlowSeen=true;}
       natLoading=false;if(my!==natSeq)return;
       if(clip){if(!i)questLateN=0;await synthIdle(1200);
         // iPhone keeps other sound turned down for a moment after its own voice ("ducking"); starting
@@ -1697,7 +1713,7 @@ async function speakQuest(segs,rate,text,opts){
         if(my!==natSeq)return;
         if(clip.blob){try{await playUrl(clip.blob,my,rate);continue;}catch(e){vlog("… preloaded clip wouldn't play, trying the original");}}
         if(my!==natSeq)return;
-        try{await playQuestAudio(clip.o,my,rate,clip.ready);continue;}catch(e){if(!questNote){questNote=true;toast("Ryusei's audio: "+e.message+" — using the iPhone voice",4000);}}}
+        try{await playQuestAudio(clip.o,my,rate,clip.ready);continue;}catch(e){vlog("✗ Ryusei's audio: "+e.message+" — iPhone voice");}}
       if(my!==natSeq)return;
       if(segs[i].orig!==undefined)await speakPlainDevice(segs[i].orig,rate);else await sayDevice(segs[i].t.trim(),"ja-JP",rate);
     }
@@ -4142,7 +4158,8 @@ function vMe(){
     ${st.enVoice==="iphone"?enVoiceList():""}
     <button class="btn sm ghost" style="margin-top:12px" data-act="voiceLog">🧾 Voice log (send me a screenshot if voice is wrong)</button>
     <button class="btn sm" style="margin-top:8px" data-act="questTest">🔎 Test Ryusei's live voice</button>
-    <details style="margin-top:10px"><summary class="sub" style="min-height:44px;display:flex;align-items:center">Optional: free tts.quest key (faster, fewer "busy")</summary>
+    ${st.questKey?`<p class="sub" style="margin-top:10px">🔑 Free key saved: Ryusei uses the fast line.</p>`:`<button class="btn sm" style="margin-top:10px" data-act="questKeySheet">🔑 Make Ryusei faster (free key)</button>`}
+    <details style="margin-top:10px"><summary class="sub" style="min-height:44px;display:flex;align-items:center">tts.quest key (paste / change)</summary>
      <p class="sub" style="margin:6px 0">Get a free key at <b>su-shiki.com/api</b>, paste it here. It's only used to ask tts.quest for Ryusei's audio and stays on this phone.</p>
      <input class="field" id="questKeyIn" type="password" placeholder="tts.quest key (optional)" value="${esc(st.questKey)}" autocomplete="off" autocapitalize="off" spellcheck="false">
      <button class="btn sm ghost" data-act="saveQuestKey">Save key</button></details>
@@ -4291,6 +4308,7 @@ function renderVoice(){
   $("#voice").innerHTML=`<div class="vtop"><button class="iconbtn" data-act="closeVoice" aria-label="Close">✕</button>
    <div class="vtitle" data-act="voiceLog" role="button" title="Voice log"><b>Yuki</b><small>${useQuest()?"🎌 "+(REC_VOICES[S.settings.jaRec]||REC_VOICES.ryusei).name.split(" ")[0]+"'s voice":"voice call"}</small></div>
    <button class="iconbtn" data-act="vCaptions" aria-label="Captions" style="font-size:15px;font-weight:800">${cc?"CC":"🙈"}</button></div>
+   ${questSlowSeen&&!S.settings.questKey&&S.settings.tts==="quest"?`<button class="vopt" style="margin:0 auto 8px;display:block" data-act="questKeySheet">🔑 Make Ryusei faster (free)</button>`:""}
    <div class="vopts"><button class="vopt${S.settings.tts==="device"||questPaused()?" on":""}" data-act="vFast">${S.settings.tts==="device"?"⚡ Fast voice":questPaused()?"⚡ Fast · tap for 🎌":"🎌 Ryusei"}</button><button class="vopt${S.settings.handsFree?" on":""}" data-act="vHands">${S.settings.handsFree?"🙌 Hands-free":"✋ Tap to talk"}</button>
     ${activeConvo()?`<button class="vopt" data-act="phrases">💡 Phrases</button>`:""}<span class="vlen">${[["tiny","Very short"],["short","Short"],["normal","Normal"]].map(([v,t])=>`<button class="vopt${len===v?" on":""}" data-act="vLen" data-v="${v}">${t}</button>`).join("")}</span></div>
    <div class="orbwrap${activeCourse()||(!UI.listening&&(()=>{const lu=[...S.chat].reverse().find(m=>m.role==="user");return lu&&lu.fix;})())?" compact":""}"><div class="orb ${st}">ゆ</div><div class="vstat">${label}</div>
@@ -4444,6 +4462,8 @@ const ACT={
     <button class="btn ghost" style="margin-top:8px" data-act="closeSheet">Cancel</button>`);},
   fbWhy:el=>{const r=FB_REASONS.find(x=>x[0]===el.dataset.k),m=S.chat[+el.dataset.i];if(!r)return;addMem(S.profile.teach,[r[2]],10);if(m)m.fb="down";save();closeSheet();rerender();toast("📝 Got it. Yuki will "+r[2].charAt(0).toLowerCase()+r[2].slice(1),2600);},
   memDel:el=>{const l=S.profile[el.dataset.k];if(!Array.isArray(l))return;l.splice(+el.dataset.i,1);save();rerender();toast("Forgotten",1200);},
+  questKeySheet:()=>questKeySheet(),
+  saveQuestKey2:()=>{const v=$("#qk2");const k=v?v.value.trim():"";if(!k){toast("Paste the key first");return;}S.settings.questKey=k;questCache.clear();questPauseUntil=0;questLateN=0;questLat.length=0;questSlowSeen=false;save();closeSheet();toast("🔑 Key saved — Ryusei should answer much faster now",3000);if(UI.voice)renderVoice();else rerender();},
   saveQuestKey:()=>{const v=$("#questKeyIn");S.settings.questKey=v?v.value.trim():"";questCache.clear();save();toast(S.settings.questKey?"Key saved — tap Test Ryusei":"Key removed");},
   questTest:async()=>{
     const step=(a,b,c)=>sheet(`<div class="h2">🔎 Testing Ryusei's live voice</div><div class="card" style="margin-top:10px;padding:6px 14px">
@@ -4580,7 +4600,7 @@ document.addEventListener("click",e=>{
   track();
   const el=e.target.closest("[data-act]");if(!el)return;
   const fn=ACT[el.dataset.act];if(!fn)return;
-  if(el.closest("#sheet")&&!["closeSheet","copyBackup","doImport","addSuggest","addLesson","copyDock","questTest","iphoneVoiceTest","trPlay"].includes(el.dataset.act))closeSheet();
+  if(el.closest("#sheet")&&!["closeSheet","copyBackup","doImport","addSuggest","addLesson","copyDock","questTest","iphoneVoiceTest","trPlay","saveQuestKey2"].includes(el.dataset.act))closeSheet();
   fn(el,e);
 });
 document.addEventListener("change",e=>{
