@@ -208,6 +208,10 @@ Safari → Add to Home Screen.
   tts.quest `questReady`, then download into memory with `toBlobUrl`, cached) while the iPhone voice is
   still talking, so each clip starts the moment the English ends. The 120 ms gap before the iPhone voice
   only applies right after a clip (`clipEndAt`).
+  All or nothing (v2026.10.14-2, owner: "the voice keeps breaking and glitching in lessons"): `speakQuest` first waits for
+  EVERY Ryusei clip of the reply (`Promise.all` of `prepClip`s, 5 s, 3.5 s when `questSlow()`), then plays them in one go;
+  if any isn't ready in time (or fails), the whole reply is read by the iPhone voice (`speakPlainDevice`) — no switching
+  voices mid-reply. The older mid-reply cut-off below now only matters for play-time failures.
   Ryusei never holds Yuki up: if a clip isn't ready 3 s after its turn (5 s for the first one; 2 s / 3 s when
   `questSlow()`), the iPhone voice says the rest of that reply. tts.quest requests go one at a time (`questQ`; bursts trigger "wait").
   An iPhone line that hasn't started after 1.8 s is cancelled and tried once more (`sayChunk`).
