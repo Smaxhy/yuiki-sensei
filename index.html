@@ -656,7 +656,7 @@ html.light #voice .btn{color:#2a1520}
 <script>
 "use strict";
 // Bump this on every change so phones can spot a new version and offer to update
-const APP_VERSION="2026.10.14-2";
+const APP_VERSION="2026.10.14-3";
 /* ============ DATA ============ */
 const LV = {
   n5:{label:"N5",name:"Beginner",color:"#9fd67c"},
@@ -1412,6 +1412,7 @@ function romaToKana(t){
   return out;}
 function speakAI(text,opts){
   const segsN=segments(romaToKana(cleanSpeech(text))).filter(s=>s.k==="ja"||S.settings.speakEnglish||opts.forceEnglish);
+  if(questPaused())questProbe(segsN);
 
   if(useQuest()&&segsN.length){if(synth)synth.cancel();
     if(enRyusei()){
@@ -1426,12 +1427,13 @@ function speakAI(text,opts){
 }
 /* ---- Ryusei/Himari live for ANY sentence: free public VOICEVOX service tts.quest (no key needed) ---- */
 const QUEST_API="https://api.tts.quest/v3/voicevox/synthesis";
-// When the free Ryusei server is slow two replies in a row, stop waiting for it for 10 minutes:
+// When the free Ryusei server is slow two replies in a row, stop waiting for it for 5 minutes (a quiet check
+// brings him back sooner as soon as the server answers quickly again, see questProbe):
 // learned words still play from Ryusei's recordings, sentences use the instant iPhone voice.
 let questLateN=0,questPauseUntil=0;
 const questPaused=()=>Date.now()<questPauseUntil;
-function questLate(){if(++questLateN>=2&&!questPaused()){questPauseUntil=Date.now()+10*60e3;questLateN=0;vlog("⏸ Ryusei live paused for 10 min (server slow)");
-  toast("Ryusei's free server is slow right now, so Yuki uses the instant voice for 10 minutes. Tap 🎌 on the call screen to switch back.",4500);}}
+function questLate(){if(++questLateN>=2&&!questPaused()){questPauseUntil=Date.now()+5*60e3;questLateN=0;vlog("⏸ Ryusei live paused for 5 min (server slow)");
+  toast("Ryusei's free server is slow right now, so Yuki uses the instant voice for a bit. He comes back by himself when the server is quick again.",4500);}}
 const useQuest=()=>S.settings.tts==="quest"&&location.protocol!=="file:"&&!questPaused();
 const SILENT_MP3="data:audio/mpeg;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjYwLjE2LjEwMAAAAAAAAAAAAAAA//OEwAAAAAAAAAAAAEluZm8AAAAPAAAACQAABCAARUVFRUVFRUVFRUVdXV1dXV1dXV1dXXR0dHR0dHR0dHR0i4uLi4uLi4uLi4uioqKioqKioqKiorq6urq6urq6urq60dHR0dHR0dHR0dHo6Ojo6Ojo6Ojo6P//////////////AAAAAExhdmM2MC4zMQAAAAAAAAAAAAAAACQD8AAAAAAAAAQgDeb0IwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//NExAAAAANIAAAAAExBTUUzLjEwMFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVTEFNRTMu//NExFMAAANIAAAAADEwMFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVTEFNRTMu//NExKYAAANIAAAAADEwMFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVTEFNRTMu//NExKwAAANIAAAAADEwMFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVTEFNRTMu//NExKwAAANIAAAAADEwMFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVTEFNRTMu//NExKwAAANIAAAAADEwMFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVTEFNRTMu//NExKwAAANIAAAAADEwMFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV//NExKwAAANIAAAAAFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV//NExKwAAANIAAAAAFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV";
 let qa=null,questNote=false;
@@ -1478,7 +1480,7 @@ async function questUrl(text){
       try{j=await r.json();}catch(e){questLastErr="HTTP "+r.status;throw new Error(questLastErr);}
       if(j.mp3StreamingUrl||j.mp3DownloadUrl){vlog("✓ tts.quest gave audio"+(waited?" after waiting "+waited+"s":""));}
       if(j.mp3StreamingUrl||j.mp3DownloadUrl)return{stream:j.mp3StreamingUrl,mp3:j.mp3DownloadUrl,wav:j.wavDownloadUrl,status:j.audioStatusUrl};
-      if(j.retryAfter!=null&&waited+ +j.retryAfter<=25){const w=(+j.retryAfter+1)*1000;waited+=w/1000;natLoading=true;await new Promise(res=>setTimeout(res,w));continue;}
+      if(j.retryAfter!=null&&waited+ +j.retryAfter<=25){const w=(+j.retryAfter+1)*1000;waited+=w/1000;await new Promise(res=>setTimeout(res,w));continue;}
       vlog("✗ tts.quest: "+(j.errorMessage||("HTTP "+r.status))+(j.retryAfter!=null?" (retryAfter "+j.retryAfter+")":""));
       questLastErr=j.errorMessage||("HTTP "+r.status);throw new Error(questLastErr);
     }
@@ -1523,7 +1525,7 @@ let questStage="";
 async function questReady(o,my){
   let statusOk=false;if(!o.status)return false;
   questStage="waiting for the audio";
-  for(let i=0;i<50&&my===natSeq;i++){
+  for(let i=0;i<50&&(my==null||my===natSeq);i++){
     try{const r=await withTimeout(fetch(o.status+(o.status.includes("?")?"&":"?")+"t="+Date.now()),6000);const st=await r.json();statusOk=true;
       if(st.isAudioError){questStage="tts.quest couldn't make the audio";throw new Error(questStage);}
       if(st.isAudioReady)return true;}
@@ -1579,10 +1581,46 @@ async function prepClip(job,my){
   const o=typeof job==="string"?job:await job;
   if(typeof o==="string"){let blob=null;try{blob=await toBlobUrl(o);}catch(e){}return{o,blob};}
   const ready=await questReady(o,my);let blob=null;
-  if(ready&&o.mp3&&my===natSeq){try{blob=await toBlobUrl(o.mp3);}catch(e){vlog("… couldn't preload the clip ("+e.message+"), streaming it");}}
+  if(ready&&o.mp3&&(my==null||my===natSeq)){try{blob=await toBlobUrl(o.mp3);}catch(e){vlog("… couldn't preload the clip ("+e.message+"), streaming it");}}
   if(live)noteLat(Date.now()-t0);
   return{o,ready,blob};
 }
+// Every Ryusei sentence tts.quest makes is saved on the phone (Cache Storage "yuki-ryusei"), so a sentence he
+// has said once plays instantly from then on, even when the free server is busy or down. Requests that miss
+// a reply's deadline keep going in the background (my = null) and are saved too, so "Say it again" and
+// repeated sentences use Ryusei next time instead of the iPhone voice.
+const RY_CACHE="yuki-ryusei",RY_MAX=800,ryMem=new Map(),ryJobs=new Map();let ryPuts=0;
+const ryKey=t=>"https://ryusei.local/"+vvSpeaker()+"/"+encodeURIComponent(t);
+async function ryGet(t){const k=ryKey(t);if(ryMem.has(k))return ryMem.get(k);
+  if(!window.caches)return null;
+  try{const r=await (await caches.open(RY_CACHE)).match(k);if(!r)return null;const b=await r.blob();if(b.size<200)return null;
+    const u=URL.createObjectURL(b.type?b:new Blob([b],{type:"audio/mpeg"}));ryMem.set(k,u);return u;}catch(e){return null;}}
+async function ryPut(t,blobUrl){const k=ryKey(t);
+  try{const b=await (await fetch(blobUrl)).blob();if(b.size<200)return;
+    if(!ryMem.has(k)){ryMem.set(k,URL.createObjectURL(b));if(ryMem.size>60){const o=ryMem.keys().next().value;URL.revokeObjectURL(ryMem.get(o));ryMem.delete(o);}}
+    if(!window.caches)return;const c=await caches.open(RY_CACHE);
+    await c.put(k,new Response(b,{headers:{"Content-Type":"audio/mpeg"}}));
+    if(++ryPuts%25===0){const ks=await c.keys();for(let i=0;i<ks.length-RY_MAX;i++)await c.delete(ks[i]);}
+  }catch(e){}}
+function ryuseiClip(text){
+  if(ryJobs.has(text))return ryJobs.get(text);
+  const p=(async()=>{
+    const hit=await ryGet(text);if(hit){vlog("✓ Ryusei from the phone (said before, no server needed)");return{o:hit,blob:hit,ready:true,saved:true};}
+    const clip=await prepClip(questUrl(text),null);
+    if(clip.blob){await ryPut(text,clip.blob);const m=ryMem.get(ryKey(text));if(m)clip.blob=m;}
+    return clip;})();
+  ryJobs.set(text,p);p.then(()=>ryJobs.delete(text),()=>ryJobs.delete(text));
+  return p;}
+// While Ryusei is paused, at most once a minute quietly ask the server for the Japanese of a reply the iPhone
+// voice is saying. If it answers quickly, the pause ends ("🎌 Ryusei is back") and that clip is saved.
+let probeAt=0;
+function questProbe(segs){
+  if(S.settings.tts!=="quest"||!questPaused()||location.protocol==="file:"||navigator.onLine===false||Date.now()-probeAt<60e3)return;
+  const sg=segs.find(x=>x.k==="ja");if(!sg)return;
+  probeAt=Date.now();const t0=Date.now();vlog("🔎 checking if Ryusei's server is quick again");
+  ryuseiClip(vvText(sg.t)).then(c=>{const ms=Date.now()-t0;
+    if(c&&c.blob&&ms<4000){if(!questPaused())return;questPauseUntil=0;questLateN=0;questLat.length=0;vlog("✓ Ryusei's server is back ("+(ms/1000).toFixed(1)+" s)");toast("🎌 Ryusei's voice is back",2000);renderVoice();}
+    else vlog("… Ryusei's server still slow ("+(ms/1000).toFixed(1)+" s)");}).catch(e=>vlog("… Ryusei still unavailable ("+e.message+")"));}
 function englishForVV(t){t=t.toLowerCase().replace(/[’‘]/g,"'");EN_FIX.forEach(([a,b])=>{t=t.replace(a,b);});return t;}
 const enRyusei=()=>S.settings.enVoice==="ryusei";
 // Japanese parts: Ryusei's recording if we have one (instant), otherwise live from tts.quest;
@@ -1596,7 +1634,7 @@ async function speakQuest(segs,rate,text,opts){
   }
   const my=++natSeq;natBusy=true;
   const recUrl=sg=>{const k=recKey(sg.t);return RECORDED.has(k)?recUrlFor(k):null;};
-  const jobs=segs.map(sg=>sg.k!=="ja"?null:prepClip(recUrl(sg)||questUrl(vvText(sg.t)),my));
+  const jobs=segs.map(sg=>sg.k!=="ja"?null:recUrl(sg)?prepClip(recUrl(sg),my):ryuseiClip(vvText(sg.t)));
   jobs.forEach(j=>j&&j.catch(()=>{}));
   // All or nothing: get EVERY Ryusei clip of this reply ready before saying anything, then play it in one smooth go.
   // If they aren't all ready in time, the whole reply uses the iPhone voice: no switching voices mid-reply
