@@ -656,7 +656,7 @@ html.light #voice .btn{color:#2a1520}
 <script>
 "use strict";
 // Bump this on every change so phones can spot a new version and offer to update
-const APP_VERSION="2026.10.14-9";
+const APP_VERSION="2026.10.14-10";
 /* ============ DATA ============ */
 const LV = {
   n5:{label:"N5",name:"Beginner",color:"#9fd67c"},
@@ -1682,18 +1682,9 @@ async function speakQuest(segs,rate,text,opts){
   const recUrl=sg=>{const k=recKey(sg.t);return RECORDED.has(k)?recUrlFor(k):null;};
   const jobs=segs.map(sg=>sg.k!=="ja"?null:recUrl(sg)?prepClip(recUrl(sg),my):ryuseiClip(vvText(sg.t)));
   jobs.forEach(j=>j&&j.catch(()=>{}));
-  // All or nothing: get EVERY Ryusei clip of this reply ready before saying anything, then play it in one smooth go.
-  // If they aren't all ready in time, the whole reply uses the iPhone voice: no switching voices mid-reply
-  // (switching halfway through sounded like the voice glitching and breaking up in lessons).
-  const pending=jobs.filter(Boolean);
-  if(pending.length){natLoading=true;
-    const limit=questSlow()?3500:5000,TIMEOUT={};
-    let ok=false;try{ok=await Promise.race([Promise.all(pending).then(()=>true),new Promise(r=>setTimeout(()=>r(TIMEOUT),limit))]);}catch(e){ok=false;vlog("✗ Ryusei: "+e.message);}
-    natLoading=false;if(my!==natSeq)return;
-    if(ok!==true){if(ok===TIMEOUT){noteLat(9000);questLate();vlog("… Ryusei not ready in "+(limit/1000)+" s, whole reply in the iPhone voice");}
-      try{await speakPlainDevice(segs.map(x=>x.orig!==undefined?x.orig:x.t).join(" "),rate);}finally{if(my===natSeq){natBusy=false;natLoading=false;}}
-      return;}
-    vlog("✓ all "+pending.length+" Ryusei clip(s) ready, playing in one go");}
+  // No waiting before speaking (owner: "it works but it's very delayed"): Yuki starts at once (English parts in the English
+  // voice) while Ryusei's Japanese clips get ready in the background. A Japanese part waits only briefly for its clip;
+  // if it isn't there in time, the iPhone Japanese voice says that part and the rest of the reply (no flip-flopping).
   // Once Ryusei falls behind in a reply, the rest of that reply stays with the iPhone voice:
   // switching voices back and forth mid-reply sounded like his voice was breaking up.
   const t0=Date.now(),LATE={};let stay=false;
@@ -1704,15 +1695,15 @@ async function speakQuest(segs,rate,text,opts){
       if(stay){if(segs[i].orig!==undefined)await speakPlainDevice(segs[i].orig,rate);else await sayDevice(segs[i].t.trim(),"ja-JP",rate);continue;}
       // (with enVoice "ryusei" every segment is sent as "ja", so it never reaches the iPhone English voice unless the service fails)
       natLoading=true;let clip=null;
-      const slow=questSlow(),wait=Math.max(slow?2000:3000,(i?0:slow?3000:5000)-(Date.now()-t0));
+      const slow=questSlow(),firstJa=jobs.findIndex(Boolean)===i,wait=Math.max(slow?800:1200,(firstJa?slow?1500:2500:0)-(Date.now()-t0));
       try{clip=await Promise.race([jobs[i],new Promise(r=>setTimeout(()=>r(LATE),wait))]);
         if(clip===LATE){clip=null;stay=true;noteLat(9000);questLate();vlog("… Ryusei not ready after "+(wait/1000).toFixed(1)+" s, iPhone voice says the rest of this reply (tts.quest busy)");}}catch(e){stay=true;
         questLate();questSlowSeen=true;}
       natLoading=false;if(my!==natSeq)return;
-      if(clip){if(!i)questLateN=0;await synthIdle(1200);
+      if(clip){if(!i)questLateN=0;await synthIdle(600);
         // iPhone keeps other sound turned down for a moment after its own voice ("ducking"); starting
         // Ryusei inside that moment made him sound quiet, so let it pass first
-        const duck=300-(Date.now()-synthEndAt);if(duck>0)await new Promise(r=>setTimeout(r,duck));
+        const duck=200-(Date.now()-synthEndAt);if(duck>0)await new Promise(r=>setTimeout(r,duck));
         if(my!==natSeq)return;
         if(clip.blob){try{await playUrl(clip.blob,my,rate);continue;}catch(e){vlog("… preloaded clip wouldn't play, trying the original");}}
         if(my!==natSeq)return;
@@ -1893,7 +1884,7 @@ function switchMicLang(lang){resumeMic(lang);}
 function stopMic(cancel){
   if(!MIC.on)return;MIC.stopReq=true;if(cancel)MIC.cancel=true;
   if(rec&&!MIC.paused){const r=rec;try{r.stop();}catch(e){micFinish();return;}
-    setTimeout(()=>{if(MIC.on&&rec===r){vlog("■ mic didn't end, closing it");try{r.onend=null;r.abort();}catch(e){}MIC.base=micText();MIC.sess="";micFinish();}},1500);}   // iPhone sometimes never fires "end"
+    setTimeout(()=>{if(MIC.on&&rec===r){vlog("■ mic didn't end, closing it");try{r.onend=null;r.abort();}catch(e){}MIC.base=micText();MIC.sess="";micFinish();}},450);}   // iPhone can take 1–2 s to fire "end" (or never does); your words are already in, so don't wait
   else micFinish();
 }
 function micFinish(cancelled){
