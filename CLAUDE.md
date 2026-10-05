@@ -411,6 +411,11 @@ Safari → Add to Home Screen.
   strengths, 2 things to practise. The course's final conversation also gets the topic list.
 - **Quizzes**: mixed, weak spots, vocab, grammar, kanji, listening, translation, and
   roleplay, all run by Yuki in chat one question at a time.
+- **No answering old messages** (v2026.10.14-5, owner: "it translates things from previous questions and repeats itself"):
+  `buildMessages` sends only the newest of two student messages in a row (an earlier one left unanswered by a failed
+  reply used to be glued on, so Yuki answered/translated it again); the prompt says to reply only to the latest message;
+  `saidBefore` lines are quoted "only so you don't say them again"; `fixForOlder()` (`fixSim` bigram overlap) drops a
+  `<<FIX>>` that clearly belongs to an older student message.
 - **Reliability**: `apiRequest` gives up after 60 s (AbortController) so Yuki can't hang on "thinking";
   auto-update never reloads during a lesson, flashcards or an open sheet (`canReloadNow`); call captions use
   `captionText()` (markdown removed, bullets kept); spoken answers with kanji still tick course words.
