@@ -656,7 +656,7 @@ html.light #voice .btn{color:#2a1520}
 <script>
 "use strict";
 // Bump this on every change so phones can spot a new version and offer to update
-const APP_VERSION="2026.10.13-3";
+const APP_VERSION="2026.10.13-4";
 /* ============ DATA ============ */
 const LV = {
   n5:{label:"N5",name:"Beginner",color:"#9fd67c"},
@@ -2121,13 +2121,26 @@ function prevLessonOf(n){
   return null;
 }
 // 3 quick questions on last lesson's words (only ones you've learned) before the new words
+// Answer options must not mean the same thing ("nice to meet you (first time)" vs "nice to meet you (please be kind
+// to me)" made a right answer look wrong). Meanings are compared without brackets and per variant ("excuse me / sorry").
+const meanVars=t=>String(t||"").toLowerCase().replace(/\([^)]*\)/g," ").split(/[\/,;]|\bor\b/).map(v=>v.replace(/[^a-z0-9' ]/g," ").replace(/\b(to|a|an|the|my|your|be)\b/g," ").replace(/\s+/g," ").trim()).filter(Boolean);
+function meanClash(a,b){const A=meanVars(a),B=meanVars(b);if(!A.length||!B.length)return false;
+  return A.some(x=>B.some(y=>{if(x===y)return true;const [s,l]=x.length<=y.length?[x,y]:[y,x];if(s.length<3)return false;const lt=l.split(" ");return s.split(" ").every(w=>lt.includes(w));}));}
+// up to n wrong options from pool items [jp, romaji, en, …]: different value, different word, and no meaning that
+// overlaps the answer or each other
+function wrongOpts(pool,ans,f,n){n=n||3;const out=[],picked=[];
+  for(const x of shuffle(pool.slice())){if(out.length>=n)break;const v=f(x);
+    if(!v||v===f(ans)||out.includes(v)||x[0]===ans[0]||wordSay(x[0])===wordSay(ans[0]))continue;
+    if(x[2]&&ans[2]&&(meanClash(x[2],ans[2])||picked.some(p=>meanClash(p[2],x[2]))))continue;
+    out.push(v);picked.push(x);}
+  return out;}
 function recapQs(n){
   const pl=prevLessonOf(n);if(!pl)return[];
   const ws=shuffle(pl.w.filter(w=>S.cards["w:"+w[0]])).slice(0,3),pool=CLESSONS.flatMap(l=>l.w);
   return ws.map((w,i)=>{
-    if(i===1)return{it:w,q:w[2],a:w[0],opts:shuffle([w[0],...shuffle(pool.filter(x=>x[0]!==w[0])).slice(0,3).map(x=>x[0])]),dir:"en",recap:true};
-    if(i===2&&RECORDED.has(wordSay(w[0])))return{it:w,q:"",say:wordSay(w[0]),a:w[2],opts:shuffle([w[2],...shuffle(pool.filter(x=>x[2]!==w[2])).slice(0,3).map(x=>x[2])]),dir:"listen",recap:true};
-    return{it:w,q:w[0],say:wordSay(w[0]),a:w[2],opts:shuffle([w[2],...shuffle(pool.filter(x=>x[2]!==w[2])).slice(0,3).map(x=>x[2])]),dir:"jp",recap:true};});
+    if(i===1)return{it:w,q:w[2],a:w[0],opts:shuffle([w[0],...wrongOpts(pool,w,x=>x[0])]),dir:"en",recap:true};
+    if(i===2&&RECORDED.has(wordSay(w[0])))return{it:w,q:"",say:wordSay(w[0]),a:w[2],opts:shuffle([w[2],...wrongOpts(pool,w,x=>x[2])]),dir:"listen",recap:true};
+    return{it:w,q:w[0],say:wordSay(w[0]),a:w[2],opts:shuffle([w[2],...wrongOpts(pool,w,x=>x[2])]),dir:"jp",recap:true};});
 }
 function startCourseNode(n){
   ensurePlan();UI.planCtx=null;
@@ -2140,15 +2153,15 @@ function startCourseNode(n){
 const itemId=(lp,it)=>lp.kind==="kana"?it[3]:"w:"+it[0];
 function buildQuiz(lp){
   const its=lp.items,qs=[],pool=lp.kind==="kana"?Object.values(KANA_POOL()):CLESSONS.flatMap(l=>l.w);
-  const others=(it,f)=>shuffle(pool.filter(x=>f(x)!==f(it))).slice(0,3).map(f);
+  const others=(it,f)=>wrongOpts(pool,it,f);
   its.forEach(it=>{const f=lp.kind==="kana"?(x=>x[1]):(x=>x[2]);qs.push({it,q:it[0],say:lp.kind==="kana"?it[0]:wordSay(it[0]),a:f(it),opts:shuffle([f(it),...others(it,f)]),dir:"jp"});});
-  shuffle(its.slice()).slice(0,3).forEach(it=>{const f=x=>x[0];const a=it[0],q=lp.kind==="kana"?it[1]:it[2];qs.push({it,q,a,opts:shuffle([a,...shuffle(pool.filter(x=>x[0]!==a)).slice(0,3).map(f)]),dir:"en"});});
+  shuffle(its.slice()).slice(0,3).forEach(it=>{const f=x=>x[0];const a=it[0],q=lp.kind==="kana"?it[1]:it[2];qs.push({it,q,a,opts:shuffle([a,...wrongOpts(pool,it,f)]),dir:"en"});});
   if(lp.kind==="words"){
     // 👂 listening: hear it, pick the meaning (recorded words only)
-    shuffle(its.filter(it=>RECORDED.has(wordSay(it[0])))).slice(0,2).forEach(it=>qs.push({it,q:"",say:wordSay(it[0]),a:it[2],opts:shuffle([it[2],...shuffle(pool.filter(x=>x[2]!==it[2])).slice(0,3).map(x=>x[2])]),dir:"listen"}));
+    shuffle(its.filter(it=>RECORDED.has(wordSay(it[0])))).slice(0,2).forEach(it=>qs.push({it,q:"",say:wordSay(it[0]),a:it[2],opts:shuffle([it[2],...wrongOpts(pool,it,x=>x[2])]),dir:"listen"}));
     // ⌨️ one typed answer: English shown, type the Japanese (romaji or kana)
     const ti=shuffle(its.slice())[0];if(ti)qs.push({it:ti,q:ti[2],a:ti[1],dir:"type",opts:[]});}
-  if(lp.kind==="words")reviewWords(its.map(x=>x[0]),2).forEach(jp=>{const w=wordInfo(jp);if(w)qs.push({it:w,q:w[0],say:wordSay(w[0]),a:w[2],opts:shuffle([w[2],...shuffle(pool.filter(x=>x[2]!==w[2])).slice(0,3).map(x=>x[2])]),dir:"jp",review:true});});
+  if(lp.kind==="words")reviewWords(its.map(x=>x[0]),2).forEach(jp=>{const w=wordInfo(jp);if(w)qs.push({it:w,q:w[0],say:wordSay(w[0]),a:w[2],opts:shuffle([w[2],...wrongOpts(pool,w,x=>x[2])]),dir:"jp",review:true});});
   return qs;
 }
 const KANA_POOL=()=>{const o={};COURSE.forEach(u=>[...u.kana].forEach(ch=>{const id=(/[ァ-ン]/.test(ch)?"k:":"h:")+ch;o[ch]=[ch,CARDS[id].back,"",id];}));return o;};
@@ -3630,7 +3643,11 @@ function makeQ(id,listen,pool){
   if(type==="listenRo")return{id,type,prompt:"",answer:c.sub,ask:"👂 Type what you hear (romaji or kana)",typeIn:"ro",listen:true,opts:[]};
   if(type==="typeSound")return{id,type,prompt:c.front,answer:c.back,ask:"Type the sound of this character",typeIn:"ro",opts:[]};
   const val={sound:x=>CARDS[x].back,kana:x=>CARDS[x].front,meaning:x=>CARDS[x].back,word:x=>CARDS[x].front,reading:x=>firstReading(CARDS[x]),listen:x=>k==="num"?CARDS[x].front:CARDS[x].back}[type];
-  const answer=val(id),others=[...new Set(shuffle(P.filter(x=>x!==id)).map(val).filter(v=>v&&v!==answer))].slice(0,3);
+  const answer=val(id),others=[],took=[],meanOf=x=>k==="kana"||k==="num"?"":CARDS[x].back;
+  for(const x of shuffle(P.filter(x=>x!==id))){if(others.length>=3)break;const v=val(x);
+    if(!v||v===answer||others.includes(v)||CARDS[x].say===c.say)continue;
+    if(meanOf(x)&&(meanClash(meanOf(x),c.back)||took.some(t=>meanClash(meanOf(t),meanOf(x)))))continue;
+    others.push(v);took.push(x);}
   const prompt=type==="listen"?"":type==="kana"||type==="word"?c.back:c.front;
   const ask=k==="num"?{meaning:"How do you say this number?",word:"Which number is this?",listen:"👂 Which number did you hear?"}[type]:{sound:"What sound is this?",kana:"Which character is this sound?",meaning:"What does this mean?",word:"How do you say this in Japanese?",reading:"How is this kanji read?",listen:"👂 Listen: what did you hear?"}[type];
   return{id,type,prompt,answer,ask,opts:shuffle([answer,...others])};

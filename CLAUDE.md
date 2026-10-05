@@ -306,6 +306,10 @@ Safari → Add to Home Screen.
   order, shown with answer and sound, `UI.fc.learn`) or path lessons. Practice shows kana first, other decks
   folded under "More decks"; the Cards tab defaults to Kana. A card speaks only when flipped
   (audio before flipping gave the answer away; "🔊 Hear it (a hint)" plays it on purpose).
+- **No look-alike answers**: every multiple-choice question (lesson practice/recap via `wrongOpts()`, tests and quizzes via
+  `makeQ`) skips wrong options whose meaning overlaps the answer or each other (`meanClash`: compares English meanings
+  without brackets, per "/" or "," variant, word containment) and words with the same reading. Owner hit はじめまして with
+  "nice to meet you (please be kind to me)" as a "wrong" option.
 - **Multiple-choice quiz** (`buildQz`/`startQz`/`vQuiz`, `UI.qz`): 10 questions from learned cards only (due
   first), 4 options from the same kind (kana: sound↔character; words: meaning↔Japanese; kanji: meaning or
   reading). No audio and no reading until you answer; then the answer, reading and audio show. Updates
