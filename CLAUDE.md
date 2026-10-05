@@ -77,6 +77,14 @@ Safari → Add to Home Screen.
   `testSpec(n)` → `startTest()` → `UI.qz.test` with a recap page first (`intro`, tap to hear), questions from
   `makeQ(id,true)` (adds 👂 listening questions), full screen like a lesson, passing marks the node done,
   failing offers Try again. v23 marks tests in already-finished units as done so the path doesn't jump back.
+- **More recaps** (state v31, owner: "more big recaps, recaps of all past lessons, last 6 lessons, 2…"): every N5/N4 unit gets
+  ⚡ Quick recap `cq:<u>:q` after lesson c, before the roleplay (lessons b+c, 8 Qs, 75%). Unit-end recaps by position in the
+  level (`endRecap(pos)`): every 6th unit 🌏 Everything so far `cq:<u>:a` (all units of the level so far + kana, 25 Qs, 75%),
+  else every 3rd 🔁 Big recap `:r`, else every 2nd 🔁 Recap · last 6 lessons `:s` (last 2 units, 14 Qs, 75%). v31 migrate
+  marks q (lesson c or roleplay done) and the unit-end recap (unit finished) as done, and an old `:r` where `:a` now sits
+  carries over. Practice → "🔁 Recaps of past lessons" (`RECAPS`, `doneLessons()`, `recapSpec(v)`, `ACT.recap`): free
+  tests on the last 1 / 2 / 6 / 12 finished lessons or everything; they're `test.free` (no path node, +10 XP, retry keeps
+  the spec, closing returns to Practice). `nodeSub` for tests now reads counts from `testSpec`.
 - **Auto-update**: on open, on returning to the app, and every 15 min, `checkUpdate` fetches
   the live page and compares its `<script>`/`<style>` with the running ones. If different it
   reloads right away when idle (`canReloadNow`), otherwise when the app is next hidden. Loop
@@ -457,7 +465,7 @@ Safari → Add to Home Screen.
 - Pages use `.sec` category headings: Practice (Today / Quick practice / decks…), Me (You / Yuki / App).
 
 ## Technical notes
-- State object `S` (currently `v:30`) saved to localStorage key `yuki-sensei-v3`. Keep it backward
+- State object `S` (currently `v:31`) saved to localStorage key `yuki-sensei-v3`. Keep it backward
   compatible. Saved data (and restored backups) go through `migrate()`; if the shape
   changes, bump `DEFAULT.v` and add a step there instead of wiping progress.
 - Clicks route through `data-act` attributes to the `ACT` object.
