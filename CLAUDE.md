@@ -419,6 +419,12 @@ Safari → Add to Home Screen.
   reply used to be glued on, so Yuki answered/translated it again); the prompt says to reply only to the latest message;
   `saidBefore` lines are quoted "only so you don't say them again"; `fixForOlder()` (`fixSim` bigram overlap) drops a
   `<<FIX>>` that clearly belongs to an older student message.
+- **No stutter, no crashes on calls** (v2026.10.14-7, owner: "don't need him to stutter or bug, the AI to work better when
+  speaking and not crash"): `sayChunkOnce` counts a line as started when `synth.speaking` is true (iOS fires "start"
+  late; cancelling and re-saying it stuttered); `warmWebEn(segs)` (from `speakQuest`) pre-fetches the online English
+  clips (`webEnChunks`, no-cors cache warm-up); `apiRequest` retries twice by itself on a dropped connection or
+  429/5xx/529; a call that still fails shows "🔁 Try again" (`UI.vretry`, `ACT.vRetry` removes the failed attempt and
+  resends the same words).
 - **Reliability**: `apiRequest` gives up after 60 s (AbortController) so Yuki can't hang on "thinking";
   auto-update never reloads during a lesson, flashcards or an open sheet (`canReloadNow`); call captions use
   `captionText()` (markdown removed, bullets kept); spoken answers with kanji still tick course words.
