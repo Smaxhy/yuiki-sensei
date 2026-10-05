@@ -276,6 +276,11 @@ Safari → Add to Home Screen.
   (3.5 s, 5.5 s on the first start: iOS can be slow to start dictation right after opening) the mic PAUSES keeping the words ("tap 🎤 Continue or ➤ Send").
   Tapping the other language (or the same one while paused) resumes inside the tap. Hands-free
   (`S.settings.handsFree`) is off by default since iPhone may refuse a mic start without a tap.
+  Pauses → commas: `onresult` notes the text so far when ~1 s passes before more words arrive (`MIC.marks`), and
+  `withPauses()` puts "、" (ja) or "," (en) there; a mic restart between `MIC.base` and the new session counts as a pause
+  too (`micText`). Numbers: `jaDigits()` reads digits with counter sound changes (`CNT_SPECIAL`/`CNT_READ`/`jaCount`:
+  ひとつ, ふたり, よじ, いっぷん, さんじゅっぷん, はたち, ついたち, さんぼん…), drops thousands commas (1,000円 → せんえん) and
+  reads phone numbers (0… with dashes) digit by digit.
   Results are joined with `joinResults`/`mergeHeard` (also base+session in `micText`): iPhone sends cumulative or
   repeated pieces ("hello", "hello how"…), and plain concatenation had doubled/scrambled what the owner said.
   Mic events are written to the voice log. Chat mic fills the text box (no auto-send).
