@@ -656,7 +656,7 @@ html.light #voice .btn{color:#2a1520}
 <script>
 "use strict";
 // Bump this on every change so phones can spot a new version and offer to update
-const APP_VERSION="2026.10.14-3";
+const APP_VERSION="2026.10.14-4";
 /* ============ DATA ============ */
 const LV = {
   n5:{label:"N5",name:"Beginner",color:"#9fd67c"},
@@ -1323,9 +1323,24 @@ const recCache=new Map();
 // Recordings play through the shared <audio> player (not Web Audio): iPhone allows it straight from a
 // tap, it isn't silenced when iOS pauses Web Audio after a call/mic/app switch, and it ignores the silent switch.
 const recUrlFor=t=>`audio/${S.settings.jaRec==="off"?"ryusei":S.settings.jaRec}/${recId(t)}.mp3`;
+// Recordings a lesson/test will need are downloaded into memory when it opens (preloadRec), so a tap plays
+// them straight from the phone: no network wait, no iPhone byte-range requests (which sometimes made iPhone
+// refuse the clip). If a clip still won't play, it's tried once the other way before the iPhone voice helps.
+const recBlobs=new Map();
+function preloadRec(list){
+  if(location.protocol==="file:"||S.settings.jaRec==="off")return;
+  (list||[]).forEach(t=>{t=t&&String(t).trim();if(!t||!RECORDED.has(t))return;const u=recUrlFor(t);if(recBlobs.has(u))return;recBlobs.set(u,null);
+    withTimeout(fetch(u),15000).then(r=>{if(!r.ok)throw new Error("HTTP "+r.status);return r.blob();})
+      .then(b=>{if(b.size<200)throw new Error("empty");recBlobs.set(u,URL.createObjectURL(new Blob([b],{type:"audio/mpeg"})));})
+      .catch(()=>recBlobs.delete(u));});
+  if(recBlobs.size>160){[...recBlobs.keys()].slice(0,40).forEach(k=>{const b=recBlobs.get(k);if(b)URL.revokeObjectURL(b);recBlobs.delete(k);});}
+}
 function playRecorded(t,rate){
-  const my=++natSeq;natBusy=true;
-  return playUrl(recUrlFor(t),my,rate).finally(()=>{if(my===natSeq)natBusy=false;});
+  const my=++natSeq;natBusy=true;const u=recUrlFor(t),b=recBlobs.get(u);
+  return playUrl(b||u,my,rate).catch(e=>{if(my!==natSeq)throw e;vlog("↺ trying the recording again "+(b?"from the internet":"from memory"));
+      if(b)return playUrl(u,my,rate);
+      return withTimeout(fetch(u),6000).then(r=>r.blob()).then(x=>{const bu=URL.createObjectURL(new Blob([x],{type:"audio/mpeg"}));recBlobs.set(u,bu);if(my!==natSeq)return;return playUrl(bu,my,rate);});})
+    .finally(()=>{if(my===natSeq)natBusy=false;});
 }
 // Voice log: what happened each time Yuki tried to speak (Me → Voice → Voice log), to find problems
 const VLOG=[];
@@ -1589,7 +1604,7 @@ async function prepClip(job,my){
 // has said once plays instantly from then on, even when the free server is busy or down. Requests that miss
 // a reply's deadline keep going in the background (my = null) and are saved too, so "Say it again" and
 // repeated sentences use Ryusei next time instead of the iPhone voice.
-const RY_CACHE="yuki-ryusei",RY_MAX=800,ryMem=new Map(),ryJobs=new Map();let ryPuts=0;
+const RY_CACHE="yuki-ryusei",RY_MAX=300,ryMem=new Map(),ryJobs=new Map();let ryPuts=0;
 const ryKey=t=>"https://ryusei.local/"+vvSpeaker()+"/"+encodeURIComponent(t);
 async function ryGet(t){const k=ryKey(t);if(ryMem.has(k))return ryMem.get(k);
   if(!window.caches)return null;
@@ -1599,7 +1614,8 @@ async function ryPut(t,blobUrl){const k=ryKey(t);
   try{const b=await (await fetch(blobUrl)).blob();if(b.size<200)return;
     if(!ryMem.has(k)){ryMem.set(k,URL.createObjectURL(b));if(ryMem.size>60){const o=ryMem.keys().next().value;URL.revokeObjectURL(ryMem.get(o));ryMem.delete(o);}}
     if(!window.caches)return;const c=await caches.open(RY_CACHE);
-    await c.put(k,new Response(b,{headers:{"Content-Type":"audio/mpeg"}}));
+    try{await c.put(k,new Response(b,{headers:{"Content-Type":"audio/mpeg"}}));}
+    catch(e){vlog("… phone storage full, clearing old saved Ryusei sentences");const ks=await c.keys();for(const x of ks.slice(0,Math.ceil(ks.length/2)))await c.delete(x);return;}
     if(++ryPuts%25===0){const ks=await c.keys();for(let i=0;i<ks.length-RY_MAX;i++)await c.delete(ks[i]);}
   }catch(e){}}
 function ryuseiClip(text){
@@ -2323,6 +2339,7 @@ function lpNext(){
     if(lp.kind==="kana")markNode(lp.node.key,true);render();}else{render();lpSay();}}
 }
 function lpSay(){const lp=UI.lp;if(!lp)return;
+  preloadRec(lp.items.map(it=>lp.kind==="kana"?it[0]:wordSay(it[0])).concat((lp.qs||[]).map(q=>q.say)));
   if(lp.step==="learn"){const it=lp.items[lp.i];speak(lp.kind==="kana"?it[0]:wordSay(it[0]),{rate:0.85});}
   else if(lp.step==="quiz"){const q=lp.qs[lp.qi];if(q&&(q.dir==="jp"||q.dir==="listen"))speak(q.say,{rate:0.85});}}
 function vLesson(){
@@ -3821,9 +3838,9 @@ function startTest(n,spec){
   const ids=[...new Set(spec.ids)].filter(i=>CARDS[i]);
   const qs=shuffle(ids.slice()).slice(0,spec.count).map(id=>makeQ(id,true,ids));
   stopSpeak();UI.lp=null;UI.fc=null;
-  UI.qz={kind:"test",qs,i:0,picked:null,right:0,missed:[],test:{key:n.key,title:spec.title,pass:spec.pass,ids,node:n},intro:true};render();
+  UI.qz={kind:"test",qs,i:0,picked:null,right:0,missed:[],test:{key:n.key,title:spec.title,pass:spec.pass,ids,node:n},intro:true};render();qzSayListen();
 }
-const qzSayListen=()=>{const z=UI.qz,q=z&&!z.intro&&z.qs[z.i];if(q&&(q.type==="listen"||q.listen)&&z.picked==null)speak((q.card||CARDS[q.id]).say,{rate:0.85});};
+const qzSayListen=()=>{const z=UI.qz;if(z&&!z.pre){z.pre=1;preloadRec(z.qs.map(q=>{const c=q.card||CARDS[q.id];return c&&c.say;}));}const q=z&&!z.intro&&z.qs[z.i];if(q&&(q.type==="listen"||q.listen)&&z.picked==null)speak((q.card||CARDS[q.id]).say,{rate:0.85});};
 /* ---- Number exercises: new numbers every time, inside what you've learned so far ---- */
 function numMax(){
   const k=new Set(Object.keys(S.cards).filter(i=>i.startsWith("n:")));
