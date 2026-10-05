@@ -177,6 +177,11 @@ Safari → Add to Home Screen.
   Removed engines (owner's request, v27): ElevenLabs, Microsoft Azure and the "Own server" VOICEVOX Space are gone;
   migrate drops their settings/keys and moves those users to Ryusei everywhere; the ElevenLabs clip cache is deleted on
   open. The only engines are "quest" (Ryusei everywhere) and "device" (⚡ Fast).
+  Recordings v2 (v2026.10.14-9, owner's log: tapping えん ten times, "voice breaking and delayed in lessons"): all clips in
+  audio/ryusei and audio/himari were re-processed by `tools/fix_audio.sh` (≥0.25 s silent lead-in, because iPhone/AirPods
+  swallow the first moment of short words; louder: peak about -1.5 dB, +9 dB max). Run it on any new clips
+  (`ls audio/*/*.mp3 | xargs -P8 -n1 tools/fix_audio.sh`; it skips clips that are already done). Clip URLs carry `AUD_V`
+  ("?v=2", bump it when the recordings change); sw.js uses the cache "yuki-audio-2" and deletes the old "yuki-audio".
   Free recorded Japanese audio: every `CARDS[*].say` (incl. course words) is pre-recorded with VOICEVOX in
   `audio/himari/` and `audio/ryusei/` (file name = `recId(text)`), chosen with
   `S.settings.jaRec`; `speak()` plays these first for exact matches, and in the default

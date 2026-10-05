@@ -656,7 +656,7 @@ html.light #voice .btn{color:#2a1520}
 <script>
 "use strict";
 // Bump this on every change so phones can spot a new version and offer to update
-const APP_VERSION="2026.10.14-8";
+const APP_VERSION="2026.10.14-9";
 /* ============ DATA ============ */
 const LV = {
   n5:{label:"N5",name:"Beginner",color:"#9fd67c"},
@@ -1322,7 +1322,10 @@ const recId=t=>Array.from(t).map(c=>c.codePointAt(0).toString(16)).join("_");
 const recCache=new Map();
 // Recordings play through the shared <audio> player (not Web Audio): iPhone allows it straight from a
 // tap, it isn't silenced when iOS pauses Web Audio after a call/mic/app switch, and it ignores the silent switch.
-const recUrlFor=t=>`audio/${S.settings.jaRec==="off"?"ryusei":S.settings.jaRec}/${recId(t)}.mp3`;
+// AUD_V changes whenever the recordings are re-made, so phones fetch the new files instead of old saved ones
+// (v2: every clip has a 0.25 s silent lead-in and is louder; iPhone/AirPods swallowed the start of short words)
+const AUD_V="?v=2";
+const recUrlFor=t=>`audio/${S.settings.jaRec==="off"?"ryusei":S.settings.jaRec}/${recId(t)}.mp3${AUD_V}`;
 // Recordings a lesson/test will need are downloaded into memory when it opens (preloadRec), so a tap plays
 // them straight from the phone: no network wait, no iPhone byte-range requests (which sometimes made iPhone
 // refuse the clip). If a clip still won't play, it's tried once the other way before the iPhone voice helps.
@@ -3470,7 +3473,7 @@ function translateEn(text){
 // A new sentence the builder made: Ryusei live when online, the iPhone's Japanese voice offline (or for English names)
 function trSay(ja,say){
   stopSpeak();resetAudio();say=say||ja;
-  if(TR_REC.has(ja)){const my=++natSeq;natBusy=true;playUrl("audio/ryusei/"+recId(ja)+".mp3",my,1).catch(()=>sayDevice(say,"ja-JP",0.9)).finally(()=>{if(my===natSeq)natBusy=false;});}
+  if(TR_REC.has(ja)){const my=++natSeq;natBusy=true;playUrl("audio/ryusei/"+recId(ja)+".mp3"+AUD_V,my,1).catch(()=>sayDevice(say,"ja-JP",0.9)).finally(()=>{if(my===natSeq)natBusy=false;});}
   else if(navigator.onLine!==false&&S.settings.tts!=="device"&&!/[A-Za-z]/.test(say))speakQuest([{k:"ja",t:say}],0.9,say,{noSplit:true}).catch(()=>sayDevice(say,"ja-JP",0.9));
   else sayDevice(say,"ja-JP",0.9);
 }
@@ -3622,8 +3625,8 @@ async function trSaveOffline(){
   if(!("caches" in window)){toast("Offline saving isn't available here");return;}
   const files=[...new Set([...TR_REC].map(t=>"audio/ryusei/"+recId(t)+".mp3"))];let done=0;
   toast("Saving "+files.length+" sentences… keep the app open",2500);
-  const c=await caches.open("yuki-audio");
-  for(let i=0;i<files.length;i+=8){await Promise.all(files.slice(i,i+8).map(async f=>{try{if(!(await c.match(f))){const r=await fetch(f);if(r.ok)await c.put(f,r);}done++;}catch(e){}}));}
+  const c=await caches.open("yuki-audio-2");
+  for(let i=0;i<files.length;i+=8){await Promise.all(files.slice(i,i+8).map(async f=>{try{if(!(await c.match(f))){const r=await fetch(f+AUD_V);if(r.ok)await c.put(f,r);}done++;}catch(e){}}));}
   try{const r=await fetch(location.pathname,{cache:"no-store"});if(r.ok)await (await caches.open("yuki-page")).put("./",r);}catch(e){}
   UI.tr.saved=done;toast(done===files.length?"✓ Saved! The translator now works offline":"Saved "+done+" of "+files.length+" (try again on Wi-Fi for the rest)",3500);if(UI.tab==="translate")rerender();
 }

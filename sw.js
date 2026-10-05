@@ -2,7 +2,8 @@
 // travel translator) on the phone, so they work with no internet. The page itself is always fetched fresh
 // when online (auto-update keeps working); the saved copy is only used offline.
 self.addEventListener("install",()=>self.skipWaiting());
-self.addEventListener("activate",e=>e.waitUntil(self.clients.claim()));
+// "yuki-audio-2": the recordings were re-made (silent lead-in, louder), so the old saved copies are dropped
+self.addEventListener("activate",e=>e.waitUntil((async()=>{try{await caches.delete("yuki-audio");}catch(err){}await self.clients.claim();})()));
 self.addEventListener("fetch",e=>{
   const req=e.request,u=new URL(req.url);
   if(req.method!=="GET"||u.origin!==location.origin)return;
@@ -16,10 +17,10 @@ async function page(req){
 // Audio: from the phone if saved, else from the internet (and saved). Safari asks for byte ranges, so
 // those are cut from the saved file.
 async function audio(req,u){
-  const c=await caches.open("yuki-audio"),key=u.origin+u.pathname;
+  const c=await caches.open("yuki-audio-2"),key=u.origin+u.pathname;
   let hit=null;try{hit=await c.match(key);}catch(e){}
   if(!hit){
-    let r;try{r=await fetch(key);}catch(err){return Response.error();}
+    let r;try{r=await fetch(u.href,{cache:"no-cache"});}catch(err){return Response.error();}
     if(r.status!==200)return r;
     // saving is a bonus: if the phone's storage is full, the clip still plays
     try{await c.put(key,r.clone());}catch(e){}
