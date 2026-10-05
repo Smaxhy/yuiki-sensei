@@ -656,7 +656,7 @@ html.light #voice .btn{color:#2a1520}
 <script>
 "use strict";
 // Bump this on every change so phones can spot a new version and offer to update
-const APP_VERSION="2026.10.14-11";
+const APP_VERSION="2026.10.14-12";
 /* ============ DATA ============ */
 const LV = {
   n5:{label:"N5",name:"Beginner",color:"#9fd67c"},
@@ -967,7 +967,7 @@ const DEFAULT={
   v:31,onboarded:false,name:"",level:"n5",goal:"",
   about:{done:false,focus:[],hira:"",kata:"",kanji:"",location:"",native:"English",minutes:15,notes:""},
   placement:null,plan:null,course:null,
-  profile:{facts:[],weak:[],strong:[],learned:[],teach:[]},
+  profile:{facts:[],weak:[],strong:[],learned:[],teach:[],eps:[],str:{}},miss:{},
   stats:{msgs:0,quizRight:0,quizWrong:0,cards:0,streak:0,lastDay:"",calls:0},
   usage:{month:"",cost:0,n:0,total:0,allN:0,last:0,lastIn:0,lastOut:0},
   days:{},daily:{goal:50,freeze:1,best:0,exam:"",examName:"",remind:"19:00",badges:[],init:false},
@@ -1205,14 +1205,39 @@ function memSame(a,b){const A=memToks(a),B=memToks(b);if(!A.size||!B.size)return
   let h=0;A.forEach(x=>{if(B.has(x))h++;});return h/Math.min(A.size,B.size)>=0.75&&h/Math.max(A.size,B.size)>=0.5;}
 // learned items are "word = meaning": the same word counts once, however it's written
 const learnKey=t=>String(t).split(/=|：|:| - | – /)[0].replace(/[（(][^)）]*[)）]/g,"").replace(/[\s「」『』~～、。!！?？]/g,"").toLowerCase();
-function addMem(list,items,cap,learned){(items||[]).forEach(x=>{x=String(x).trim().replace(/\s+/g," ");if(!x||x.length>120)return;
-  const k=learned&&learnKey(x);for(let i=list.length-1;i>=0;i--)if(learned?learnKey(list[i])===k:memSame(list[i],x))list.splice(i,1);list.push(x);});
-  while(list.length>cap)list.shift();}
+// Yuki's memory works more like a brain (owner: "remember things better, improve more and more, work like a brain"):
+// every memory has a strength (how often it came up again) and when it was last seen. Repeats make it stronger,
+// and when a list is full the weakest, least recent memory is forgotten first, not simply the oldest.
+const memK=t=>String(t).toLowerCase().replace(/\s+/g," ").trim().slice(0,60);
+function memStr(x){const st=S.profile&&S.profile.str,v=st&&st[memK(x)];return v?v[0]:1;}
+// memories from before strengths existed count as established (seen twice, a week ago)
+function memScore(x,i,len){const st=(S.profile.str||{})[memK(x)]||[2,Date.now()-7*864e5];const days=(Date.now()-st[1])/864e5;return Math.min(st[0],6)*1.5-days/10+(len?i/len:0);}
+function addMem(list,items,cap,learned){const st=S.profile.str||(S.profile.str={});(items||[]).forEach(x=>{x=String(x).trim().replace(/\s+/g," ");if(!x||x.length>120)return;
+  const k=learned&&learnKey(x);let n=0;for(let i=list.length-1;i>=0;i--)if(learned?learnKey(list[i])===k:memSame(list[i],x)){const o=st[memK(list[i])];if(o){n=Math.max(n,o[0]);delete st[memK(list[i])];}else n=Math.max(n,1);list.splice(i,1);}
+  list.push(x);if(!learned)st[memK(x)]=[n+1,Date.now()];});
+  while(list.length>cap){if(learned){list.shift();continue;}let lo=0,ls=1e9;list.forEach((x,i)=>{const sc=memScore(x,i,list.length);if(sc<ls){ls=sc;lo=i;}});delete st[memK(list[lo])];list.splice(lo,1);}
+  if(Object.keys(st).length>400)Object.keys(st).slice(0,100).forEach(k=>delete st[k]);}
+// Recall: the memories that matter right now (linked to what you're talking about, strong, or recent), like a brain
+// bringing up what's relevant instead of just the last few things it heard
+function recallCtx(){const c=activeCourse(),cv=activeConvo&&activeConvo(),lu=[...S.chat].reverse().find(m=>m.role==="user");
+  return memToks([lu&&lu.text,c&&c.title,c&&c.goal,c&&c.targets&&c.targets.join(" "),cv&&cv.title,cv&&cv.scene].filter(Boolean).join(" "));}
+function recall(list,n,ctx){if(list.length<=n)return list.slice();ctx=ctx||recallCtx();
+  const sc=list.map((x,i)=>{let h=0;memToks(x).forEach(t=>{if(ctx.has(t))h++;});return[i,h*3+memScore(x,i,list.length)];});
+  const keep=new Set(sc.sort((a,b)=>b[1]-a[1]).slice(0,n).map(a=>a[0]));return list.filter((x,i)=>keep.has(i));}
+// Diary: one line per lesson, test or conversation, so Yuki can say "last time you…"
+function episode(t){const p=S.profile;if(!p.eps)p.eps=[];const d=new Date(),day=String(d.getMonth()+1).padStart(2,"0")+"/"+String(d.getDate()).padStart(2,"0");
+  p.eps.push(day+" "+String(t).slice(0,140));while(p.eps.length>30)p.eps.shift();}
+// Real mistakes from quizzes, tests and flashcards (not guesses): words you keep getting wrong come back in conversation
+function noteMiss(id,ok){if(!id||!CARDS[id])return;const m=S.miss||(S.miss={}),v=m[id]||[0,0,0];
+  if(ok)v[1]++;else{v[0]++;v[2]=Date.now();}m[id]=v;
+  const ks=Object.keys(m);if(ks.length>250)ks.sort((a,b)=>m[a][2]-m[b][2]).slice(0,50).forEach(k=>delete m[k]);}
+function keepsMissing(n){const m=S.miss||{};return Object.keys(m).filter(id=>CARDS[id]&&m[id][0]>=2&&m[id][0]>m[id][1]*0.5)
+  .sort((a,b)=>(m[b][0]-m[b][1]*0.5)-(m[a][0]-m[a][1]*0.5)||m[b][2]-m[a][2]).slice(0,n||5);}
 // 👎 on a reply → a teaching rule Yuki follows from then on (shown and removable in Me → What Yuki remembers)
 const FB_REASONS=[["long","Too long","Keep replies shorter"],["hard","Too hard","Use easier Japanese and more English help"],["easy","Too easy","Use more Japanese and less English"],
  ["topic","Went off topic","Stay on the lesson objective"],["wrong","Wrong or confusing","Double-check explanations and keep them simple"],["repeat","Repeats itself","Don't repeat the same questions or phrases"],
  ["fast","Moves on too fast","Check I understood before moving on"],["boring","Boring / too drill-like","Make it a real conversation with follow-up questions"]];
-const memTag=(k,f,i,c)=>`<button class="tg ${c} memtg" data-act="memDel" data-k="${k}" data-i="${i}" aria-label="Forget ${esc(f)}">${esc(f)} <b>✕</b></button>`;
+const memTag=(k,f,i,c)=>`<button class="tg ${c} memtg" data-act="memDel" data-k="${k}" data-i="${i}" aria-label="Forget ${esc(f)}">${esc(f)}${k!=="learned"&&memStr(f)>1?" "+"★".repeat(Math.min(3,memStr(f)-1)):""} <b>✕</b></button>`;
 function cleanMemory(){const p=S.profile;
   ["facts","strong","weak"].forEach(k=>{const old=p[k].slice();p[k]=[];addMem(p[k],old,30);});
   const l=p.learned.slice();p.learned=[];addMem(p.learned,l,300,true);
@@ -1972,9 +1997,10 @@ function memoryPrompt(){
   const due=dueIds(Object.keys(CARDS)).length;
   return `YOU REMEMBER
 - Finished: ${S.done.length?S.done.map(id=>(lessonById(id)||{}).title).filter(Boolean).slice(-6).join(", "):"none"}
-- About them: ${p.facts.slice(-12).join("; ")||"-"}
-- Weak: ${p.weak.slice(-8).join("; ")||"-"}
-- Strong: ${p.strong.slice(-5).join("; ")||"-"}
+- About them: ${recall(p.facts,12).join("; ")||"-"}
+- Weak: ${recall(p.weak,8).join("; ")||"-"}${keepsMissing(5).length?`\n- Keeps getting wrong in quizzes (bring these back): ${keepsMissing(5).map(id=>CARDS[id].label).join("; ")}`:""}${(p.eps||[]).length?`\n- Recent sessions: ${p.eps.slice(-3).join(" | ")}`:""}
+- Strong: ${recall(p.strong,5).join("; ")||"-"}
+- Use memory like a friend: link to a fact or past session when it fits ("last time you…") and recycle what they keep missing.
 - Recently learned: ${p.learned.slice(-12).join("; ")||"-"}
 - Quiz: ${S.stats.quizRight} right, ${S.stats.quizWrong} wrong. Cards due: ${due}.${p.teach.length?`\n- YOUR TEACHING NOTES (learned from this student; always follow): ${p.teach.slice(-8).join("; ")}`:""}
 ${saidBefore()}${coursePrompt()}${convoPrompt()}${les?`\nCURRENT LESSON: "${les.title}" — ${les.desc} (${LV[les.level].label}, unit "${les.unit}"). Teach it in small steps: short explanation → 2-3 examples → a quick practice question, then wait for their answer. Never dump the whole lesson at once. When they've shown they understand the core of it, congratulate them and tell them they can tap "✓ Done".`:""}`;
@@ -2119,7 +2145,7 @@ async function send(display,apiText,mode){
   const um={role:"user",text:display,api:apiText||undefined};box.push(um);S.stats.msgs++;
   const said=UI.spoken&&UI.spoken.tidy===display?UI.spoken.raw:display;UI.spoken=null;
   if(activeCourse()&&(!apiText||mode==="voice")){courseTurn();markUsed(detectUsed(kanaize(said)));}
-  if(activeConvo()&&(!apiText||mode==="voice")){S.convo.turns++;addXP(3,"msgs");}
+  if(activeConvo()&&(!apiText||mode==="voice")){S.convo.turns++;addXP(3,"msgs");if(S.convo.turns===6)episode("Conversation practice: "+S.convo.title);}
   while(box.length>200)box.shift();
   save();
   if(!UI.voice&&UI.tab!=="chat"){UI.tab="chat";render();}else appendLast();
@@ -2313,7 +2339,7 @@ function nextCard(){
 
 /* ---- word memory (spaced repetition shared with flashcards) ---- */
 function bumpWord(id,ok){
-  const c=S.cards[id]||{box:0,due:0};
+  noteMiss(id,ok);const c=S.cards[id]||{box:0,due:0};
   if(ok){c.box=Math.min(c.box+1,6);c.due=Date.now()+INT[c.box];}else{c.box=0;c.due=Date.now();}
   S.cards[id]=c;
 }
@@ -2582,7 +2608,7 @@ function courseResync(){const c=activeCourse();if(!c||c.synced===S.chat.length)r
   c.turns=talkTurns(c);
   if(found.size)markUsed([...found]);else courseFinishCheck(c);}
 function courseFinishCheck(c){
-  if(talkDone(c)&&!(S.plan&&S.plan.done[c.key])){markNode(c.key,true);toast("🎉 Real conversation done! Tap Finish lesson when you're ready",3000);
+  if(talkDone(c)&&!(S.plan&&S.plan.done[c.key])){episode("Finished “"+c.title+"” ("+c.goal+") using "+c.used.join(", "));markNode(c.key,true);toast("🎉 Real conversation done! Tap Finish lesson when you're ready",3000);
     if(UI.voice)setTimeout(renderVoice,50);else if(UI.tab==="chat")setTimeout(rerenderChatHead,50);return true;}
   return false;
 }
@@ -3943,7 +3969,7 @@ const cardOf=x=>typeof x==="string"?CARDS[x]:x;
 function qzGrade(q,ok){
   const z=UI.qz;
   if(q.num){if(ok)z.right++;else z.missed.push(q.card);}
-  else{const c=S.cards[q.id]||{box:0,due:0};if(ok){z.right++;c.box=Math.min(c.box+1,6);c.due=Date.now()+INT[c.box];}else{c.box=Math.max(0,c.box-1);c.due=Date.now();z.missed.push(q.id);addUnique(S.profile.weak,[CARDS[q.id].label],30);}S.cards[q.id]=c;}
+  else{noteMiss(q.id,ok);const c=S.cards[q.id]||{box:0,due:0};if(ok){z.right++;c.box=Math.min(c.box+1,6);c.due=Date.now()+INT[c.box];}else{c.box=Math.max(0,c.box-1);c.due=Date.now();z.missed.push(q.id);addUnique(S.profile.weak,[CARDS[q.id].label],30);}S.cards[q.id]=c;}
   S.stats.cards++;addXP(ok?2:1,"cards");save();render();speak((q.card||CARDS[q.id]).say,{rate:0.85});
 }
 function startQz(kind){
@@ -4117,7 +4143,7 @@ function vCard(){
 }
 const INT=[0,10*60e3,864e5,3*864e5,7*864e5,16*864e5,35*864e5];
 function grade(ok){
-  const f=UI.fc,id=f.q[f.i],c=S.cards[id]||{box:0,due:0},card=CARDS[id];
+  const f=UI.fc,id=f.q[f.i],c=S.cards[id]||{box:0,due:0},card=CARDS[id];noteMiss(id,ok);
   if(ok){c.box=Math.min(c.box+1,6);c.due=Date.now()+INT[c.box];f.right++;
     if(c.box>=3){S.profile.weak=S.profile.weak.filter(w=>w!==card.label);}}
   else{c.box=0;c.due=Date.now();f.wrong++;f.missed.push(id);addUnique(S.profile.weak,[card.label],30);
@@ -4192,11 +4218,13 @@ function vMe(){
   </div>
   `,
    memory:()=>`<div class="card">
-   <p class="sub" style="margin-bottom:8px">Tap ✕ to make Yuki forget something. Repeats are merged automatically.</p>
+   <p class="sub" style="margin-bottom:8px">🧠 Yuki's memory works like a brain: things that come up again get stronger (★), she recalls what fits the moment, and the weakest fade first. Tap ✕ to make her forget something.</p>
    ${S.profile.facts.length?`<p class="sub" style="margin:0 0 6px">About you</p><div class="tags">${S.profile.facts.map((f,i)=>memTag("facts",f,i,"")).join("")}</div>`:`<p class="sub">Nothing yet — chat with her and she'll pick things up.</p>`}
    ${S.profile.strong.length?`<p class="sub" style="margin:12px 0 6px">Strong at</p><div class="tags">${S.profile.strong.map((f,i)=>memTag("strong",f,i,"s")).join("")}</div>`:""}
    ${S.profile.teach.length?`<p class="sub" style="margin:12px 0 6px">How Yuki teaches you (her own notes + your 👎 feedback)</p><div class="tags">${S.profile.teach.map((f,i)=>memTag("teach",f,i,"")).join("")}</div>`:""}
    ${S.profile.weak.length?`<p class="sub" style="margin:12px 0 6px">Working on</p><div class="tags">${S.profile.weak.map((f,i)=>memTag("weak",f,i,"w")).join("")}</div>`:""}
+   ${keepsMissing(8).length?`<p class="sub" style="margin:12px 0 6px">❌ Words you keep missing (from your quizzes)</p><div class="tags">${keepsMissing(8).map(id=>`<button class="tg w" data-act="sayText" data-text="${esc(CARDS[id].say)}">${esc(CARDS[id].front)} · ${esc(CARDS[id].back)} <b>×${S.miss[id][0]}</b></button>`).join("")}</div>`:""}
+   ${(S.profile.eps||[]).length?`<p class="sub" style="margin:12px 0 6px">📓 Yuki's diary of your sessions</p>${S.profile.eps.slice(-8).reverse().map(e=>`<p class="sub" style="margin:2px 0">• ${esc(e)}</p>`).join("")}`:""}
    <p class="sub" style="margin-top:12px">${S.profile.learned.length} words & patterns taught · ${S.stats.msgs} messages · ${S.stats.cards} cards reviewed</p>
   </div>
   `,
@@ -4415,6 +4443,7 @@ const ACT={
     const v=i.value.replace(/[^0-9０-９]/g,"").replace(/[０-９]/g,c=>String.fromCharCode(c.charCodeAt(0)-0xFEE0)).replace(/^0+(?=\d)/,"");
     if(!v){toast("Type the number first");i.focus();return;}const q=z.qs[z.i];z.picked=v;qzGrade(q,v===q.answer);},
   qzNext:()=>{const z=UI.qz;if(!z)return;z.i++;z.picked=null;stopSpeak();
+    if(z.test&&z.i>=z.qs.length){const ms=[...new Set(z.missed)].map(id=>CARDS[id]&&CARDS[id].front).filter(Boolean).slice(0,4);episode(z.test.title+": "+z.right+"/"+z.qs.length+(ms.length?", missed "+ms.join(", "):", no mistakes"));}
     if(z.test&&z.i>=z.qs.length&&z.right/z.qs.length>=z.test.pass){if(z.test.free)addXP(10,null,z.test.title);else markNode(z.test.key,true);}
     render();qzSayListen();},
   qzClose:()=>{const t=UI.qz&&UI.qz.test;UI.qz=null;stopSpeak();if(t)UI.tab=t.free?"practice":"home";render();},

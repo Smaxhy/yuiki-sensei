@@ -174,6 +174,16 @@ Safari → Add to Home Screen.
   this student (MEM field "teach", 1 short rule when she notices confusion / too hard / too long; and the 👍/👎 under her
   latest reply: 👎 → `FB_REASONS` sheet → a rule like "Keep replies shorter"); max 10, deduped by `addMem`, sent as
   "YOUR TEACHING NOTES … always follow" in `memoryPrompt`, removable in Me → What Yuki remembers.
+  Brain-like memory (v2026.10.14-12, owner: "remember things better, improve more and more, work like a brain"; all local,
+  no extra API calls): `S.profile.str` = {memK(text): [strength, lastSeen]}; `addMem` adds +1 strength when a memory comes
+  up again and, when a list is full, forgets the lowest `memScore` (strength vs. age; memories without an entry count as
+  strength 2, a week old) instead of the oldest (learned items still drop oldest). `recall(list,n)` picks what's sent:
+  overlap with `recallCtx()` (last student message, current lesson/convo) ×3 + memScore — used for facts (12), weak (8),
+  strong (5). `S.miss` = {cardId: [wrong, right, lastWrong]} from `noteMiss` in `bumpWord`, `grade`, `qzGrade`;
+  `keepsMissing(n)` → prompt line "Keeps getting wrong in quizzes (bring these back)". `episode(text)` writes Yuki's diary
+  `S.profile.eps` (max 30, "MM/DD …"): lesson talk finished, every test result with missed words, conversation practice
+  (at 6 turns); the last 3 go in the prompt as "Recent sessions", plus a rule to use memory like a friend. Me → What Yuki
+  remembers shows ★ strength, "❌ Words you keep missing" and "📓 Yuki's diary".
   Don't break this format.
 - **Lessons**: 100+ lessons in the `CUR` object, grouped by level (n5–n1) → unit →
   [id, title, description]. Tapping one starts a step-by-step lesson in chat, and
