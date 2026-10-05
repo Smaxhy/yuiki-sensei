@@ -14,7 +14,16 @@ Safari → Add to Home Screen.
   No AI, no credits. Result saved to `S.placement` and can set `S.level`.
 - **Learner card**: `learnerCard()` turns `S.about` + `S.placement` into one compact line
   sent with every request so Yuki always knows who the student is.
-- **Conversation course (N5 path)**: `COURSE` = 14 topic units (greetings, introductions,
+- **Conversation courses (N5 + N4)**: `COURSE` = 36 units: 24 N5 + 12 N4 (unit field `lv`, default "n5"). v30 added 10 N5
+  units before "Real conversations" (money & big numbers c15, konbini c16, restaurant c17, past tense c18, adjectives c19,
+  health c20, plans & phone c21, home c22, seasons c23, explaining c24; kana bites ナニヌネノ…パピプペポ) and the N4 course
+  c31–c42 (requests/permission/rules, -ている, casual plain forms, opinions & comparing, experiences, work & school,
+  giving & receiving, feelings & ～そう, trains & directions, weather & ～たら/～ば, keigo, Real N4 conversations = FINAL;
+  N4 units have `kana:""` so no kana node). Words may carry a 4th field of kanji spellings ("一万|万") that feed
+  `KANJI_ALT` for mic detection. Level helpers: `isN5Path()` = level n5 or n4, `courseLv()`, `unitLv(u)`, `levelUnits(lv)`;
+  the path shows only the current level's units (titles "Unit k" / "N4 · Unit k"), recaps every 3rd unit by position,
+  finals `cq:final` (N5) / `cq:final4` (N4), tests and the final conversation use that level's words. v30 migration moves
+  Real conversations' progress 13 → 23 (after v26's 11 → 13). Original units: `COURSE` 14 topic units (greetings, introductions,
   numbers, food, time, hobbies, family, shopping, directions, weather & feelings, travel, small talk (c13*),
   making friends (c14*), real conversations). State v26 inserted the two new units before "Real conversations"
   (migrate remaps cr:11/cq:11:m/cq:11:t → index 13; ck:11 stays since unit 11 still teaches カキクケコ). Each unit
@@ -404,7 +413,7 @@ Safari → Add to Home Screen.
 - Pages use `.sec` category headings: Practice (Today / Quick practice / decks…), Me (You / Yuki / App).
 
 ## Technical notes
-- State object `S` (currently `v:29`) saved to localStorage key `yuki-sensei-v3`. Keep it backward
+- State object `S` (currently `v:30`) saved to localStorage key `yuki-sensei-v3`. Keep it backward
   compatible. Saved data (and restored backups) go through `migrate()`; if the shape
   changes, bump `DEFAULT.v` and add a step there instead of wiping progress.
 - Clicks route through `data-act` attributes to the `ACT` object.
