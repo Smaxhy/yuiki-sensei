@@ -656,7 +656,7 @@ html.light #voice .btn{color:#2a1520}
 <script>
 "use strict";
 // Bump this on every change so phones can spot a new version and offer to update
-const APP_VERSION="2026.10.14-4";
+const APP_VERSION="2026.10.14-5";
 /* ============ DATA ============ */
 const LV = {
   n5:{label:"N5",name:"Beginner",color:"#9fd67c"},
@@ -1922,6 +1922,7 @@ STYLE
 ${styleRules()}
 - Direct, no filler. One idea at a time. Real examples; say why.${S.level==="n5"||S.level==="n4"?"\n- Put spaces between Japanese words (わたし は ゆき です) so the voice reads particles right.":""}
 - CONVERSATION: flow like a real chat (react to what they said, then one follow-up question) while every reply moves toward the current objective. If they drift off topic, answer briefly and naturally, then bridge back with a question they can answer with today's words. Never repeat a question they already answered, and vary your wording (no same opener or praise twice in a row).
+- Reply ONLY to their latest message. Never translate, correct or answer earlier messages again.
 - Mistake → what they wrote → correct version → one-line reason.
 - Do what they ask (quiz, roleplay, drill). Quizzes: one question at a time, right/wrong + short reason, keep score, stop after 10 and sum up.
 - If they ask to add a topic to their path, say so and put it in "path".
@@ -1937,7 +1938,7 @@ function saidBefore(){
   const n=S.settings.history||6,older=S.chat.slice(0,Math.max(0,S.chat.length-n)).filter(m=>m.role==="assistant"&&!m.err).slice(-8);
   if(!older.length)return"";
   const bits=older.map(m=>stripHidden(m.text).replace(/<<[\s\S]*$/,"").replace(/[*_#`\[\]]/g,"").replace(/\s+/g," ").trim().slice(0,55)).filter(Boolean);
-  return`- Already said earlier in this chat (don't repeat these questions or lines; move on to something new): ${bits.join(" | ")}\n`;}
+  return`- Your own earlier lines, listed only so you don't say them again (don't translate, answer or repeat them): ${bits.map(b=>"「"+b+"」").join(" ")}\n`;}
 function memoryPrompt(){
   const p=S.profile,les=S.currentLesson&&lessonById(S.currentLesson);
   const due=dueIds(Object.keys(CARDS)).length;
@@ -1961,7 +1962,9 @@ function buildMessages(mode){
     // older messages are shortened (the last two stay whole): saves tokens without losing the thread
     if(k<list.length-2&&content.length>300)content=content.slice(0,300)+"…";
     if(!msgs.length&&role!=="user")return;
-    if(msgs.length&&msgs[msgs.length-1].role===role)msgs[msgs.length-1].content+="\n\n"+content;
+    // two student messages in a row (a reply failed in between): send only the newest, otherwise Yuki answered and
+    // translated the old unanswered message again ("it translates things from previous questions and repeats itself")
+    if(msgs.length&&msgs[msgs.length-1].role===role){if(role==="user")msgs[msgs.length-1].content=content;else msgs[msgs.length-1].content+="\n\n"+content;}
     else msgs.push({role,content});
   });
   return msgs;
@@ -2066,6 +2069,14 @@ function applyMem(mem){
   if(Array.isArray(mem.path)&&lastU&&/\b(path|add (a |an |the )?lessons?)\b/i.test(lastU.text||"")){const added=mem.path.slice(0,1).filter(t=>addCustom(t));if(added.length)toast("⭐ Yuki added to your path: "+added.join(", "),3500);}
   if(mem.lessonDone&&S.currentLesson&&!S.done.includes(S.currentLesson)){S.done.push(S.currentLesson);addXP(15,null,(lessonById(S.currentLesson)||{}).title);toast("✅ Lesson complete!");}
 }
+// Yuki sometimes wrote the correction/translation for an EARLIER message. If the <<FIX>> clearly matches an older
+// message of the student's better than the one just sent, don't show it under the new one.
+function fixSim(a,b){const n=x=>String(x||"").toLowerCase().replace(/[\s、。，,.!?！？「」"'()（）]/g,"");a=n(a);b=n(b);if(a.length<2||b.length<2)return 0;
+  const bg=x=>{const o=new Set();for(let i=0;i<x.length-1;i++)o.add(x.slice(i,i+2));return o;};const A=bg(a),B=bg(b);let c=0;A.forEach(x=>{if(B.has(x))c++;});return c/Math.min(A.size,B.size);}
+function fixForOlder(fix,um,box){
+  const f=(fix.ja||"")+" "+(fix.en||""),cur=fixSim(f,um.text);if(cur>=0.3)return false;
+  const i=box.indexOf(um),older=box.slice(Math.max(0,i-6),i).filter(m=>m.role==="user");
+  const bad=older.some(m=>fixSim(f,m.text)>Math.max(0.5,cur+0.3));if(bad)vlog("… Yuki's correction was for an earlier message, not shown");return bad;}
 async function send(display,apiText,mode){
   display=(display||"").trim();if(!display||UI.busy)return;
   UI.busy=true;
@@ -2083,7 +2094,7 @@ async function send(display,apiText,mode){
   try{
     const raw=await callAI(UI.voice?"voice":mode);
     const f0=takeFix(normMarkers(raw)),t0=takeSay(f0.raw),say=t0.say;
-    if(f0.fix&&(!apiText||mode==="voice")){um.fix=f0.fix;const ui=box.indexOf(um),el=S.chat===box&&document.querySelector(`.m.u[data-i="${ui}"]`);if(el)el.outerHTML=msgHTML(um,ui);}
+    if(f0.fix&&(!apiText||mode==="voice")&&!fixForOlder(f0.fix,um,box)){um.fix=f0.fix;const ui=box.indexOf(um),el=S.chat===box&&document.querySelector(`.m.u[data-i="${ui}"]`);if(el)el.outerHTML=msgHTML(um,ui);}
     const {text,mem}=parseMem(t0.raw);
     try{applyMem(mem);}catch(e){console.warn("memory skipped",e);}
     const shown=stripHidden(text);
