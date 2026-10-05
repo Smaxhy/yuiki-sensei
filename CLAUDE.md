@@ -220,6 +220,11 @@ Safari → Add to Home Screen.
   EVERY Ryusei clip of the reply (`Promise.all` of `prepClip`s, 5 s, 3.5 s when `questSlow()`), then plays them in one go;
   if any isn't ready in time (or fails), the whole reply is read by the iPhone voice (`speakPlainDevice`) — no switching
   voices mid-reply. The older mid-reply cut-off below now only matters for play-time failures.
+  No pre-wait (v2026.10.14-10, owner: "it works but it's very delayed"): the all-or-nothing wait below is GONE. `speakQuest`
+  starts speaking at once (English in the English voice); a Japanese part waits briefly for its clip (first one up to
+  2.5 s from the start, 1.5 s when `questSlow()`; later ones 1.2 s / 0.8 s), else the iPhone Japanese voice says it and the
+  rest of the reply (`stay`). Before a clip: `synthIdle(600)` and a 200 ms duck gap. `stopMic` waits only 450 ms for
+  iPhone's "end" (was 1.5 s). English parts are always spoken by the English voice on calls when "Read English parts" is on.
   Lesson audio (v2026.10.14-4, owner: "playing audios still isn't working during lessons"): `preloadRec(list)` downloads
   the recordings a lesson (`lpSay`: items + quiz) or quiz/test (`qzSayListen`, also on `startTest`) needs into memory
   (`recBlobs`, blob URLs), so `playRecorded` plays them from the phone; if a clip fails it tries once the other way
