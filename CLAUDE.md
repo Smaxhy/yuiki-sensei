@@ -212,6 +212,13 @@ Safari → Add to Home Screen.
   EVERY Ryusei clip of the reply (`Promise.all` of `prepClip`s, 5 s, 3.5 s when `questSlow()`), then plays them in one go;
   if any isn't ready in time (or fails), the whole reply is read by the iPhone voice (`speakPlainDevice`) — no switching
   voices mid-reply. The older mid-reply cut-off below now only matters for play-time failures.
+  Saved Ryusei (v2026.10.14-3, owner: "make Ryusei's servers work better so he doesn't crash or pause"): live
+  sentences go through `ryuseiClip(text)` = phone cache first (Cache Storage "yuki-ryusei", key `ryKey` = speaker+text,
+  `ryGet`/`ryPut`, max 800, blob URLs in `ryMem` max 60), else `prepClip(questUrl(text), null)`. `my = null` means the
+  request keeps going after the reply's deadline (background) and is saved, so a sentence said once plays instantly
+  forever (Say it again, repeats, offline). The slow-server pause is 5 min, and while paused `questProbe()` (from
+  `speakAI`, max once a minute) quietly asks tts.quest for the reply's first Japanese part; under 4 s → unpause,
+  toast "🎌 Ryusei's voice is back".
   Ryusei never holds Yuki up: if a clip isn't ready 3 s after its turn (5 s for the first one; 2 s / 3 s when
   `questSlow()`), the iPhone voice says the rest of that reply. tts.quest requests go one at a time (`questQ`; bursts trigger "wait").
   An iPhone line that hasn't started after 1.8 s is cancelled and tried once more (`sayChunk`).
@@ -241,7 +248,7 @@ Safari → Add to Home Screen.
   "speaking" for seconds after a line ended). `noteLat()` records live clip times; when the free service is
   slow (`questSlow()`, median of the last 3 > 4.5 s) the cut-off is shorter (3.5 s first, 2.5 s later) and a
   one-time tip suggests the free tts.quest key.
-  Two late/failed Ryusei replies (`questLate()`) pause live Ryusei for 10 min (`questPaused()`, `useQuest()` false,
+  Two late/failed Ryusei replies (`questLate()`) pause live Ryusei for 5 min (`questPaused()`, `useQuest()` false,
   toast once); recordings still play. The call-screen button then reads "⚡ Fast · tap for 🎌" and tapping it resumes.
   Call screen has a "🎌 Ryusei / ⚡ Fast voice" switch (`ACT.vFast`): Fast = `tts="device"` (recordings for
   learned words, the iPhone's own Japanese/English voices for everything else, no waiting).
