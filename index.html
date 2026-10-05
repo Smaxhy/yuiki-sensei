@@ -656,7 +656,7 @@ html.light #voice .btn{color:#2a1520}
 <script>
 "use strict";
 // Bump this on every change so phones can spot a new version and offer to update
-const APP_VERSION="2026.10.13-4";
+const APP_VERSION="2026.10.14-1";
 /* ============ DATA ============ */
 const LV = {
   n5:{label:"N5",name:"Beginner",color:"#9fd67c"},
@@ -790,13 +790,101 @@ const COURSE=[
   {id:"c14a",t:"Finding common ground",g:"Find things you have in common",w:[["さいきん","saikin","recently, lately"],["よく","yoku","often"],["いつも","itsumo","always"],["おなじ","onaji","the same"],["～もすきです","mo suki desu","I like ~ too"]]},
   {id:"c14b",t:"Swapping contacts",g:"Swap LINE and stay in touch",w:[["ライン","rain","LINE (the chat app)"],["こうかん","koukan","swap, exchange"],["インスタ","insuta","Instagram"],["あとで","ato de","later"],["れんらくします","renraku shimasu","I'll get in touch"]]},
   {id:"c14c",t:"Making plans",g:"Suggest a day and a plan to meet",w:[["こんど","kondo","next time, sometime"],["ひま","hima","free (time)"],["いつがいいですか","itsu ga ii desu ka","when is good for you?"],["のみにいきましょう","nomi ni ikimashou","let's go for a drink"],["じゃあ","jaa","well then, OK then"]]}]},
+ {t:"Money & big numbers",e:"💴",c:"#f2c36b",kana:"ナニヌネノ",cd:"Read prices and pay any amount up to 10,000 yen",rp:"You're at a market stall in Osaka asking prices and paying.",ls:[
+  {id:"c15a",t:"Hundreds",g:"Say prices in the hundreds",w:[["にひゃく","nihyaku","two hundred","二百"],["ごひゃく","gohyaku","five hundred","五百"],["さんびゃく","sanbyaku","three hundred","三百"],["ろっぴゃく","roppyaku","six hundred","六百"],["はっぴゃく","happyaku","eight hundred","八百"]]},
+  {id:"c15b",t:"Thousands",g:"Say prices in the thousands",w:[["にせん","nisen","two thousand","二千"],["さんぜん","sanzen","three thousand","三千"],["ごせん","gosen","five thousand","五千"],["はっせん","hassen","eight thousand","八千"],["いちまん","ichiman","ten thousand","一万|万"]]},
+  {id:"c15c",t:"Paying",g:"Ask the total and pay",w:[["ぜんぶで","zenbu de","in total","全部で"],["おつり","otsuri","change (money back)","お釣り"],["レシート","reshiito","receipt"],["たかすぎます","takasugimasu","it's too expensive","高すぎます"],["わりびき","waribiki","discount","割引"]]}]},
+ {t:"At the convenience store",e:"🏪",c:"#9fd67c",kana:"ハヒフヘホ",cd:"Buy things at a konbini and answer the staff",rp:"You're paying at a convenience store and the clerk asks you questions.",ls:[
+  {id:"c16a",t:"Konbini basics",g:"Buy everyday things at a konbini",w:[["コンビニ","konbini","convenience store"],["おべんとう","obentou","boxed lunch","お弁当|弁当"],["あたためますか","atatamemasu ka","shall I heat it up?","温めますか"],["おはし","ohashi","chopsticks","お箸|箸"],["ポイントカード","pointo kaado","points card"]]},
+  {id:"c16b",t:"How will you pay?",g:"Say how you want to pay",w:[["カードで","kaado de","by card"],["げんきんで","genkin de","in cash","現金で"],["スマホで","sumaho de","with my phone"],["けっこうです","kekkou desu","no thank you","結構です"],["レジ","reji","checkout, till"]]},
+  {id:"c16c",t:"Finding things",g:"Ask if a shop has something and where it is",w:[["～はありますか","wa arimasu ka","do you have ~?","～は有りますか"],["どこにありますか","doko ni arimasu ka","where is it?","何処にありますか|どこに有りますか"],["あっち","atchi","over there"],["こっち","kotchi","this way, here"],["これください","kore kudasai","this one, please","これ下さい"]]}]},
+ {t:"At a restaurant",e:"🍣",c:"#c59cf4",kana:"マミムメモ",cd:"Get a table, order a meal and pay the bill",rp:"You're at a restaurant ordering dinner with a friend.",ls:[
+  {id:"c17a",t:"Getting a table",g:"Ask for a table",w:[["なんめいさまですか","nanmei-sama desu ka","how many people?","何名様ですか"],["ふたりです","futari desu","two people","二人です"],["きんえん","kin'en","non-smoking","禁煙"],["メニュー","menyuu","menu"],["あいていますか","aite imasu ka","is there a table free?","空いていますか|空いてますか"]]},
+  {id:"c17b",t:"Ordering",g:"Order food and drinks",w:[["ちゅうもん","chuumon","order","注文"],["これとこれ","kore to kore","this and this"],["おすすめはなんですか","osusume wa nan desu ka","what do you recommend?","おすすめは何ですか|お勧めは何ですか"],["おおもり","oomori","large portion","大盛り"],["おみず","omizu","water (polite)","お水"]]},
+  {id:"c17c",t:"Paying the bill",g:"Ask for the bill and thank the staff",w:[["おかいけい","okaikei","the bill, please","お会計"],["べつべつで","betsubetsu de","separately","別々で"],["ごちそうさまでした","gochisousama deshita","thank you for the meal","ご馳走様でした|ごちそう様でした"],["いただきます","itadakimasu","let's eat (before eating)","頂きます"],["おいしかったです","oishikatta desu","it was delicious","美味しかったです"]]}]},
+ {t:"What I did",e:"🔁",c:"#f4a3c0",kana:"ヤユヨワヲ",cd:"Talk about what you did yesterday and last weekend",rp:"A friend asks what you did yesterday and last weekend.",ls:[
+  {id:"c18a",t:"Past tense",g:"Say what you did",w:[["たべました","tabemashita","ate","食べました"],["のみました","nomimashita","drank","飲みました"],["いきました","ikimashita","went","行きました"],["みました","mimashita","watched, saw","見ました"],["かいました","kaimashita","bought","買いました"]]},
+  {id:"c18b",t:"My day",g:"Describe your day in the past",w:[["べんきょうしました","benkyou shimashita","studied","勉強しました"],["はたらきました","hatarakimashita","worked","働きました"],["あそびました","asobimashita","hung out, played","遊びました"],["やすみました","yasumimashita","rested, took a day off","休みました"],["ねました","nemashita","slept, went to bed","寝ました"]]},
+  {id:"c18c",t:"How was it?",g:"Ask and answer about the past",w:[["なにをしましたか","nani o shimashita ka","what did you do?","何をしましたか"],["どこにいきましたか","doko ni ikimashita ka","where did you go?","どこに行きましたか"],["だれと","dare to","with whom?","誰と"],["ひとりで","hitori de","alone, by myself","一人で"],["どうでしたか","dou deshita ka","how was it?"]]}]},
+ {t:"Describing things",e:"🎨",c:"#7cb8f4",kana:"ラリルレロ",cd:"Describe things and give your opinion",rp:"You're telling a friend about a new café you found.",ls:[
+  {id:"c19a",t:"Size and age",g:"Describe size and age",w:[["おおきい","ookii","big","大きい"],["ちいさい","chiisai","small","小さい"],["あたらしい","atarashii","new","新しい"],["ふるい","furui","old (things)","古い"],["ひろい","hiroi","spacious, wide","広い"]]},
+  {id:"c19b",t:"My opinion",g:"Say what you think of something",w:[["むずかしい","muzukashii","difficult","難しい"],["かんたん","kantan","easy, simple","簡単"],["べんり","benri","convenient","便利"],["きれい","kirei","pretty, clean","綺麗"],["しずか","shizuka","quiet","静か"]]},
+  {id:"c19c",t:"Not really",g:"Say what something isn't",w:[["たかくない","takakunai","not expensive","高くない"],["おいしくない","oishikunai","not tasty","美味しくない"],["すきじゃない","suki janai","don't like","好きじゃない"],["あまり","amari","not very (with a negative)","余り"],["ぜんぜん","zenzen","not at all","全然"]]}]},
+ {t:"Health & help",e:"🏥",c:"#f2c36b",kana:"ガギグゲゴ",cd:"Say how you feel and get help at a pharmacy",rp:"You feel sick and go to a pharmacy for help.",ls:[
+  {id:"c20a",t:"My body",g:"Name parts of the body",w:[["あたま","atama","head","頭"],["おなか","onaka","stomach","お腹"],["のど","nodo","throat","喉"],["あし","ashi","leg, foot","足"],["せなか","senaka","back (body)","背中"]]},
+  {id:"c20b",t:"It hurts",g:"Say what hurts and how you feel",w:[["いたい","itai","it hurts","痛い"],["ねつ","netsu","fever","熱"],["かぜ","kaze","a cold","風邪"],["きもちわるい","kimochi warui","I feel sick","気持ち悪い"],["せき","seki","cough","咳"]]},
+  {id:"c20c",t:"Getting help",g:"Ask for medicine and help",w:[["くすり","kusuri","medicine","薬"],["びょういん","byouin","hospital","病院"],["くすりや","kusuriya","pharmacy","薬屋"],["だいじょうぶですか","daijoubu desu ka","are you OK?","大丈夫ですか"],["きゅうきゅうしゃ","kyuukyuusha","ambulance","救急車"]]}]},
+ {t:"Plans & the phone",e:"📱",c:"#9fd67c",kana:"ザジズゼゾ",cd:"Make and change plans by phone or message",rp:"You call a friend to set a time and place to meet.",ls:[
+  {id:"c21a",t:"Meeting up",g:"Suggest a time and place to meet",w:[["あいましょう","aimashou","let's meet","会いましょう"],["まちあわせ","machiawase","meeting up (place/time)","待ち合わせ"],["どこで","doko de","where (at)?","何処で"],["えきのまえ","eki no mae","in front of the station","駅の前"],["～ごろ","goro","around (a time)","～頃"]]},
+  {id:"c21b",t:"Running late",g:"Say you're late or can't come",w:[["おくれます","okuremasu","I'll be late","遅れます"],["ちこく","chikoku","being late","遅刻"],["いけません","ikemasen","I can't go","行けません"],["ごめんなさい","gomen nasai","I'm sorry","御免なさい"],["いまいきます","ima ikimasu","I'm coming now","今行きます"]]},
+  {id:"c21c",t:"On the phone",g:"Handle a simple phone call",w:[["もしもし","moshi moshi","hello (on the phone)"],["でんわします","denwa shimasu","I'll call","電話します"],["メッセージ","messeeji","message"],["またあとで","mata ato de","later then","また後で"],["きこえますか","kikoemasu ka","can you hear me?","聞こえますか"]]}]},
+ {t:"Home & neighbourhood",e:"🏠",c:"#c59cf4",kana:"ダヂヅデド",cd:"Describe your home and what's nearby",rp:"A new friend asks what your place and neighbourhood are like.",ls:[
+  {id:"c22a",t:"My home",g:"Name rooms and things at home",w:[["いえ","ie","house, home","家"],["アパート","apaato","apartment"],["だいどころ","daidokoro","kitchen","台所"],["おふろ","ofuro","bath","お風呂"],["ベッド","beddo","bed"]]},
+  {id:"c22b",t:"Where is it?",g:"Say where things are",w:[["うえ","ue","on, above","上"],["した","shita","under, below","下"],["なか","naka","inside","中"],["となり","tonari","next to","隣"],["まえ","mae","in front of","前"]]},
+  {id:"c22c",t:"Around me",g:"Describe what's near your home",w:[["ちかくに","chikaku ni","nearby","近くに"],["スーパー","suupaa","supermarket"],["こうえん","kouen","park","公園"],["がっこう","gakkou","school","学校"],["にぎやか","nigiyaka","lively","賑やか"]]}]},
+ {t:"Seasons & holidays",e:"🍂",c:"#f4a3c0",kana:"バビブベボ",cd:"Talk about seasons, holidays and your plans",rp:"You chat about your favourite season and your holiday plans.",ls:[
+  {id:"c23a",t:"Seasons",g:"Name the seasons and say which you like",w:[["はる","haru","spring","春"],["なつ","natsu","summer","夏"],["あき","aki","autumn","秋"],["ふゆ","fuyu","winter","冬"],["きせつ","kisetsu","season","季節"]]},
+  {id:"c23b",t:"Holidays",g:"Talk about holidays and festivals",w:[["やすみ","yasumi","day off, holiday","休み"],["なつやすみ","natsuyasumi","summer holidays","夏休み"],["おしょうがつ","oshougatsu","New Year","お正月"],["はなび","hanabi","fireworks","花火"],["おまつり","omatsuri","festival","お祭り"]]},
+  {id:"c23c",t:"My plans",g:"Say what you plan or want to do",w:[["よてい","yotei","plan, schedule","予定"],["らいねん","rainen","next year","来年"],["いってみたい","itte mitai","I'd like to try going","行ってみたい"],["つもり","tsumori","intend to"],["たのしみ","tanoshimi","looking forward to it","楽しみ"]]}]},
+ {t:"Explaining & checking",e:"💡",c:"#7cb8f4",kana:"パピプペポ",cd:"Ask what things mean and explain words you don't know",rp:"You try to explain something to a shop clerk without knowing the exact word.",ls:[
+  {id:"c24a",t:"What does it mean?",g:"Ask what words mean and how to say them",w:[["なんていいますか","nan te iimasu ka","how do you say it?","何て言いますか"],["どういういみですか","dou iu imi desu ka","what does it mean?","どういう意味ですか"],["かんじ","kanji","kanji","漢字"],["よみかた","yomikata","how to read it","読み方"],["かいてください","kaite kudasai","please write it","書いてください|書いて下さい"]]},
+  {id:"c24b",t:"Describing it",g:"Describe something you don't know the word for",w:[["～みたいな","mitai na","like a ~"],["つかいます","tsukaimasu","(you) use it","使います"],["たべもの","tabemono","food","食べ物"],["のみもの","nomimono","drink","飲み物"],["もの","mono","thing","物"]]},
+  {id:"c24c",t:"Got it?",g:"Check you understood",w:[["わかりました","wakarimashita","I understand, got it","分かりました"],["つまり","tsumari","so, in other words"],["たぶん","tabun","probably, maybe","多分"],["まちがい","machigai","mistake","間違い"],["ただしい","tadashii","correct","正しい"]]}]},
  {t:"Real conversations",e:"💬",c:"#7cb8f4",kana:"タチツテト",rp:"FINAL",ls:[
   {id:"c12a",t:"Keeping a chat going",g:"React naturally in conversation",w:[["そうですね","sou desu ne","that's right / let me see"],["へえ","hee","oh really?"],["なるほど","naruhodo","I see"],["ちょっとまって","chotto matte","wait a moment"],["もういちど","mou ichido","once more"]]},
   {id:"c12b",t:"When you don't understand",g:"Ask people to help you understand",w:[["ゆっくり","yukkuri","slowly"],["～てください","te kudasai","please ~"],["えいごで","eigo de","in English"],["にほんご","nihongo","Japanese (language)"],["すこし","sukoshi","a little"]]},
-  {id:"c12c",t:"Saying goodbye",g:"End a conversation and stay in touch",w:[["またあいましょう","mata aimashou","let's meet again"],["れんらく","renraku","contact"],["たのしかった","tanoshikatta","it was fun"],["がんばって","ganbatte","good luck!"],["きをつけて","ki o tsukete","take care"]]}]}
+  {id:"c12c",t:"Saying goodbye",g:"End a conversation and stay in touch",w:[["またあいましょう","mata aimashou","let's meet again"],["れんらく","renraku","contact"],["たのしかった","tanoshikatta","it was fun"],["がんばって","ganbatte","good luck!"],["きをつけて","ki o tsukete","take care"]]}]},
+ {lv:"n4",t:"Please & may I",e:"🙏",c:"#f4a3c0",kana:"",cd:"Ask people to do things, ask permission and understand rules",rp:"You're staying at a ryokan and ask the staff for help and what's allowed.",ls:[
+  {id:"c31a",t:"Please do",g:"Ask someone to do something politely",w:[["みせてください","misete kudasai","please show me","見せてください|見せて下さい"],["おしえてください","oshiete kudasai","please tell me, teach me","教えてください|教えて下さい"],["てつだってください","tetsudatte kudasai","please help me","手伝ってください|手伝って下さい"],["まってください","matte kudasai","please wait","待ってください|待って下さい"],["しずかにしてください","shizuka ni shite kudasai","please be quiet","静かにしてください"]]},
+  {id:"c31b",t:"May I?",g:"Ask for permission",w:[["はいってもいいですか","haitte mo ii desu ka","may I come in?","入ってもいいですか"],["すわってもいいですか","suwatte mo ii desu ka","may I sit down?","座ってもいいですか"],["つかってもいいですか","tsukatte mo ii desu ka","may I use it?","使ってもいいですか"],["とってもいいですか","totte mo ii desu ka","may I take (a photo)?","撮ってもいいですか"],["あけてもいいですか","akete mo ii desu ka","may I open it?","開けてもいいですか"]]},
+  {id:"c31c",t:"Rules",g:"Say what you must and mustn't do",w:[["すってはいけません","sutte wa ikemasen","you mustn't smoke","吸ってはいけません"],["はいってはいけません","haitte wa ikemasen","you mustn't enter","入ってはいけません"],["はらわなければなりません","harawanakereba narimasen","you have to pay","払わなければなりません"],["しなくてもいいです","shinakute mo ii desu","you don't have to"],["きんし","kinshi","prohibited","禁止"]]}]},
+ {lv:"n4",t:"Right now",e:"⏳",c:"#7cb8f4",kana:"",cd:"Say what you're doing now and what you usually do",rp:"A friend messages to ask what you're up to and about your routine.",ls:[
+  {id:"c32a",t:"Doing it now",g:"Say what someone is doing right now",w:[["たべています","tabete imasu","am eating","食べています"],["まっています","matte imasu","am waiting","待っています"],["べんきょうしています","benkyou shite imasu","am studying","勉強しています"],["ねています","nete imasu","is sleeping","寝ています"],["あめがふっています","ame ga futte imasu","it's raining","雨が降っています"]]},
+  {id:"c32b",t:"States",g:"Describe ongoing states",w:[["しっています","shitte imasu","I know","知っています"],["しりません","shirimasen","I don't know","知りません"],["けっこんしています","kekkon shite imasu","am married","結婚しています"],["はたらいています","hataraite imasu","am working (at a job)","働いています"],["もっています","motte imasu","I have, I'm holding","持っています"]]},
+  {id:"c32c",t:"How often",g:"Say how often you do things",w:[["まいあさ","maiasa","every morning","毎朝"],["ときどき","tokidoki","sometimes","時々"],["たまに","tama ni","once in a while"],["めったに","metta ni","rarely (with a negative)"],["しゅうかん","shuukan","habit","習慣"]]}]},
+ {lv:"n4",t:"Casual talk",e:"😎",c:"#f2c36b",kana:"",cd:"Talk casually with friends using plain forms",rp:"You're hanging out with a close friend and talking casually.",ls:[
+  {id:"c33a",t:"Plain forms",g:"Use dictionary forms with friends",w:[["たべる","taberu","to eat","食べる"],["いく","iku","to go","行く"],["みる","miru","to watch, see","見る"],["する","suru","to do"],["くる","kuru","to come","来る"]]},
+  {id:"c33b",t:"Friend talk",g:"React like a friend",w:[["うん","un","yeah"],["ううん","uun","nope"],["マジで","maji de","seriously?","まじで"],["まあね","maa ne","kind of, sort of"],["だよね","da yo ne","right? I know!"]]},
+  {id:"c33c",t:"Plain past & not",g:"Say casually what you did and didn't do",w:[["たべた","tabeta","ate (casual)","食べた"],["いった","itta","went (casual)","行った"],["たべない","tabenai","don't eat","食べない"],["いかない","ikanai","won't go","行かない"],["わからない","wakaranai","don't know (casual)","分からない"]]}]},
+ {lv:"n4",t:"Opinions & reasons",e:"🗣️",c:"#9fd67c",kana:"",cd:"Give opinions, reasons and comparisons",rp:"You and a friend are deciding where to go for the weekend.",ls:[
+  {id:"c34a",t:"Because…",g:"Give reasons and link ideas",w:[["ので","node","because (polite)"],["だから","dakara","so, that's why"],["それに","sore ni","besides, also"],["しかし","shikashi","however"],["ほかに","hoka ni","anything else?","他に"]]},
+  {id:"c34b",t:"I think…",g:"Say what you think",w:[["とおもいます","to omoimasu","I think that…","と思います"],["かもしれません","kamo shiremasen","might, maybe"],["はずです","hazu desu","it should be"],["ほうがいいです","hou ga ii desu","you'd better","方がいいです"],["やっぱり","yappari","as I thought, after all"]]},
+  {id:"c34c",t:"Comparing",g:"Compare two or more things",w:[["より","yori","than"],["いちばん","ichiban","the most, number one","一番"],["どちら","dochira","which (of two)?"],["おなじくらい","onaji kurai","about the same","同じくらい"],["もっと","motto","more"]]}]},
+ {lv:"n4",t:"Experiences",e:"🌏",c:"#c59cf4",kana:"",cd:"Talk about things you've done and recommend things",rp:"You swap travel stories with a Japanese traveller at a hostel.",ls:[
+  {id:"c35a",t:"Have you ever…?",g:"Say what you have and haven't done",w:[["いったことがあります","itta koto ga arimasu","I have been (there)","行ったことがあります"],["たべたことがあります","tabeta koto ga arimasu","I have eaten it","食べたことがあります"],["みたことがあります","mita koto ga arimasu","I have seen it","見たことがあります"],["いちども","ichido mo","never once (with a negative)","一度も"],["なんかい","nankai","how many times?","何回"]]},
+  {id:"c35b",t:"Travel stories",g:"Describe a trip",w:[["ひこうき","hikouki","plane","飛行機"],["しんかんせん","shinkansen","bullet train","新幹線"],["りょかん","ryokan","Japanese inn","旅館"],["おみやげ","omiyage","souvenir","お土産"],["けしき","keshiki","scenery, view","景色"]]},
+  {id:"c35c",t:"You should try it",g:"Recommend things to try",w:[["ぜひ","zehi","definitely, by all means","是非"],["いってみてください","itte mite kudasai","try going there","行ってみてください"],["たべてみてください","tabete mite kudasai","try eating it","食べてみてください"],["ゆうめい","yuumei","famous","有名"],["にんき","ninki","popular","人気"]]}]},
+ {lv:"n4",t:"Work & school",e:"💼",c:"#f4a3c0",kana:"",cd:"Talk about your job, studies and goals",rp:"You meet a Japanese colleague and talk about work and future plans.",ls:[
+  {id:"c36a",t:"At work",g:"Talk about your job",w:[["かいしゃ","kaisha","company","会社"],["かいぎ","kaigi","meeting","会議"],["ざんぎょう","zangyou","overtime","残業"],["じょうし","joushi","boss","上司"],["どうりょう","douryou","colleague","同僚"]]},
+  {id:"c36b",t:"At school",g:"Talk about classes and exams",w:[["じゅぎょう","jugyou","class, lesson","授業"],["しゅくだい","shukudai","homework","宿題"],["しけん","shiken","exam","試験"],["そつぎょう","sotsugyou","graduation","卒業"],["せんこう","senkou","major (subject)","専攻"]]},
+  {id:"c36c",t:"Goals",g:"Talk about dreams and goals",w:[["しょうらい","shourai","the future","将来"],["ゆめ","yume","dream","夢"],["もくひょう","mokuhyou","goal","目標"],["がんばります","ganbarimasu","I'll do my best","頑張ります"],["になりたい","ni naritai","want to become"]]}]},
+ {lv:"n4",t:"Giving & receiving",e:"🎁",c:"#7cb8f4",kana:"",cd:"Talk about gifts and favours and thank people properly",rp:"It's a friend's birthday and you talk about presents and favours.",ls:[
+  {id:"c37a",t:"Gifts",g:"Say who gave what to whom",w:[["あげます","agemasu","I give"],["もらいます","moraimasu","I receive"],["くれます","kuremasu","(someone) gives me"],["プレゼント","purezento","present"],["たんじょうび","tanjoubi","birthday","誕生日"]]},
+  {id:"c37b",t:"Favours",g:"Ask for and talk about favours",w:[["かしてください","kashite kudasai","please lend me","貸してください"],["かります","karimasu","I borrow","借ります"],["かえします","kaeshimasu","I give back","返します"],["おしえてくれました","oshiete kuremashita","(they) taught me","教えてくれました"],["てつだってもらいました","tetsudatte moraimashita","I got help","手伝ってもらいました"]]},
+  {id:"c37c",t:"Thanking",g:"Thank people properly",w:[["おかげで","okage de","thanks to you"],["たすかりました","tasukarimashita","that really helped","助かりました"],["わざわざ","wazawaza","going to the trouble"],["えんりょなく","enryo naku","without holding back","遠慮なく"],["おれい","orei","thanks, a thank-you gift","お礼"]]}]},
+ {lv:"n4",t:"Feelings & reactions",e:"😊",c:"#f2c36b",kana:"",cd:"React to news and say how things seem",rp:"A friend tells you some good and bad news from their week.",ls:[
+  {id:"c38a",t:"How I feel",g:"Describe feelings",w:[["しんぱい","shinpai","worried","心配"],["あんしん","anshin","relieved","安心"],["びっくり","bikkuri","surprised"],["ざんねん","zannen","too bad, a pity","残念"],["はずかしい","hazukashii","embarrassed","恥ずかしい"]]},
+  {id:"c38b",t:"Reacting",g:"React to good and bad news",w:[["たいへん","taihen","that's tough","大変"],["よかったですね","yokatta desu ne","that's great (for you)","良かったですね"],["おめでとう","omedetou","congratulations"],["おだいじに","odaiji ni","get well soon","お大事に"],["きにしないで","ki ni shinaide","don't worry about it","気にしないで"]]},
+  {id:"c38c",t:"It looks…",g:"Say how things seem",w:[["おいしそう","oishisou","looks tasty","美味しそう"],["むずかしそう","muzukashisou","looks difficult","難しそう"],["げんきそう","genkisou","looks well","元気そう"],["ねむそう","nemusou","looks sleepy","眠そう"],["いそがしそう","isogashisou","looks busy","忙しそう"]]}]},
+ {lv:"n4",t:"Getting around 2",e:"🚇",c:"#9fd67c",kana:"",cd:"Change trains, follow directions and buy the right ticket",rp:"You're at a big station asking how to get to your hotel.",ls:[
+  {id:"c39a",t:"Trains",g:"Change trains and find the gates",w:[["のりかえ","norikae","transfer, change trains","乗り換え"],["ちかてつ","chikatetsu","subway","地下鉄"],["しゅうでん","shuuden","last train","終電"],["かいさつ","kaisatsu","ticket gate","改札"],["でぐち","deguchi","exit","出口"]]},
+  {id:"c39b",t:"Directions",g:"Follow and give directions",w:[["しんごう","shingou","traffic light","信号"],["かど","kado","corner","角"],["つきあたり","tsukiatari","end of the road","突き当たり"],["まがってください","magatte kudasai","please turn","曲がってください"],["わたってください","watatte kudasai","please cross","渡ってください"]]},
+  {id:"c39c",t:"Tickets & time",g:"Buy the right ticket",w:[["かたみち","katamichi","one way","片道"],["おうふく","oufuku","return (round trip)","往復"],["していせき","shiteiseki","reserved seat","指定席"],["じゆうせき","jiyuuseki","unreserved seat","自由席"],["かかります","kakarimasu","it takes (time/money)"]]}]},
+ {lv:"n4",t:"Weather & what if",e:"🌦️",c:"#c59cf4",kana:"",cd:"Talk about the forecast and make if-plans",rp:"You and a friend plan a day out but the weather looks bad.",ls:[
+  {id:"c40a",t:"Wild weather",g:"Talk about weather and nature",w:[["たいふう","taifuu","typhoon","台風"],["じしん","jishin","earthquake","地震"],["ゆき","yuki","snow","雪"],["くもり","kumori","cloudy","曇り"],["かぜがつよい","kaze ga tsuyoi","it's windy","風が強い"]]},
+  {id:"c40b",t:"Forecast",g:"Talk about the forecast",w:[["てんきよほう","tenki yohou","weather forecast","天気予報"],["でしょう","deshou","probably will"],["ふりそう","furisou","looks like it'll rain","降りそう"],["きおん","kion","temperature","気温"],["はれるといいですね","hareru to ii desu ne","hope it's sunny","晴れるといいですね"]]},
+  {id:"c40c",t:"What if…",g:"Make plans with if",w:[["あめがふったら","ame ga futtara","if it rains","雨が降ったら"],["ひまだったら","hima dattara","if you're free","暇だったら"],["もし","moshi","if"],["それなら","sore nara","in that case"],["やすければ","yasukereba","if it's cheap","安ければ"]]}]},
+ {lv:"n4",t:"Polite Japanese",e:"🙇",c:"#f4a3c0",kana:"",cd:"Understand shop and staff keigo and answer politely",rp:"You're at a hotel front desk where the staff use very polite Japanese.",ls:[
+  {id:"c41a",t:"Shop keigo",g:"Understand what staff say",w:[["いらっしゃいませ","irasshaimase","welcome (in shops)"],["しょうしょうおまちください","shoushou omachi kudasai","one moment please","少々お待ちください"],["かしこまりました","kashikomarimashita","certainly"],["もうしわけありません","moushiwake arimasen","I'm very sorry","申し訳ありません"],["おねがいいたします","onegai itashimasu","I humbly ask","お願いいたします|お願い致します"]]},
+  {id:"c41b",t:"Humble me",g:"Talk about yourself humbly",w:[["ともうします","to moushimasu","my name is (humble)","と申します"],["まいります","mairimasu","I go, I come (humble)","参ります"],["おります","orimasu","I am (humble)"],["ちょうだいします","choudai shimasu","I receive (humble)","頂戴します"],["はいけんします","haiken shimasu","I'll take a look (humble)","拝見します"]]},
+  {id:"c41c",t:"Respectful you",g:"Understand respectful verbs",w:[["いらっしゃいます","irasshaimasu","(someone) is, comes"],["めしあがります","meshiagarimasu","(someone) eats","召し上がります"],["ごらんになります","goran ni narimasu","(someone) looks","ご覧になります"],["おっしゃいます","osshaimasu","(someone) says"],["なさいます","nasaimasu","(someone) does"]]}]},
+ {lv:"n4",t:"Real N4 conversations",e:"🎓",c:"#7cb8f4",kana:"",cd:"Tell stories and keep a long conversation natural",rp:"FINAL",ls:[
+  {id:"c42a",t:"Telling a story",g:"Tell a story in order",w:[["まず","mazu","first of all"],["それから","sore kara","and then"],["そのあと","sono ato","after that","その後"],["さいごに","saigo ni","finally","最後に"],["けっきょく","kekkyoku","in the end","結局"]]},
+  {id:"c42b",t:"Sounding natural",g:"Use natural conversation fillers",w:[["けど","kedo","but, though"],["なんか","nanka","like, kind of"],["ちなみに","chinami ni","by the way, incidentally"],["じつは","jitsu wa","actually, to be honest","実は"],["ところで","tokoro de","by the way (changing topic)"]]},
+  {id:"c42c",t:"Wrapping up",g:"End a conversation naturally",w:[["そろそろ","sorosoro","it's about time (to go)"],["またこんど","mata kondo","next time","また今度"],["きょうはありがとう","kyou wa arigatou","thanks for today","今日はありがとう"],["たのしかったね","tanoshikatta ne","that was fun, wasn't it","楽しかったね"],["じゃあまたね","jaa mata ne","see you then"]]}]}
 ];
 // What each unit lets you do by the end (shown as the unit goal and in "What you can do now")
-["Greet people at any time of day and ask how they are","Introduce yourself: your name, where you're from and what you do","Count to 10, say your age and swap phone numbers","Say what you like and order food and drinks","Tell the time and talk about your day","Talk about your hobbies and invite someone out","Talk about your family and describe people","Shop for clothes: colours, prices and paying","Ask the way and catch the right train","Talk about the weather, how you feel and why","Check in at a hotel and ask for things politely","Start a chat with a stranger and keep it going","Find common ground, swap LINE and make plans","Hold a whole conversation and get help when you're lost"].forEach((g,i)=>{if(COURSE[i])COURSE[i].cd=g;});
+["Greet people at any time of day and ask how they are","Introduce yourself: your name, where you're from and what you do","Count to 10, say your age and swap phone numbers","Say what you like and order food and drinks","Tell the time and talk about your day","Talk about your hobbies and invite someone out","Talk about your family and describe people","Shop for clothes: colours, prices and paying","Ask the way and catch the right train","Talk about the weather, how you feel and why","Check in at a hotel and ask for things politely","Start a chat with a stranger and keep it going","Find common ground, swap LINE and make plans","Hold a whole conversation and get help when you're lost"].forEach((g,i)=>{const u=COURSE.filter(x=>!x.cd)[0];if(u)u.cd=g;});
 const CLESSONS=COURSE.flatMap((u,ui)=>u.ls.map(l=>({...l,unit:ui})));
 const clessonById=id=>CLESSONS.find(l=>l.id===id);
 const wordSay=jp=>jp.replace(/～/g,"");
@@ -876,7 +964,7 @@ const KANJI_LV={none:"none yet",few:"under 50",some:"50–300",many:"300+"};
 /* ============ STATE ============ */
 const KEY="yuki-sensei-v3";
 const DEFAULT={
-  v:29,onboarded:false,name:"",level:"n5",goal:"",
+  v:30,onboarded:false,name:"",level:"n5",goal:"",
   about:{done:false,focus:[],hira:"",kata:"",kanji:"",location:"",native:"English",minutes:15,notes:""},
   placement:null,plan:null,course:null,
   profile:{facts:[],weak:[],strong:[],learned:[],teach:[]},
@@ -1066,6 +1154,12 @@ function migrate(st){
   ["azKey","azRegion","azEn","azJa","ttsChars","vvUrl","elKey","elVoice","elVoiceName","elCap","elJaOnly","elChars","ttsBack"].forEach(k=>delete S2[k]);
   // the StreamElements English voices (Amy, Joanna, Matthew, Brian) stopped working on iPhone: use Google's
   if(/^web:/.test(S2.voiceEn)&&!WEB_EN[S2.voiceEn.slice(4)])S2.voiceEn="web:google";
+  // v29 → v30: 10 more N5 units go in before "Real conversations" (unit index 13 → 23, its kana bite moves with it)
+  if((st.v||0)<30){const mv=k=>({"cr:13":"cr:23","cq:13:m":"cq:23:m","cq:13:t":"cq:23:t","ck:13":"ck:23","cq:13:r":"cq:23:r"})[k]||k;
+    if(st.plan&&st.plan.done){const d=st.plan.done;["cr:13","cq:13:m","cq:13:t","ck:13","cq:13:r"].forEach(k=>{if(d[k]){delete d[k];d[mv(k)]=true;}});}
+    if(st.plan&&Array.isArray(st.plan.custom))st.plan.custom.forEach(c=>{if(c&&c.before)c.before=mv(c.before);});
+    if(st.course&&st.course.key)st.course.key=mv(st.course.key);
+    if(st.threads&&st.threads["cr:13"]&&!st.threads["cr:23"]){st.threads["cr:23"]=st.threads["cr:13"];delete st.threads["cr:13"];if(st.chatId==="cr:13")st.chatId="cr:23";}}
   // v22 → v23: tests & recaps on the path; ones in units already finished count as done
   if((st.v||0)<23&&st.plan&&st.plan.done){const d=st.plan.done;
     COURSE.forEach((u,ui)=>{if(d["cr:"+ui]){d["cq:"+ui+":m"]=d["cq:"+ui+":t"]=true;if(ui%3===2)d["cq:"+ui+":r"]=true;}else if(d["ck:"+ui]||d["cl:"+u.ls[2].id])d["cq:"+ui+":m"]=true;});
@@ -1952,7 +2046,11 @@ async function send(display,apiText,mode){
 const isoDay=d=>{d=d||new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");};
 function ensurePlan(){if(!S.plan){S.plan={start:isoDay(),done:{},custom:[]};save();}return S.plan;}
 const doneMap=()=>S.plan?S.plan.done:{};
-const isN5Path=()=>S.level==="n5";
+// N5 and N4 both follow a conversation course (units in COURSE with lv "n5"/"n4"); other levels use CUR lessons
+const isN5Path=()=>S.level==="n5"||S.level==="n4";
+const courseLv=()=>S.level==="n4"?"n4":"n5";
+const unitLv=u=>u.lv||"n5";
+const levelUnits=lv=>COURSE.map((u,i)=>i).filter(i=>unitLv(COURSE[i])===(lv||courseLv()));
 const UCOL=["#f4a3c0","#7cb8f4","#f2c36b","#9fd67c","#c59cf4"];
 // The same unit colours, deeper, so white text and icons read well on them (both themes)
 const UCOL_L={"#f4a3c0":"#ec5f87","#7cb8f4":"#3d8fe0","#f2c36b":"#f0a92b","#9fd67c":"#58b84a","#c59cf4":"#9b6ce0"};
@@ -1960,18 +2058,19 @@ const ucol=c=>UCOL_L[String(c).toLowerCase()]||c;
 function applyTheme(){const t=S.settings.theme||"light",light=t==="light"||(t==="auto"&&matchMedia("(prefers-color-scheme: light)").matches);
   document.documentElement.classList.toggle("light",light);const m=document.querySelector('meta[name="theme-color"]');if(m)m.content=light?"#faf7f2":"#0f1117";}
 function pathUnits(){
-  if(isN5Path())return COURSE.map((u,i)=>({title:"Unit "+(i+1),sub:u.t,e:u.e,c:ucol(u.c)}));
+  if(isN5Path())return COURSE.map((u,i)=>{const pos=levelUnits(unitLv(u)).indexOf(i);return{title:(unitLv(u)==="n4"?"N4 · ":"")+"Unit "+(pos+1),sub:u.t,e:u.e,c:ucol(u.c)};});
   return(CUR[S.level]||[]).map(([u],i)=>({title:LV[S.level].label+" · Unit "+(i+1),sub:u,e:"📘",c:ucol(UCOL[i%5])}));
 }
 function pathNodes(){
   let nodes=[];
-  if(isN5Path())COURSE.forEach((u,ui)=>{
-    const [a,b,c]=u.ls;
+  if(isN5Path())levelUnits().forEach((ui,pos)=>{
+    const u=COURSE[ui],[a,b,c]=u.ls;
     nodes.push({key:"cl:"+a.id,t:"CL",k:a.id,unit:ui},{key:"cl:"+b.id,t:"CL",k:b.id,unit:ui},{key:"cq:"+ui+":m",t:"CQ",k:"m",unit:ui},{key:"ck:"+ui,t:"CK",k:u.kana,unit:ui},{key:"cl:"+c.id,t:"CL",k:c.id,unit:ui},{key:"cr:"+ui,t:"CR",k:ui,unit:ui},{key:"cq:"+ui+":t",t:"CQ",k:"t",unit:ui});
-    if(ui%3===2)nodes.push({key:"cq:"+ui+":r",t:"CQ",k:"r",unit:ui});
+    if(!u.kana)nodes.splice(nodes.findIndex(n=>n.key==="ck:"+ui),1);   // N4 units have no kana bite
+    if(pos%3===2)nodes.push({key:"cq:"+ui+":r",t:"CQ",k:"r",unit:ui});
   });
   else(CUR[S.level]||[]).forEach(([u,ls],ui)=>{ls.forEach(l=>nodes.push({key:"L:"+l[0],t:"L",k:l[0],unit:ui}));nodes.push({key:S.level+":"+ui+":q",t:"Q",k:"unit",unit:ui},{key:S.level+":"+ui+":c",t:"CQ",k:"c",unit:ui});});
-  if(isN5Path())nodes.push({key:"cq:final",t:"CQ",k:"f",unit:COURSE.length-1});
+  if(isN5Path()){const lu=levelUnits();nodes.push({key:courseLv()==="n4"?"cq:final4":"cq:final",t:"CQ",k:"f",unit:lu[lu.length-1]});}
   const custom=S.plan?S.plan.custom.filter(c=>!c.level||c.level===S.level):[];
   if(custom.length){
     const firstOpen=nodes.find(n=>!nodeDone(n));
@@ -2008,7 +2107,7 @@ function nodeLabel(n){
   if(n.t==="CR")return COURSE[n.k].rp==="FINAL"?"Your big conversation":"Roleplay: "+COURSE[n.k].t;
   if(n.t==="L"){const l=lessonById(n.k);return l?l.title:n.k;}
   if(n.t==="Q")return"Unit review";
-  if(n.t==="CQ")return{m:"Mini test",t:"Unit test",r:"Big recap",f:"N5 final test",c:"Card recap"}[n.k];
+  if(n.t==="CQ")return{m:"Mini test",t:"Unit test",r:"Big recap",f:unitLv(COURSE[n.unit]||{}).toUpperCase()+" final test",c:"Card recap"}[n.k];
   return n.title;
 }
 function nodeIcon(n){
@@ -2029,7 +2128,7 @@ function nodeGoal(n){
   if(n.t==="CL")return clessonById(n.k).g;
   if(n.t==="CK")return"Read and say "+[...n.k].join(" ");
   if(n.t==="CR")return COURSE[n.k].rp==="FINAL"?"Hold a whole conversation using everything from the course":"Use this unit's words in a real conversation";
-  if(n.t==="CQ")return{m:"Show you know this unit's first 10 words",t:"Prove you've mastered "+(u?"“"+u.t+"”":"this unit"),r:"Remember everything from the last 3 units",f:"Pass the N5 conversation course",c:"Keep the cards you've learned fresh"}[n.k];
+  if(n.t==="CQ")return{m:"Show you know this unit's first 10 words",t:"Prove you've mastered "+(u?"“"+u.t+"”":"this unit"),r:"Remember everything from the last 3 units",f:"Pass the "+unitLv(u||{}).toUpperCase()+" conversation course",c:"Keep the cards you've learned fresh"}[n.k];
   if(n.t==="L"){const l=lessonById(n.k);return l?l.desc:"";}
   if(n.t==="Q")return"Check everything from this unit";
   return"Learn: "+n.title;
@@ -2215,7 +2314,7 @@ function vLesson(){
 /* ---- conversation step: Yuki must get you to use the target words ---- */
 // The 5 words a roleplay is built around: this unit's (or for the final, the whole course's) weakest words
 function rpTargets(n){
-  const u=COURSE[n.k],pool=u.rp==="FINAL"?CLESSONS.flatMap(l=>l.w):u.ls.flatMap(l=>l.w);
+  const u=COURSE[n.k],pool=u.rp==="FINAL"?CLESSONS.filter(l=>unitLv(COURSE[l.unit])===unitLv(u)).flatMap(l=>l.w):u.ls.flatMap(l=>l.w);
   return pool.map(w=>w[0]).sort((a,b)=>((S.cards["w:"+a]||{box:0}).box-(S.cards["w:"+b]||{box:0}).box)||Math.random()-0.5).slice(0,5);
 }
 function startTalk(n,preset){
@@ -2309,7 +2408,7 @@ const jaDigits=t=>String(t).replace(/[０-９]/g,c=>String.fromCharCode(c.charCo
   .replace(/(\d)[,，](?=\d{3}(?!\d))/g,"$1")   // 1,000 → 1000
   .replace(/\b0\d{1,4}(?:[-ー‐]\d{2,4}){1,2}\b|\b0\d{8,10}\b/g,ph=>ph.split(/[-ー‐]/).map(g=>[...g].map(d=>DIG[+d]).join("")).join("、"))   // phone numbers
   .replace(/(\d+)(つ|人|時|月|円|年|分|歳|才|本|回|階|泊|日|枚|番)?/g,(m,d,c)=>{const n=parseInt(d,10);if(n>=100000)return m;return c&&n>0?jaCount(n,c):jaNum(n)+(c||"");});
-const KANJI_ALT={
+const KANJI_ALT_BASE={
  // the mic often writes these in kanji / other spellings
  "おはよう":["お早う"],"おねがいします":["お願いします"],"よろしくおねがいします":["よろしくお願いします","宜しくお願いします"],"よかった":["良かった"],"はじめまして":["初めまして"],
  "おすすめ":["お勧め","お薦め","オススメ"],"どこがいいですか":["どこが良いですか","何処がいいですか"],"をください":["を下さい"],"てください":["て下さい"],"てもいいですか":["ても良いですか"],
@@ -2328,6 +2427,8 @@ const KANJI_ALT={
  "てんき":["天気"],"はれ":["晴れ"],"あめ":["雨"],"あつい":["暑い"],"さむい":["寒い"],"うれしい":["嬉しい"],"かなしい":["悲しい"],"つかれました":["疲れました"],"ねむい":["眠い"],"たのしい":["楽しい"],"ほんとう":["本当"],"だいじょうぶ":["大丈夫"],
  "りょこう":["旅行"],"よやく":["予約"],"へや":["部屋"],"なんぱく":["何泊"],"いきたい":["行きたい"],"みたい":["見たい"],"たべたい":["食べたい"],"しゃしん":["写真"],"だめ":["駄目"],"わかりません":["分かりません","解りません"],"たすけて":["助けて"],
  "もういちど":["もう一度"],"ちょっとまって":["ちょっと待って"],"えいごで":["英語で"],"にほんご":["日本語"],"すこし":["少し"],"またあいましょう":["また会いましょう"],"れんらく":["連絡"],"たのしかった":["楽しかった"],"がんばって":["頑張って"],"きをつけて":["気をつけて","気を付けて"]};
+const KANJI_ALT=KANJI_ALT_BASE;
+CLESSONS.forEach(l=>l.w.forEach(w=>{if(!w[3])return;const k=normJ(w[0]);KANJI_ALT[k]=[...new Set([...(KANJI_ALT[k]||[]),...w[3].split("|")])];}));
 // iPhone's Japanese voice typing writes kanji the student can't read yet. Swap known words back to
 // kana (all course words + common beginner words), longest first. Whatever kanji is left is flagged.
 const KANA_EXTRA={"私":"わたし","僕":"ぼく","何":"なに","日本":"にほん","日本語":"にほんご","英語":"えいご","好き":"すき","大好き":"だいすき","食べ":"たべ","飲み":"のみ","行き":"いき","来":"き","見":"み","聞き":"きき","話し":"はなし","分かり":"わかり","分かる":"わかる","大丈夫":"だいじょうぶ","本当":"ほんとう","先生":"せんせい","学生":"がくせい","友達":"ともだち","今日":"きょう","明日":"あした","昨日":"きのう","今":"いま","毎日":"まいにち","名前":"なまえ","元気":"げんき","水":"みず","お茶":"おちゃ","ご飯":"ごはん","美味しい":"おいしい","高い":"たかい","安い":"やすい","駅":"えき","電車":"でんしゃ","天気":"てんき","雨":"あめ","暑い":"あつい","寒い":"さむい","楽しい":"たのしい","嬉しい":"うれしい","疲れ":"つかれ","時":"じ","分":"ふん","円":"えん","人":"ひと","国":"くに","仕事":"しごと","家族":"かぞく","映画":"えいが","音楽":"おんがく","趣味":"しゅみ","旅行":"りょこう","写真":"しゃしん","一緒":"いっしょ","少し":"すこし","頑張":"がんば","宜しく":"よろしく","御願い":"おねがい","お願い":"おねがい","有難う":"ありがとう","有り難う":"ありがとう","今日は":"こんにちは","今晩は":"こんばんは","お早う":"おはよう","左様なら":"さようなら","済みません":"すみません","又":"また"};
@@ -2434,7 +2535,7 @@ function unitSheet(u){
    <button class="btn" style="margin-top:8px" data-act="closeSheet">Close</button>`);
 }
 function levelSheet(){
-  sheet(`<div class="h2" style="margin-bottom:6px">Your path follows your level</div><p class="sub" style="margin-bottom:12px">N5 is the beginner conversation course: 14 topic units, 5 words per lesson, and real chats with Yuki. Higher levels build the path from that level's lessons. Progress on each path is kept.</p>
+  sheet(`<div class="h2" style="margin-bottom:6px">Your path follows your level</div><p class="sub" style="margin-bottom:12px">N5 (24 units) and N4 (12 units) are full conversation courses: 5 words per lesson, tests, and real chats with Yuki, 5 words per lesson, and real chats with Yuki. Higher levels build the path from that level's lessons. Progress on each path is kept.</p>
    <div class="tags" style="margin-bottom:14px">${Object.entries(LV).map(([k,v])=>`<button class="chip${S.level===k?" on":""}" data-act="setLevel" data-v="${k}">${v.label} ${v.name}</button>`).join("")}</div>
    <button class="btn ghost" data-act="placeStart">🎯 Take the 3-minute level check</button>
    <button class="btn ghost" style="margin-top:8px" data-act="allLessons">📚 Browse all lessons</button>
@@ -2442,7 +2543,7 @@ function levelSheet(){
 }
 function pathScroll(){
   const h=$("#unitHead");if(!h)return;
-  const lim=h.getBoundingClientRect().top+8;let u=0;
+  const fb=document.querySelector(".ubanner");const lim=h.getBoundingClientRect().top+8;let u=fb?+fb.dataset.u:0;
   let any=false;
   document.querySelectorAll(".ubanner").forEach(p=>{if(p.getBoundingClientRect().top<lim){u=+p.dataset.u;any=true;}});
   h.classList.toggle("ghost",!any);
@@ -2519,7 +2620,7 @@ const BADGES=[
  ["kata","ア","Katakana master","Learn every katakana",()=>DECKS.kata.ids.every(i=>S.cards[i])],
  ["goal5","🎯","Goal getter","Hit your daily goal 5 times",()=>Object.values(S.days).filter(d=>d.goal).length>=5],
  ["hour5","⏱️","Dedicated","Study 5 hours in total",()=>Object.values(S.days).reduce((a,d)=>a+(d.sec||0),0)>=18000],
- ["grad","🎓","Graduate","Finish the N5 conversation course",()=>!!doneMap()["cr:"+(COURSE.length-1)]]
+ ["grad","🎓","Graduate","Finish the N5 conversation course",()=>!!doneMap()["cr:"+COURSE.findIndex(u=>u.rp==="FINAL"&&unitLv(u)==="n5")]]
 ];
 function checkBadges(silent){
   const got=S.daily.badges;
@@ -3654,13 +3755,13 @@ function makeQ(id,listen,pool){
 }
 /* ---- Path tests & recaps: free (offline) multiple-choice tests with a recap page first ---- */
 const unitWords=ui=>COURSE[ui].ls.flatMap(l=>l.w.map(w=>"w:"+w[0]));
-const unitKana=ui=>[...COURSE[ui].kana].map(ch=>(/[ァ-ン]/.test(ch)?"k:":"h:")+ch);
+const unitKana=ui=>[...(COURSE[ui].kana||"")].map(ch=>(/[ァ-ン]/.test(ch)?"k:":"h:")+ch);
 function testSpec(n){
   const u=n.unit;
   if(n.k==="m")return{title:"Mini test · "+COURSE[u].t,ids:COURSE[u].ls.slice(0,2).flatMap(l=>l.w.map(w=>"w:"+w[0])),count:10,pass:0.7};
   if(n.k==="t")return{title:"Unit test · "+COURSE[u].t,ids:[...unitWords(u),...unitKana(u)],count:16,pass:0.8};
-  if(n.k==="r"){const from=Math.max(0,u-2);return{title:"Big recap · units "+(from+1)+"–"+(u+1),ids:COURSE.slice(from,u+1).flatMap((_,i)=>[...unitWords(from+i),...unitKana(from+i)]),count:20,pass:0.8};}
-  if(n.k==="f")return{title:"N5 final test",ids:COURSE.flatMap((_,i)=>[...unitWords(i),...unitKana(i)]),count:30,pass:0.8};
+  if(n.k==="r"){const lu=levelUnits(unitLv(COURSE[u])),pos=lu.indexOf(u),from=Math.max(0,pos-2),us=lu.slice(from,pos+1);return{title:"Big recap · units "+(from+1)+"–"+(pos+1),ids:us.flatMap(i=>[...unitWords(i),...unitKana(i)]),count:20,pass:0.8};}
+  if(n.k==="f"){const lv=unitLv(COURSE[u]);return{title:lv.toUpperCase()+" final test",ids:levelUnits(lv).flatMap(i=>[...unitWords(i),...unitKana(i)]),count:30,pass:0.8};}
   // other levels: a recap of the cards you've learned (or the core decks if you haven't learned any yet)
   const mine=Object.keys(S.cards).filter(i=>CARDS[i]);
   return{title:"Card recap · "+(pathUnits()[u]||{sub:""}).sub,ids:mine.length>=6?mine:[...DECKS.vocab.ids,...DECKS.kanji.ids],count:15,pass:0.7};
