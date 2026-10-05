@@ -656,7 +656,7 @@ html.light #voice .btn{color:#2a1520}
 <script>
 "use strict";
 // Bump this on every change so phones can spot a new version and offer to update
-const APP_VERSION="2026.10.13-2";
+const APP_VERSION="2026.10.13-3";
 /* ============ DATA ============ */
 const LV = {
   n5:{label:"N5",name:"Beginner",color:"#9fd67c"},
@@ -1306,8 +1306,18 @@ const EN_KATA={hi:"ハイ",hello:"ハロー",good:"グッド",great:"グレー�
 function toSpeakable(t){
   return String(t).replace(/[A-Za-z']+/g,w=>{const k=w.toLowerCase().replace(/'/g,"");return EN_KATA[k]?EN_KATA[k]+" ":"";}).replace(/\s+/g," ").trim();
 }
+// Romaji of words from the course inside English ("say konnichiwa") goes to the Japanese voice as kana,
+// so the English voice doesn't mangle it. Only known course/phrase words, 4+ letters, never plain English words.
+let ROMA_MAP=null;
+function romaToKana(t){
+  if(!ROMA_MAP){ROMA_MAP=new Map();const add=(ro,jp)=>{ro=String(ro||"").toLowerCase().replace(/[^a-z ]/g,"").trim();jp=String(jp).replace(/[～~\s]/g,"");
+      if(ro.replace(/ /g,"").length<4||EN_COMMON.has(ro)||/^(sore|made|dame|kore|rain|mise|hare|zero|demo|donna|nana)$/.test(ro)||!/[ぁ-んァ-ヶ]/.test(jp))return;if(!ROMA_MAP.has(ro))ROMA_MAP.set(ro,jp);};
+    CLESSONS.forEach(l=>l.w.forEach(([jp,ro])=>add(ro,jp)));TALK.forEach(g=>g[2].forEach(([jp,ro])=>add(ro.replace(/[.,!?]/g,""),jp)));}
+  let out=String(t);[...ROMA_MAP.keys()].sort((a,b)=>b.length-a.length).forEach(ro=>{
+    const re=new RegExp("(^|[^A-Za-z])("+ro.replace(/ /g,"[ -]?")+")(?![A-Za-z])","gi");out=out.replace(re,(m,a)=>a+ROMA_MAP.get(ro));});
+  return out;}
 function speakAI(text,opts){
-  const segsN=segments(cleanSpeech(text)).filter(s=>s.k==="ja"||S.settings.speakEnglish||opts.forceEnglish);
+  const segsN=segments(romaToKana(cleanSpeech(text))).filter(s=>s.k==="ja"||S.settings.speakEnglish||opts.forceEnglish);
 
   if(useQuest()&&segsN.length){if(synth)synth.cancel();
     if(enRyusei()){
@@ -1338,8 +1348,17 @@ function unlockPlayer(e){if(UI.listening||(e&&e.target&&e.target.closest&&e.targ
 document.addEventListener("touchend",unlockPlayer,{passive:true});
 document.addEventListener("pointerdown",unlockPlayer,{passive:true});
 // Japanese is written without spaces; beginner-style spaced kana makes the voice read は as "ha", へ as "he"
+// Words that are often followed by the particle は/へ in Yuki's replies (course nouns + pronouns). Written without
+// spaces ("わたしはゆきです"), the voice would read は as "ha"; after these words it's the particle "wa".
+let PART_RE=null;
+function partRe(){if(PART_RE)return PART_RE;
+  const ws=new Set("わたし あなた かれ かのじょ これ それ あれ ここ そこ あそこ どこ きょう あした きのう いま なまえ しゅみ しごと くに にほん ともだち かぞく みせ えき へや ホテル トイレ てんき おしごと おなまえ わたしたち みんな せんせい がっこう うち".split(" "));
+  CLESSONS.forEach(l=>l.w.forEach(([jp])=>{if(/^[ぁ-んァ-ヶー]{2,7}$/.test(jp)&&!/(ます|です|ました|ない|たい|て|い)$/.test(jp))ws.add(jp);}));
+  const list=[...ws].sort((a,b)=>b.length-a.length).join("|");
+  PART_RE=new RegExp("(^|[^ぁ-んァ-ヶー])("+list+")([はへ])(?=[ぁ-んァ-ヶー一-龯])","g");return PART_RE;}
 function vvText(t){
-  return String(t).trim()
+  return String(t).trim().replace(partRe(),(m,a,w,p)=>a+w+(p==="は"?"わ":"え"))
+    .replace(/は(?=(なん|なに|どこ|だれ|いつ|どう|いくら|どんな)[ぁ-ん])/g,"わ")
     .replace(/(^|[ \u3000])は(?=[ \u3000])/g,"$1わ").replace(/(^|[ \u3000])へ(?=[ \u3000])/g,"$1え")
     .replace(/([\u3040-\u306e\u3070-\u30ff\u3400-\u9fff])は(?=[ \u3000、。！？!?,.]|$)/g,"$1わ")
     .replace(/([\u3040-\u3077\u3079-\u30ff\u3400-\u9fff])へ(?=[ \u3000、。！？!?,.]|$)/g,"$1え")
@@ -1741,8 +1760,8 @@ function systemPrompt(mode){
 STUDENT: ${S.name||"?"}, JLPT ${L.label} (${L.name}). Goal: ${S.goal||"?"}. ${learnerCard()}
 STYLE
 ${styleRules()}
-- Direct, no filler. One idea at a time. Real examples; say why.
-- CONVERSATION: flow like a real chat (react to what they said, then one follow-up question) while every reply moves toward the current objective. If they drift off topic, answer briefly and naturally, then bridge back with a question they can answer with today's words. Never repeat a question they already answered.
+- Direct, no filler. One idea at a time. Real examples; say why.${S.level==="n5"||S.level==="n4"?"\n- Put spaces between Japanese words (わたし は ゆき です) so the voice reads particles right.":""}
+- CONVERSATION: flow like a real chat (react to what they said, then one follow-up question) while every reply moves toward the current objective. If they drift off topic, answer briefly and naturally, then bridge back with a question they can answer with today's words. Never repeat a question they already answered, and vary your wording (no same opener or praise twice in a row).
 - Mistake → what they wrote → correct version → one-line reason.
 - Do what they ask (quiz, roleplay, drill). Quizzes: one question at a time, right/wrong + short reason, keep score, stop after 10 and sum up.
 - If they ask to add a topic to their path, say so and put it in "path".
@@ -1753,6 +1772,12 @@ ${sayWanted()?`- SPOKEN VERSION: a Japanese-only voice reads your reply. Before 
 <<FIX>>{"ja":"","en":"","ok":true,"why":""} when their latest message is their own sentence (not a command like "quiz me"). Japanese: ja = correct natural Japanese with 、。？ at their level, en = English translation, properly punctuated. English: en = their English fixed, ja = how to say it in Japanese. ok = already correct (voice-typing punctuation doesn't count); why = main fix, a few words. The app shows it under their message, so mention the fix only briefly${voice?" (say it in a few words)":""}.
 <<MEM>>{} always last, with only what's NEW (never repeat anything already in YOU REMEMBER; leave a field out when nothing is new): "facts" (about them), "weak", "strong", "learned" ("word = meaning"), "right"/"wrong" (quiz counts), "lessonDone" (true when the current lesson's core is mastered), "used" (target words used correctly, exact spelling), "path" (1 topic, ONLY when the student asks you to add a lesson to their path), "teach" (1 short rule for teaching THIS student better, only when you notice something: they were confused, it was too hard/easy/long, a method worked).`;
 }
+// Yuki only sees the last few messages (credit saver), so remind her what she already said before those
+function saidBefore(){
+  const n=S.settings.history||6,older=S.chat.slice(0,Math.max(0,S.chat.length-n)).filter(m=>m.role==="assistant"&&!m.err).slice(-8);
+  if(!older.length)return"";
+  const bits=older.map(m=>stripHidden(m.text).replace(/<<[\s\S]*$/,"").replace(/[*_#`\[\]]/g,"").replace(/\s+/g," ").trim().slice(0,55)).filter(Boolean);
+  return`- Already said earlier in this chat (don't repeat these questions or lines; move on to something new): ${bits.join(" | ")}\n`;}
 function memoryPrompt(){
   const p=S.profile,les=S.currentLesson&&lessonById(S.currentLesson);
   const due=dueIds(Object.keys(CARDS)).length;
@@ -1763,7 +1788,7 @@ function memoryPrompt(){
 - Strong: ${p.strong.slice(-5).join("; ")||"-"}
 - Recently learned: ${p.learned.slice(-12).join("; ")||"-"}
 - Quiz: ${S.stats.quizRight} right, ${S.stats.quizWrong} wrong. Cards due: ${due}.${p.teach.length?`\n- YOUR TEACHING NOTES (learned from this student; always follow): ${p.teach.slice(-8).join("; ")}`:""}
-${coursePrompt()}${convoPrompt()}${les?`\nCURRENT LESSON: "${les.title}" — ${les.desc} (${LV[les.level].label}, unit "${les.unit}"). Teach it in small steps: short explanation → 2-3 examples → a quick practice question, then wait for their answer. Never dump the whole lesson at once. When they've shown they understand the core of it, congratulate them and tell them they can tap "✓ Done".`:""}`;
+${saidBefore()}${coursePrompt()}${convoPrompt()}${les?`\nCURRENT LESSON: "${les.title}" — ${les.desc} (${LV[les.level].label}, unit "${les.unit}"). Teach it in small steps: short explanation → 2-3 examples → a quick practice question, then wait for their answer. Never dump the whole lesson at once. When they've shown they understand the core of it, congratulate them and tell them they can tap "✓ Done".`:""}`;
 }
 // Calls are quick back-and-forths, so they send at most 6 recent messages (the lesson itself is in the memory part)
 function buildMessages(mode){

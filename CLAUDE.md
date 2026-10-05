@@ -233,6 +233,12 @@ Safari → Add to Home Screen.
   Call screen has a "🎌 Ryusei / ⚡ Fast voice" switch (`ACT.vFast`): Fast = `tts="device"` (recordings for
   learned words, the iPhone's own Japanese/English voices for everything else, no waiting).
   A mic with no sign of life retries once by itself (`MIC.retried`) before pausing.
+  Pronunciation fixes: `vvText` also turns the particle は/へ into わ/え after known nouns in unspaced Japanese
+  (`partRe()`: course nouns + pronouns, "わたしはゆき" → "わたしわゆき") and before question words (はなん/はどこ…);
+  `romaToKana()` (in `speakAI`) swaps romaji of course/phrase words inside English ("say konnichiwa") for kana so the
+  Japanese voice says them (≥4 letters, English look-alikes like zero/demo/made excluded); at N5/N4 Yuki is told to space
+  Japanese words. No repeats: `saidBefore()` (in `memoryPrompt`) lists up to 8 of Yuki's replies older than the history
+  window ("don't repeat these"), plus a vary-your-wording rule.
   Text for Ryusei goes through `vvText()`: spaces between Japanese characters removed (spaced
   beginner kana makes VOICEVOX pause after every word and stress oddly), Japanese punctuation.
   `cleanSpeech()` speaks the reading for 漢字(かな) instead of the kanji. Ryusei never starts while
