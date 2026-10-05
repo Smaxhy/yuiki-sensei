@@ -656,7 +656,7 @@ html.light #voice .btn{color:#2a1520}
 <script>
 "use strict";
 // Bump this on every change so phones can spot a new version and offer to update
-const APP_VERSION="2026.10.14-5";
+const APP_VERSION="2026.10.14-6";
 /* ============ DATA ============ */
 const LV = {
   n5:{label:"N5",name:"Beginner",color:"#9fd67c"},
@@ -1106,7 +1106,7 @@ function migrate(st){
   // v9 → v10: Ryusei everywhere (live voice via free tts.quest, recordings in Ryusei)
   if((st.v||0)<10){S2.jaRec="ryusei";if(S2.tts==="device")S2.tts="quest";}
   // v10 → v11: Ryusei can read English too
-  if(!["ryusei","iphone"].includes(S2.enVoice))S2.enVoice="ryusei";
+  S2.enVoice="iphone";   // owner: Ryusei speaks Japanese only (English through him "bugs it")
   // v11 → v12: Ryusei can't really speak English, so English goes back to the iPhone voice
   // v14 → v15: owner wants Ryusei for English too (no robot voice)
   if((st.v||0)<15)S2.enVoice="ryusei";
@@ -1345,7 +1345,7 @@ function playRecorded(t,rate){
 // Voice log: what happened each time Yuki tried to speak (Me → Voice → Voice log), to find problems
 const VLOG=[];
 function vlog(msg){const d=new Date();VLOG.push(String(d.getHours()).padStart(2,"0")+":"+String(d.getMinutes()).padStart(2,"0")+":"+String(d.getSeconds()).padStart(2,"0")+"  "+msg);if(VLOG.length>40)VLOG.shift();}
-const engineName=()=>({quest:"Ryusei everywhere",device:"Recordings + iPhone"}[S.settings.tts]||S.settings.tts)+" · English: "+(S.settings.enVoice==="ryusei"?"Ryusei":"iPhone");
+const engineName=()=>({quest:"Ryusei everywhere",device:"Recordings + iPhone"}[S.settings.tts]||S.settings.tts)+" · English: English voice";
 function speak(text,opts){
   opts=opts||{};
   vlog("▶ speak ["+engineName()+"]: "+String(opts.say||text).replace(/\s+/g," ").slice(0,50));
@@ -1638,7 +1638,8 @@ function questProbe(segs){
     if(c&&c.blob&&ms<4000){if(!questPaused())return;questPauseUntil=0;questLateN=0;questLat.length=0;vlog("✓ Ryusei's server is back ("+(ms/1000).toFixed(1)+" s)");toast("🎌 Ryusei's voice is back",2000);renderVoice();}
     else vlog("… Ryusei's server still slow ("+(ms/1000).toFixed(1)+" s)");}).catch(e=>vlog("… Ryusei still unavailable ("+e.message+")"));}
 function englishForVV(t){t=t.toLowerCase().replace(/[’‘]/g,"'");EN_FIX.forEach(([a,b])=>{t=t.replace(a,b);});return t;}
-const enRyusei=()=>S.settings.enVoice==="ryusei";
+// Ryusei only ever speaks Japanese (owner's request); English always uses the English voice
+const enRyusei=()=>false;
 // Japanese parts: Ryusei's recording if we have one (instant), otherwise live from tts.quest;
 // English parts: Ryusei too (live) when enVoice is "ryusei", else the iPhone voice
 async function speakQuest(segs,rate,text,opts){
@@ -2019,7 +2020,7 @@ function callAI(mode){
     messages:buildMessages(mode)},voice);
 }
 // The hidden <<SAY>> line (spoken version for Ryusei) is taken out of the reply and kept separately
-const sayWanted=()=>S.settings.tts==="quest"&&S.settings.enVoice==="ryusei";
+const sayWanted=()=>false;
 // The hidden <<FIX>> line (corrected version + translation of what the student said) is shown under their message
 // Yuki sometimes writes a hidden marker slightly wrong ("FIX>>", "<FIX>", "<<FIX>> "). Put them all back
 // into the exact form, and never show or speak a leftover hidden line.
@@ -4119,7 +4120,7 @@ function vMe(){
    ${chipRow("ttsSet","tts",st.tts,[["quest","🎌 "+(REC_VOICES[st.jaRec]||REC_VOICES.ryusei).name.split(" ")[0]+" everywhere"],["device","⚡ Fast (iPhone voice)"]])}
    ${st.tts==="quest"?`<p class="sub" style="margin:10px 0 0">Free, no key: all Japanese — lessons, chat, calls — is spoken by ${esc((REC_VOICES[st.jaRec]||REC_VOICES.ryusei).name.split(" ")[0])}. Words you're learning play instantly from recordings; new sentences come live from the free VOICEVOX service <b>tts.quest</b> (can take a few seconds; if it's busy, that sentence uses the iPhone voice). English parts use your iPhone's voice (or ${esc((REC_VOICES[st.jaRec]||REC_VOICES.ryusei).name.split(" ")[0])} with a Japanese accent, if you prefer).</p>
     <p class="sub" style="margin:10px 0 6px">Voice</p>${chipRow("recSet","jaRec",st.jaRec==="off"?"ryusei":st.jaRec,Object.entries(REC_VOICES).map(([k,v])=>[k,v.name.split(" ")[0]]))}
-    <p class="sub" style="margin:12px 0 6px">English parts</p>${chipRow("enVoiceSet","enVoice",st.enVoice,[["ryusei",(REC_VOICES[st.jaRec]||REC_VOICES.ryusei).name.split(" ")[0]+" (Japanese accent)"],["iphone","iPhone voice"]])}
+    <p class="sub" style="margin:12px 0 6px">${esc((REC_VOICES[st.jaRec]||REC_VOICES.ryusei).name.split(" ")[0])} speaks only the Japanese. English parts use the English voice below.</p>
     ${st.enVoice==="iphone"?voicePicker("en","English voice",st.voiceEn):""}
     ${st.enVoice==="iphone"?`<div class="toggle" style="margin-top:6px"><span>English voice now: <b>${esc(voiceNow("en-US"))}</b></span><button class="mini" data-act="iphoneVoiceTest">🔊 Test</button></div>`:""}
     ${st.enVoice==="iphone"?enVoiceList():""}

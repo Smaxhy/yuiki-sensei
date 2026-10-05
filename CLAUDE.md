@@ -183,6 +183,9 @@ Safari → Add to Home Screen.
   engine `speakWithRecordings()` also uses them for any matching Japanese segment inside Yuki's
   replies (rest = iPhone voice). New decks: re-run
   `tools/gen_audio.py`. Credits "VOICEVOX:冥鳴ひまり" / "VOICEVOX:青山龍星" must stay (Me + README).
+  Ryusei = Japanese only (v2026.10.14-6, owner: "I need Ryusei to only speak Japanese, not English, that's what bugs it"):
+  `enRyusei()` and `sayWanted()` always return false, migrate forces `enVoice="iphone"` and the "English parts" picker is
+  gone; English always goes to the English voice (online/iPhone). The enVoice="ryusei" notes below are history.
   Default engine "Ryusei everywhere" (`S.settings.tts="quest"`, default voice `jaRec="ryusei"`):
   Japanese segments play from the recordings when they match, otherwise live from the free public
   VOICEVOX service tts.quest (`questUrl` → mp3StreamingUrl, played on one shared <audio> element
