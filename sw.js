@@ -17,10 +17,13 @@ async function page(req){
 // those are cut from the saved file.
 async function audio(req,u){
   const c=await caches.open("yuki-audio"),key=u.origin+u.pathname;
-  let hit=await c.match(key);
+  let hit=null;try{hit=await c.match(key);}catch(e){}
   if(!hit){
-    try{const r=await fetch(key);if(r.status!==200)return r;await c.put(key,r.clone());hit=r;}
-    catch(err){return Response.error();}
+    let r;try{r=await fetch(key);}catch(err){return Response.error();}
+    if(r.status!==200)return r;
+    // saving is a bonus: if the phone's storage is full, the clip still plays
+    try{await c.put(key,r.clone());}catch(e){}
+    hit=r;
   }
   const range=req.headers.get("range");
   if(!range)return hit;

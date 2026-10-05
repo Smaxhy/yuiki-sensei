@@ -212,9 +212,14 @@ Safari → Add to Home Screen.
   EVERY Ryusei clip of the reply (`Promise.all` of `prepClip`s, 5 s, 3.5 s when `questSlow()`), then plays them in one go;
   if any isn't ready in time (or fails), the whole reply is read by the iPhone voice (`speakPlainDevice`) — no switching
   voices mid-reply. The older mid-reply cut-off below now only matters for play-time failures.
+  Lesson audio (v2026.10.14-4, owner: "playing audios still isn't working during lessons"): `preloadRec(list)` downloads
+  the recordings a lesson (`lpSay`: items + quiz) or quiz/test (`qzSayListen`, also on `startTest`) needs into memory
+  (`recBlobs`, blob URLs), so `playRecorded` plays them from the phone; if a clip fails it tries once the other way
+  (internet ↔ memory) before the iPhone voice. sw.js never fails an audio response just because saving it to the cache
+  failed (full storage). The Ryusei sentence cache is capped at 300 and halves itself if storage is full.
   Saved Ryusei (v2026.10.14-3, owner: "make Ryusei's servers work better so he doesn't crash or pause"): live
   sentences go through `ryuseiClip(text)` = phone cache first (Cache Storage "yuki-ryusei", key `ryKey` = speaker+text,
-  `ryGet`/`ryPut`, max 800, blob URLs in `ryMem` max 60), else `prepClip(questUrl(text), null)`. `my = null` means the
+  `ryGet`/`ryPut`, max 300, blob URLs in `ryMem` max 60), else `prepClip(questUrl(text), null)`. `my = null` means the
   request keeps going after the reply's deadline (background) and is saved, so a sentence said once plays instantly
   forever (Say it again, repeats, offline). The slow-server pause is 5 min, and while paused `questProbe()` (from
   `speakAI`, max once a minute) quietly asks tts.quest for the reply's first Japanese part; under 4 s → unpause,
