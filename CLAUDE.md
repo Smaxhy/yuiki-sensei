@@ -153,6 +153,10 @@ Safari → Add to Home Screen.
   "strong" removes it from "weak" and vice versa; caps facts 30 / weak 20 / strong 20 / learned 300. The prompt asks for
   only things not already in YOU REMEMBER. v29 runs `cleanMemory()` once on old saves. Me → What Yuki remembers: tap ✕
   (`ACT.memDel`) to make her forget an item.
+  Self-improvement (owner: "the AI constantly learns from its mistakes"): `S.profile.teach` = Yuki's teaching notes about
+  this student (MEM field "teach", 1 short rule when she notices confusion / too hard / too long; and the 👍/👎 under her
+  latest reply: 👎 → `FB_REASONS` sheet → a rule like "Keep replies shorter"); max 10, deduped by `addMem`, sent as
+  "YOUR TEACHING NOTES … always follow" in `memoryPrompt`, removable in Me → What Yuki remembers.
   Don't break this format.
 - **Lessons**: 100+ lessons in the `CUR` object, grouped by level (n5–n1) → unit →
   [id, title, description]. Tapping one starts a step-by-step lesson in chat, and
@@ -359,6 +363,12 @@ Safari → Add to Home Screen.
   (`S.convo.st`: tip to react/ask back, wrap-up rates reactions, asking back, keeping it going). 💡 Phrase helper in any
   convo thread: chips `PH_QUICK` + "💡 Phrases" (`phraseSheet`, `ACT.phIns` inserts into `#inp`; on a call it speaks it),
   also a 💡 button on the call screen. `buildQz("words")` now maps to "word" (the Words quiz button was finding nothing).
+- **Conversation steering + speaking test**: `systemPrompt` CONVERSATION rule: chat naturally (react + one follow-up) but
+  move every reply toward the current objective, bridge back when they drift, never re-ask answered questions. 🎓
+  "Speaking test: everything I've learned" (`CONVOS` id "exam", 6th field "exam", row at the top of Practice → Real
+  conversations): `examTopics()` = units with finished lessons (title + goal) + up to 24 learned words; `convoPrompt`
+  runs it as a smooth examiner chat, ~2 exchanges per topic with transitions, then a score /10 per topic, overall, 2
+  strengths, 2 things to practise. The course's final conversation also gets the topic list.
 - **Quizzes**: mixed, weak spots, vocab, grammar, kanji, listening, translation, and
   roleplay, all run by Yuki in chat one question at a time.
 - **Reliability**: `apiRequest` gives up after 60 s (AbortController) so Yuki can't hang on "thinking";

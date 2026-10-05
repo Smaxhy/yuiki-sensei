@@ -634,6 +634,7 @@ html.light #voice .btn{color:#2a1520}
 #main .node .bd.lk{background:var(--ink2,#1d2030);font-size:13px;filter:none}
 .memtg{min-height:36px}.memtg b{opacity:.55;margin-left:4px;font-weight:900}
 .tchip{display:inline-flex;flex-direction:column;align-items:center;line-height:1.15;color:inherit;font-family:inherit}.tchip small{font-size:11px;font-weight:700;opacity:.75;margin-top:1px;max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.msgfb{display:flex;gap:6px;margin:4px 0 0 4px;align-items:center}.mfb{background:none;border:0;font-size:16px;opacity:.55;min-width:36px;min-height:36px;border-radius:10px}.mfb:active{opacity:1}
 </style>
 </head>
 <body>
@@ -655,7 +656,7 @@ html.light #voice .btn{color:#2a1520}
 <script>
 "use strict";
 // Bump this on every change so phones can spot a new version and offer to update
-const APP_VERSION="2026.10.12-10";
+const APP_VERSION="2026.10.13-1";
 /* ============ DATA ============ */
 const LV = {
   n5:{label:"N5",name:"Beginner",color:"#9fd67c"},
@@ -878,7 +879,7 @@ const DEFAULT={
   v:29,onboarded:false,name:"",level:"n5",goal:"",
   about:{done:false,focus:[],hira:"",kata:"",kanji:"",location:"",native:"English",minutes:15,notes:""},
   placement:null,plan:null,course:null,
-  profile:{facts:[],weak:[],strong:[],learned:[]},
+  profile:{facts:[],weak:[],strong:[],learned:[],teach:[]},
   stats:{msgs:0,quizRight:0,quizWrong:0,cards:0,streak:0,lastDay:"",calls:0},
   usage:{month:"",cost:0,n:0,total:0,allN:0,last:0,lastIn:0,lastOut:0},
   days:{},daily:{goal:50,freeze:1,best:0,exam:"",examName:"",remind:"19:00",badges:[],init:false},
@@ -929,12 +930,20 @@ const CONVOS=[
  // small talk & making friends (6th field "st" = small-talk coaching; scene built fresh each time by convoScene)
  ["stranger","🎲","Chat with a stranger","A random person and random topics, every time","","st"],
  ["mkfriend","🤝","Make a friend","Chat, swap LINE, make plans","","st"],
- ["roulette","🎡","Topic roulette","Yuki jumps between random topics","","st"]];
+ ["roulette","🎡","Topic roulette","Yuki jumps between random topics","","st"],
+ ["exam","🎓","Speaking test: everything I've learned","A real conversation through all your topics, scored per topic","","exam"]];
 const ST_PEOPLE=["Haruka, 24, a barista from Osaka who loves karaoke","Kenta, 31, an office worker from Nagoya and a big baseball fan","Mei, 21, a design student who draws manga","Taro, 67, a retired teacher who loves gardening and fishing","Aya, 28, a nurse who plays bass in a band","Sho, 35, a chef who runs a small ramen shop","Rina, 22, a gamer and anime fan","Daisuke, 40, a dad who loves camping","Yui, 26, an office worker who travels whenever she can","Ken, 19, a university student who surfs","Emi, 33, a yoga teacher who loves cats","Hiro, 45, a taxi driver who knows every good restaurant"];
 const ST_PLACES=["sitting next to the student at a ramen counter","in the queue at a busy café in Shibuya","at a small bar in Golden Gai","in the next seat on a long shinkansen ride","in a hostel common room in Kyoto","under the cherry blossoms in a park","waiting at a bus stop in the rain","in the rest area of an onsen","at a language exchange meetup","at a game centre in Akihabara"];
 const ST_TOPICS=["food","weekend plans","travel","music","movies and anime","work","hometowns","sports","pets","seasons and weather","favourite places in Japan","learning languages","games","cooking","festivals","family","dreams and plans"];
 const pick1=a=>a[Math.floor(Math.random()*a.length)];
+// What a speaking test covers: the units you've worked on (their goals) and words you've learned
+function examTopics(){
+  const d=doneMap(),units=COURSE.map((u,i)=>({u,i,n:u.ls.filter(l=>d["cl:"+l.id]).length})).filter(x=>x.n>0);
+  const words=shuffle(Object.keys(S.cards).filter(k=>k.startsWith("w:")).map(k=>k.slice(2))).slice(0,24);
+  return{units:units.map(x=>x.u.t+" ("+x.u.cd+")"),words};
+}
 function convoScene(c){
+  if(c[5]==="exam"){const t=examTopics();return t.units.length?`topics in order: ${t.units.join("; ")}. Words they know: ${t.words.join("、")||"-"}`:"topics: greetings and introducing yourself (they are just starting)";}
   const t=shuffle(ST_TOPICS.slice());
   if(c[0]==="stranger")return`${pick1(ST_PEOPLE)}, ${pick1(ST_PLACES)}; you're a stranger to the student and start chatting casually. Begin with ${t[0]}, then drift naturally to ${t[1]} and ${t[2]}`;
   if(c[0]==="mkfriend")return`${pick1(ST_PEOPLE)}, meeting the student for the first time ${pick1(ST_PLACES)}. Get on well: chat about ${t[0]} and ${t[1]}, find something in common, and when it fits suggest swapping LINE and meeting again (or let the student suggest it), then agree a day and a plan`;
@@ -942,11 +951,12 @@ function convoScene(c){
 }
 const activeConvo=()=>S.convo&&S.chatId===S.convo.id?S.convo:null;
 function convoPrompt(){const v=activeConvo();if(!v)return"";
+  if(v.exam)return`\nSPEAKING TEST: a friendly examiner chat (you are Yuki) covering everything they've learned, ${v.scene}. Go through the topics one by one with natural transitions (そういえば… / ところで…), about 2 exchanges per topic, using only Japanese they know (new words get English in brackets). Keep it a smooth conversation, not a quiz list: react, then ask the next question. If they get stuck, simplify once, then move on. Exchanges so far: ${v.turns}. When every topic is covered, end the chat warmly and give an English report: a score /10 for each topic, overall score, 2 strengths and the 2 most important things to practise next.`;
   return`\nREAL CONVERSATION "${v.title}": you are ${v.scene}. Stay in character and talk like a real person: react, share a little about yourself, ask follow-up questions, 1-2 short sentences per turn, in Japanese at their level (new words get English in brackets). Don't teach or quiz, just converse.${v.st?" Small-talk coaching: keep it flowing and change topic naturally when one runs dry. If the student only answers and never asks back or reacts, once add a tiny English tip in brackets (e.g. Tip: react with へえ！ and ask back そちらは？).":""} Exchanges so far: ${v.turns}. After about 10, wrap up naturally, then add a short English wrap-up: what went well, 2 things to improve${v.st?", how well they reacted, asked back and kept it going":""}, a score /10.`;}
 function startConvo(id,voice){
   const c=CONVOS.find(x=>x[0]===id);if(!c)return;
   S.currentLesson=null;UI.planCtx=null;
-  openThread("cv:"+id,c[1]+" "+c[2],"convo",true);S.convo={id:"cv:"+id,title:c[2],scene:c[5]?convoScene(c):c[4],turns:0,st:!!c[5]};save();
+  openThread("cv:"+id,c[1]+" "+c[2],"convo",true);S.convo={id:"cv:"+id,title:c[2],scene:c[5]?convoScene(c):c[4],turns:0,st:c[5]==="st",exam:c[5]==="exam"};save();
   UI.tab="chat";render();if(voice)openVoice();
   send(c[1]+" "+c[2],"Start the conversation now, in character, with a short greeting and an easy question for me.");
 }
@@ -970,7 +980,7 @@ function chatsSheet(){
 function migrate(st){
   const arr=x=>Array.isArray(x)?x:[], num=x=>Number.isFinite(+x)?+x:0;
   const obj=x=>x&&typeof x==="object"&&!Array.isArray(x)?x:{};
-  ["facts","weak","strong","learned"].forEach(k=>st.profile[k]=arr(st.profile[k]).map(String));
+  ["facts","weak","strong","learned","teach"].forEach(k=>st.profile[k]=arr(st.profile[k]).map(String));
   ["msgs","quizRight","quizWrong","cards","streak","calls"].forEach(k=>st.stats[k]=num(st.stats[k]));
   // v20 → v21: study days (calendar, streak, daily goal, badges). The old streak becomes study days.
   st.days=obj(st.days);
@@ -1097,6 +1107,10 @@ const learnKey=t=>String(t).split(/=|：|:| - | – /)[0].replace(/[（(][^)）]
 function addMem(list,items,cap,learned){(items||[]).forEach(x=>{x=String(x).trim().replace(/\s+/g," ");if(!x||x.length>120)return;
   const k=learned&&learnKey(x);for(let i=list.length-1;i>=0;i--)if(learned?learnKey(list[i])===k:memSame(list[i],x))list.splice(i,1);list.push(x);});
   while(list.length>cap)list.shift();}
+// 👎 on a reply → a teaching rule Yuki follows from then on (shown and removable in Me → What Yuki remembers)
+const FB_REASONS=[["long","Too long","Keep replies shorter"],["hard","Too hard","Use easier Japanese and more English help"],["easy","Too easy","Use more Japanese and less English"],
+ ["topic","Went off topic","Stay on the lesson objective"],["wrong","Wrong or confusing","Double-check explanations and keep them simple"],["repeat","Repeats itself","Don't repeat the same questions or phrases"],
+ ["fast","Moves on too fast","Check I understood before moving on"],["boring","Boring / too drill-like","Make it a real conversation with follow-up questions"]];
 const memTag=(k,f,i,c)=>`<button class="tg ${c} memtg" data-act="memDel" data-k="${k}" data-i="${i}" aria-label="Forget ${esc(f)}">${esc(f)} <b>✕</b></button>`;
 function cleanMemory(){const p=S.profile;
   ["facts","strong","weak"].forEach(k=>{const old=p[k].slice();p[k]=[];addMem(p[k],old,30);});
@@ -1715,6 +1729,7 @@ STUDENT: ${S.name||"?"}, JLPT ${L.label} (${L.name}). Goal: ${S.goal||"?"}. ${le
 STYLE
 ${styleRules()}
 - Direct, no filler. One idea at a time. Real examples; say why.
+- CONVERSATION: flow like a real chat (react to what they said, then one follow-up question) while every reply moves toward the current objective. If they drift off topic, answer briefly and naturally, then bridge back with a question they can answer with today's words. Never repeat a question they already answered.
 - Mistake → what they wrote → correct version → one-line reason.
 - Do what they ask (quiz, roleplay, drill). Quizzes: one question at a time, right/wrong + short reason, keep score, stop after 10 and sum up.
 - If they ask to add a topic to their path, say so and put it in "path".
@@ -1723,7 +1738,7 @@ ${voice?`- CALL: they hear you via text-to-speech. 1 short spoken sentence, 2 at
 ${sayWanted()?`- SPOKEN VERSION: a Japanese-only voice reads your reply. Before the memory line add <<SAY>> + the whole reply with English words in katakana (Great job! → グレート ジョブ！), no emojis, romaji or symbols.
 `:""}HIDDEN LINES at the very end, each on its own line, never mentioned:
 <<FIX>>{"ja":"","en":"","ok":true,"why":""} when their latest message is their own sentence (not a command like "quiz me"). Japanese: ja = correct natural Japanese with 、。？ at their level, en = English translation, properly punctuated. English: en = their English fixed, ja = how to say it in Japanese. ok = already correct (voice-typing punctuation doesn't count); why = main fix, a few words. The app shows it under their message, so mention the fix only briefly${voice?" (say it in a few words)":""}.
-<<MEM>>{} always last, with only what's NEW (never repeat anything already in YOU REMEMBER; leave a field out when nothing is new): "facts" (about them), "weak", "strong", "learned" ("word = meaning"), "right"/"wrong" (quiz counts), "lessonDone" (true when the current lesson's core is mastered), "used" (target words used correctly, exact spelling), "path" (1 topic, ONLY when the student asks you to add a lesson to their path).`;
+<<MEM>>{} always last, with only what's NEW (never repeat anything already in YOU REMEMBER; leave a field out when nothing is new): "facts" (about them), "weak", "strong", "learned" ("word = meaning"), "right"/"wrong" (quiz counts), "lessonDone" (true when the current lesson's core is mastered), "used" (target words used correctly, exact spelling), "path" (1 topic, ONLY when the student asks you to add a lesson to their path), "teach" (1 short rule for teaching THIS student better, only when you notice something: they were confused, it was too hard/easy/long, a method worked).`;
 }
 function memoryPrompt(){
   const p=S.profile,les=S.currentLesson&&lessonById(S.currentLesson);
@@ -1734,7 +1749,7 @@ function memoryPrompt(){
 - Weak: ${p.weak.slice(-8).join("; ")||"-"}
 - Strong: ${p.strong.slice(-5).join("; ")||"-"}
 - Recently learned: ${p.learned.slice(-12).join("; ")||"-"}
-- Quiz: ${S.stats.quizRight} right, ${S.stats.quizWrong} wrong. Cards due: ${due}.
+- Quiz: ${S.stats.quizRight} right, ${S.stats.quizWrong} wrong. Cards due: ${due}.${p.teach.length?`\n- YOUR TEACHING NOTES (learned from this student; always follow): ${p.teach.slice(-8).join("; ")}`:""}
 ${coursePrompt()}${convoPrompt()}${les?`\nCURRENT LESSON: "${les.title}" — ${les.desc} (${LV[les.level].label}, unit "${les.unit}"). Teach it in small steps: short explanation → 2-3 examples → a quick practice question, then wait for their answer. Never dump the whole lesson at once. When they've shown they understand the core of it, congratulate them and tell them they can tap "✓ Done".`:""}`;
 }
 // Calls are quick back-and-forths, so they send at most 6 recent messages (the lesson itself is in the memory part)
@@ -1838,7 +1853,8 @@ function asList(x){
 }
 function applyMem(mem){
   const p=S.profile;
-  ["facts","learned","strong","weak","used","path"].forEach(k=>{if(k in mem)mem[k]=asList(mem[k]);});
+  ["facts","learned","strong","weak","used","path","teach"].forEach(k=>{if(k in mem)mem[k]=asList(mem[k]);});
+  addMem(p.teach,mem.teach,10);
   addMem(p.facts,mem.facts,30);
   addMem(p.learned,mem.learned,300,true);
   // got better at something → it leaves "weak"; struggling again → it leaves "strong"
@@ -2181,7 +2197,7 @@ ${c.prev?`This lesson builds on the last one ("${c.prev}"): link back to it earl
 `:""}${rv?`OLDER WORDS to bring back (ask about them or work them in, early on): ${rv}.`:""}
 Mix it up: once or twice, drop in a quick surprise task (a mini quiz, fill-the-gap, or a [[listening]] line) with target or older words, then keep talking.
 Use only Japanese the student has learned (target, older and recently learned words); any other word needs its English in brackets.
-Open by stating today's objective in one short English line. Rules: have a REAL back-and-forth conversation (at least ${TALK_MIN} exchanges; now ${talkTurns(c)}): react to what they say, share a little about yourself, ask follow-up questions, and set up moments where the student HAS to say each target word. Don't just drill words. One small step per message. If they're stuck, give a hint (the English meaning or the first sound), not the answer. Keep your Japanese very simple, using mostly the target and older words, with English help as their style needs. They may type romaji; that counts. When every target word has been used, congratulate them warmly and ask 2 quick recap questions (one about an older word).${c.kind==="final"?" This is the end-of-course test: about 10 turns, light corrections only, and at the end give friendly scores out of 10 for understanding, speaking, vocabulary and grammar plus what to work on next.":""}
+Open by stating today's objective in one short English line. Rules: have a REAL back-and-forth conversation (at least ${TALK_MIN} exchanges; now ${talkTurns(c)}): react to what they say, share a little about yourself, ask follow-up questions, and set up moments where the student HAS to say each target word. Don't just drill words. One small step per message. If they're stuck, give a hint (the English meaning or the first sound), not the answer. Keep your Japanese very simple, using mostly the target and older words, with English help as their style needs. They may type romaji; that counts. When every target word has been used, congratulate them warmly and ask 2 quick recap questions (one about an older word).${c.kind==="final"?" Cover these topics in order with smooth transitions: "+examTopics().units.join("; ")+"."+" This is the end-of-course test: about 10 turns, light corrections only, and at the end give friendly scores out of 10 for understanding, speaking, vocabulary and grammar plus what to work on next.":""}
 ${c.speaking?"This is a SPEAKING lesson on a voice call: keep each message to 1-2 short spoken sentences, and invite them to answer out loud.":"This is a typed CHAT lesson."}
 In the memory line, put target words they used correctly this turn in "used" (exact spelling from the list).`;
 }
@@ -3494,7 +3510,8 @@ function msgHTML(m,i){
   const prev=S.chat[i-1],cont=prev&&prev.role==="assistant";
   const av=cont?`<div style="width:30px;flex-shrink:0"></div>`:`<div class="av" style="width:30px;height:30px;font-size:14px;margin-top:2px">ゆ</div>`;
   if(m.err)return`<div class="m a${cont?" cont":""}">${av}<div class="err">${m.text}<br><button class="mini" style="margin-top:8px" data-act="meSec" data-v="ai">Open setup</button></div></div>`;
-  return`<div class="m a${cont?" cont":""}">${av}<div class="bubwrap"><div class="bub withsay"><div class="bt">${md(m.text)}</div><button class="say" data-act="sayMsg" data-i="${i}" aria-label="Listen">🔊</button></div></div></div>`;
+  const fb=i===S.chat.length-1&&i>0?`<div class="msgfb">${m.fb?`<span class="sub">${m.fb==="up"?"👍 Thanks!":"📝 Yuki noted it"}</span>`:`<button class="mfb" data-act="fbUp" data-i="${i}" aria-label="Good reply">👍</button><button class="mfb" data-act="fbDown" data-i="${i}" aria-label="Bad reply">👎</button>`}</div>`:"";
+  return`<div class="m a${cont?" cont":""}">${av}<div class="bubwrap"><div class="bub withsay"><div class="bt">${md(m.text)}</div><button class="say" data-act="sayMsg" data-i="${i}" aria-label="Listen">🔊</button></div>${fb}</div></div>`;
 }
 function afterChat(){
   const box=$("#msgs");if(box)box.scrollTop=box.scrollHeight;
@@ -3706,8 +3723,9 @@ function vPractice(){
     return`<div class="row kanarow"><span class="ri">💡</span><span class="rt"><b>Small-talk phrases</b><span>${learned}/${d.ids.length} learned${due?" · <b style='display:inline;color:var(--sakura)'>"+due+" due</b>":""} · free</span></span>
      <button class="mini" data-act="deck" data-d="talk"${learned?"":" disabled style='opacity:.4'"}>Review</button><button class="mini ok" data-act="learnNew" data-d="talk">＋ 5 new</button></div>
      <button class="row" data-act="phrases"><span class="ri">📖</span><span class="rt"><b>All the phrases</b><span>Start, react, keep it going, swap LINE, rescue yourself · tap to hear</span></span><span class="chev">›</span></button>`;})()}
-  ${CONVOS.filter(c=>c[5]).map(([id,ic,t,d])=>`<button class="row" data-act="convo" data-v="${id}"><span class="ri">${ic}</span><span class="rt"><b>${t}</b><span>${d} · uses credits</span></span><span class="chev">›</span></button>`).join("")}
+  ${CONVOS.filter(c=>c[5]==="st").map(([id,ic,t,d])=>`<button class="row" data-act="convo" data-v="${id}"><span class="ri">${ic}</span><span class="rt"><b>${t}</b><span>${d} · uses credits</span></span><span class="chev">›</span></button>`).join("")}
   <div class="sec">🗣️ Real conversations</div><p class="sub" style="margin:-4px 4px 10px">Yuki plays a character and you just talk. About 10 exchanges, then a score and tips (uses credits).</p>
+  <button class="row" data-act="convo" data-v="exam"><span class="ri">🎓</span><span class="rt"><b>Speaking test: everything I've learned</b><span>All your topics in one smooth conversation · scored per topic</span></span><span class="chev">›</span></button>
   ${CONVOS.filter(c=>!c[5]).map(([id,ic,t,d])=>`<button class="row" data-act="convo" data-v="${id}"><span class="ri">${ic}</span><span class="rt"><b>${t}</b><span>${d}</span></span><span class="chev">›</span></button>`).join("")}
   <div class="sec">⚡ Quick practice</div>
   ${dueIds(Object.keys(S.cards)).length?`<button class="row" data-act="review"><span class="ri">🔁</span><span class="rt"><b>Review ${dueIds(Object.keys(S.cards)).length} due cards</b><span>All decks mixed · about ${Math.max(1,Math.round(Math.min(20,dueIds(Object.keys(S.cards)).length)/4))} min</span></span></button>`:""}
@@ -3876,6 +3894,7 @@ function vMe(){
    <p class="sub" style="margin-bottom:8px">Tap ✕ to make Yuki forget something. Repeats are merged automatically.</p>
    ${S.profile.facts.length?`<p class="sub" style="margin:0 0 6px">About you</p><div class="tags">${S.profile.facts.map((f,i)=>memTag("facts",f,i,"")).join("")}</div>`:`<p class="sub">Nothing yet — chat with her and she'll pick things up.</p>`}
    ${S.profile.strong.length?`<p class="sub" style="margin:12px 0 6px">Strong at</p><div class="tags">${S.profile.strong.map((f,i)=>memTag("strong",f,i,"s")).join("")}</div>`:""}
+   ${S.profile.teach.length?`<p class="sub" style="margin:12px 0 6px">How Yuki teaches you (her own notes + your 👎 feedback)</p><div class="tags">${S.profile.teach.map((f,i)=>memTag("teach",f,i,"")).join("")}</div>`:""}
    ${S.profile.weak.length?`<p class="sub" style="margin:12px 0 6px">Working on</p><div class="tags">${S.profile.weak.map((f,i)=>memTag("weak",f,i,"w")).join("")}</div>`:""}
    <p class="sub" style="margin-top:12px">${S.profile.learned.length} words & patterns taught · ${S.stats.msgs} messages · ${S.stats.cards} cards reviewed</p>
   </div>
@@ -4149,6 +4168,11 @@ const ACT={
   // tap a target word: hear it (free recording) and see what it means, without leaving the lesson
   chipWord:el=>{const jp=el.dataset.jp,w=wordInfo(jp);if(UI.listening)return;speak(wordSay(jp),{rate:0.85});if(w)toast(jp+" ("+w[1]+") = "+w[2],2200);},
   micAllow:()=>micAllowSheet(),
+  fbUp:el=>{const m=S.chat[+el.dataset.i];if(!m)return;m.fb="up";save();rerender();toast("👍 Yuki will keep doing that",1500);},
+  fbDown:el=>{const i=+el.dataset.i;sheet(`<div class="h2" style="margin-bottom:6px">What was wrong?</div><p class="sub" style="margin-bottom:12px">Yuki turns this into a teaching rule and follows it from now on.</p>
+    ${FB_REASONS.map(([k,t])=>`<button class="row" data-act="fbWhy" data-i="${i}" data-k="${k}"><span class="rt"><b>${esc(t)}</b></span></button>`).join("")}
+    <button class="btn ghost" style="margin-top:8px" data-act="closeSheet">Cancel</button>`);},
+  fbWhy:el=>{const r=FB_REASONS.find(x=>x[0]===el.dataset.k),m=S.chat[+el.dataset.i];if(!r)return;addMem(S.profile.teach,[r[2]],10);if(m)m.fb="down";save();closeSheet();rerender();toast("📝 Got it. Yuki will "+r[2].charAt(0).toLowerCase()+r[2].slice(1),2600);},
   memDel:el=>{const l=S.profile[el.dataset.k];if(!Array.isArray(l))return;l.splice(+el.dataset.i,1);save();rerender();toast("Forgotten",1200);},
   saveQuestKey:()=>{const v=$("#questKeyIn");S.settings.questKey=v?v.value.trim():"";questCache.clear();save();toast(S.settings.questKey?"Key saved — tap Test Ryusei":"Key removed");},
   questTest:async()=>{
