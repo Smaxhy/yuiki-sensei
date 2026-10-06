@@ -243,6 +243,12 @@ Safari → Add to Home Screen.
   2.5 s from the start, 1.5 s when `questSlow()`; later ones 1.2 s / 0.8 s), else the iPhone Japanese voice says it and the
   rest of the reply (`stay`). Before a clip: `synthIdle(600)` and a 200 ms duck gap. `stopMic` waits only 450 ms for
   iPhone's "end" (was 1.5 s). English parts are always spoken by the English voice on calls when "Read English parts" is on.
+  Mic + Ryusei lead-in (v2026.10.14-13, owner: "it fails to pick up my voice while calling and Ryusei still breaks often"):
+  `stopMic` waits up to 1.2 s (words already in) / 2.5 s (nothing yet) for iPhone's late results, and a result arriving
+  after Send closes the mic 350 ms later (`MIC.closeIt`, `MIC.lateT`); the 0.45 s cut-off lost the words. Live Ryusei clips
+  get 0.25 s of silence in front (`padClip`: `mp3Fmt` reads the sample rate/channels, `LEAD_MP3` = silent MP3s without a
+  Xing header for 22.05/24/44.1/48 kHz mono/stereo) in `ryGet`/`ryPut`; later Japanese parts wait up to 2.5 s (1.8 s when
+  slow) before the iPhone voice takes over, the first one up to 3 s.
   Lesson audio (v2026.10.14-4, owner: "playing audios still isn't working during lessons"): `preloadRec(list)` downloads
   the recordings a lesson (`lpSay`: items + quiz) or quiz/test (`qzSayListen`, also on `startTest`) needs into memory
   (`recBlobs`, blob URLs), so `playRecorded` plays them from the phone; if a clip fails it tries once the other way
