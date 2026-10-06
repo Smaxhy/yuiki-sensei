@@ -495,7 +495,7 @@ Safari → Add to Home Screen.
   `sed -n '/<script>/,/<\/script>/p' index.html | sed '1d;$d' > /tmp/app.js && node --check /tmp/app.js`
 - Commit with a clear message and push to `main` so GitHub Pages updates
   (or to the session's assigned branch, then merge to `main`).
-- Explain changes to the owner in plain language. They're learning, not a developer.
+- Explain changes to the owner in plain language, in 1–2 short sentences max (owner: "I don't read long messages; just tell me what to do and how, super short and simple"). They're learning, not a developer.
 
 ## Ideas for next versions
 - Kanji stroke-order practice
