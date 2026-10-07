@@ -656,7 +656,7 @@ html.light #voice .btn{color:#2a1520}
 <script>
 "use strict";
 // Bump this on every change so phones can spot a new version and offer to update
-const APP_VERSION="2026.10.14-13";
+const APP_VERSION="2026.10.14-14";
 /* ============ DATA ============ */
 const LV = {
   n5:{label:"N5",name:"Beginner",color:"#9fd67c"},
@@ -1857,9 +1857,9 @@ function micRun(){
   const first=!MIC.base&&!MIC.sess;
   rec=r;MIC.paused=false;MIC.sess="";MIC.audioOk=false;MIC.marks=[];MIC.lastRaw="";MIC.lastAt=0;
   if(!first){const v=$(".vstat");if(v&&UI.voice)v.textContent="🎤 Still listening…";}
-  r.lang=MIC.lang;r.interimResults=true;r.continuous=true;r.maxAlternatives=1;
+  r.lang=MIC.lang;r.interimResults=true;r.continuous=micCont();r.maxAlternatives=1;
   const ok=ev=>{if(rec!==r)return;if(!MIC.audioOk)vlog("🎤 mic "+ev);MIC.audioOk=true;MIC.retried=false;const v=$(".vstat");if(v&&UI.voice)v.textContent="🎤 Hearing you · tap ➤ Send when you're done";};
-  r.onstart=()=>ok("started");r.onaudiostart=()=>ok("hearing audio");r.onspeechstart=()=>ok("hearing speech");
+  r.onstart=()=>ok("started");r.onaudiostart=()=>ok("hearing audio");r.onspeechstart=()=>{MIC.speech=true;ok("hearing speech");};
   r.onresult=e=>{if(rec!==r)return;const t0=joinResults(e.results),now=Date.now();
     // a pause of ~1 s before more words → remember where, and put a comma there
     if(MIC.lastRaw&&now-MIC.lastAt>950&&t0.length>MIC.lastRaw.length&&t0.startsWith(MIC.lastRaw)&&!MIC.marks.includes(MIC.lastRaw))MIC.marks.push(MIC.lastRaw);
@@ -1888,7 +1888,7 @@ function startMic(onText,onDone,lang){
   const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
   if(!SR){micHelp("unsupported");return false;}
   stopSpeak();releasePlayer();
-  Object.assign(MIC,{retried:false,on:true,paused:false,lang:lang||S.settings.micLang,base:"",sess:"",stopReq:false,cancel:false,onText,onDone,heardAt:Date.now(),audioOk:false});
+  Object.assign(MIC,{speech:false,retried:false,on:true,paused:false,lang:lang||S.settings.micLang,base:"",sess:"",stopReq:false,cancel:false,onText,onDone,heardAt:Date.now(),audioOk:false});
   UI.micLang=MIC.lang;UI.listening=true;refreshMic();
   micRun();   // right here, inside the tap
   micPermTip();
@@ -1934,9 +1934,17 @@ function stopMic(cancel){
     MIC.closeIt=closeIt;setTimeout(closeIt,micText()?1200:2500);}
   else micFinish();
 }
+// Some iPhones give nothing back in "continuous" listening (the mic is on, you talk, no words arrive). When a turn
+// ends with no words, the next turn uses the other mode (continuous ↔ one sentence at a time, restarted after each
+// pause), and the choice that works is remembered (localStorage "yuki-micmode").
+const micCont=()=>{try{return localStorage.getItem("yuki-micmode")!=="s";}catch(e){return true;}};
+function micSwapMode(){const nx=micCont()?"s":"c";try{localStorage.setItem("yuki-micmode",nx);}catch(e){}vlog("🎤 no words came back, next time listening "+(nx==="s"?"one sentence at a time":"continuously"));}
 function micFinish(cancelled){
   if(!MIC.on)return;MIC.on=false;MIC.paused=false;
-  const text=micText(),done=MIC.onDone,cancel=cancelled||MIC.cancel;
+  const text=micText().replace(/\s*[、,]\s*$/,""),done=MIC.onDone,cancel=cancelled||MIC.cancel;
+  if(!cancel&&!text.trim()){micSwapMode();
+    if(UI.voice){UI.vstate="idle";setTimeout(()=>{const v=$(".vstat");if(v)v.textContent="🎤 I didn't hear any words — tap 🎤 and try again (speak right after tapping)";},60);}
+    else toast("🎤 No words heard — tap 🎤 and try again",2200);}
   rec=null;UI.listening=false;refreshMic();
   if(done)done(cancel?"":text);
 }

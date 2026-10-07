@@ -249,6 +249,9 @@ Safari → Add to Home Screen.
   get 0.25 s of silence in front (`padClip`: `mp3Fmt` reads the sample rate/channels, `LEAD_MP3` = silent MP3s without a
   Xing header for 22.05/24/44.1/48 kHz mono/stereo) in `ryGet`/`ryPut`; later Japanese parts wait up to 2.5 s (1.8 s when
   slow) before the iPhone voice takes over, the first one up to 3 s.
+  Mic mode self-heal (v2026.10.14-14, owner: "make it pick up my mic on calls"): `micCont()` (localStorage "yuki-micmode",
+  "c" continuous / "s" one sentence at a time, restarted after each pause). A turn that ends with no words (`micFinish`)
+  flips the mode (`micSwapMode`) and the call screen says "I didn't hear any words — tap 🎤 and try again".
   Lesson audio (v2026.10.14-4, owner: "playing audios still isn't working during lessons"): `preloadRec(list)` downloads
   the recordings a lesson (`lpSay`: items + quiz) or quiz/test (`qzSayListen`, also on `startTest`) needs into memory
   (`recBlobs`, blob URLs), so `playRecorded` plays them from the phone; if a clip fails it tries once the other way
