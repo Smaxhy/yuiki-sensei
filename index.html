@@ -656,7 +656,7 @@ html.light #voice .btn{color:#2a1520}
 <script>
 "use strict";
 // Bump this on every change so phones can spot a new version and offer to update
-const APP_VERSION="2026.10.14-14";
+const APP_VERSION="2026.10.14-15";
 /* ============ DATA ============ */
 const LV = {
   n5:{label:"N5",name:"Beginner",color:"#9fd67c"},
@@ -3525,6 +3525,9 @@ function trSay(ja,say){
   stopSpeak();resetAudio();say=say||ja;
   if(TR_REC.has(ja)){const my=++natSeq;natBusy=true;playUrl("audio/ryusei/"+recId(ja)+".mp3"+AUD_V,my,1).catch(()=>sayDevice(say,"ja-JP",0.9)).finally(()=>{if(my===natSeq)natBusy=false;});}
   else if(navigator.onLine!==false&&S.settings.tts!=="device"&&!/[A-Za-z]/.test(say))speakQuest([{k:"ja",t:say}],0.9,say,{noSplit:true}).catch(()=>sayDevice(say,"ja-JP",0.9));
+  // offline: a sentence Ryusei has said before is saved on the phone, so play that instead of the iPhone voice
+  else if(S.settings.tts!=="device"&&!/[A-Za-z]/.test(say)){const my=++natSeq;natBusy=true;
+    ryGet(vvText(say)).then(u=>u?playUrl(u,my,0.9):Promise.reject()).catch(()=>{if(my===natSeq)return sayDevice(say,"ja-JP",0.9);}).finally(()=>{if(my===natSeq)natBusy=false;});}
   else sayDevice(say,"ja-JP",0.9);
 }
 /* ---- Free translation of anything you say (no AI, no credits) + a sentence bank that grows from your chats ---- */

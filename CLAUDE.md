@@ -410,6 +410,7 @@ Safari → Add to Home Screen.
   → else Ryusei live via `speakQuest` when online (not in ⚡ Fast mode, no English letters) → else the iPhone
   Japanese voice. "Save the voice for offline" (`trSaveOffline`) puts all clips and the page in the cache.
   New common sentences: add them to `TR_EXTRA` and re-run the generator.
+  Offline, `trSay` plays a sentence Ryusei said before from the phone (`ryGet`) before falling back to the iPhone voice.
 - **Free translation + sentence bank** (no AI, no credits): the translator has two directions (`UI.tr.dir` "en"/"ja",
   🎤 in en-US or ja-JP). `trRun`: a sure offline hit (exact sentence-bank match, or a recorded built sentence) plays
   at once; otherwise, when online, `freeMT(text,sl,tl)` = Google Translate's public `client=gtx` endpoint (romaji
