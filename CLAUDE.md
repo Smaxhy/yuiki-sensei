@@ -365,6 +365,9 @@ Safari → Add to Home Screen.
   points there (at most once per 3 days, localStorage `yuki-mictip`).
 - **Listening**: Japanese wrapped in [[double brackets]] in AI replies shows as a hidden,
   tap-to-play audio clip.
+  v2026.10.14-16 (owner: "audio is breaking with tasks where I have to press for it to speak"): `prefetchListen(shown)` (in
+  `send`, 300 ms after the reply so its own voice requests go first) makes and saves Ryusei's clip for each [[…]] right away,
+  so ▶ plays from the phone; `cleanSpeech` drops [[…]] from the spoken reply (it gave the answer away).
 - **Flashcards**: decks for hiragana, katakana, 80 core words, and 50 kanji, using
   Leitner spaced repetition stored in `S.cards`. Works offline with no AI. Rounds only use cards already
   learned (due first, then weakest); new kana come only from "＋ 5 new" (`learnNew`: 5 characters in chart

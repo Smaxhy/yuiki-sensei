@@ -656,7 +656,7 @@ html.light #voice .btn{color:#2a1520}
 <script>
 "use strict";
 // Bump this on every change so phones can spot a new version and offer to update
-const APP_VERSION="2026.10.14-15";
+const APP_VERSION="2026.10.14-16";
 /* ============ DATA ============ */
 const LV = {
   n5:{label:"N5",name:"Beginner",color:"#9fd67c"},
@@ -1299,7 +1299,8 @@ function cleanSpeech(t){
   return stripHidden(t).replace(/<<MEM>>[\s\S]*$/,"")
    // 「こんにちは」(konnichiwa) → こんにちは: the romaji only repeats the Japanese, and an English voice mangles it
    .replace(/([\u3040-\u30ff\u3400-\u9fff\u3005][」』]?)\s*[（(]\s*[A-Za-zāēīōūÂâÊêÎîÔôÛû'\- ]+\s*[)）]/g,"$1")
-   .replace(/\[\[|\]\]/g,"")
+   // a [[listening task]] is only heard when you tap ▶ (reading it out in the reply gave the answer away)
+   .replace(/\[\[[\s\S]+?\]\]/g," ")
    .replace(/([\u3400-\u9fff\u3005]+)[（(]([\u3040-\u30ff]+)[)）]/g,"$2")
    .replace(/[*_#`>|]/g," ")
    .replace(/\p{Extended_Pictographic}/gu,"")
@@ -1470,6 +1471,11 @@ function romaToKana(t){
   let out=String(t);[...ROMA_MAP.keys()].sort((a,b)=>b.length-a.length).forEach(ro=>{
     const re=new RegExp("(^|[^A-Za-z])("+ro.replace(/ /g,"[ -]?")+")(?![A-Za-z])","gi");out=out.replace(re,(m,a)=>a+ROMA_MAP.get(ro));});
   return out;}
+// ▶ Play audio (listening tasks) in Yuki's replies: Ryusei's clip is made the moment the reply arrives and saved,
+// so the tap plays it at once instead of waiting for the server (and breaking into the iPhone voice)
+function prefetchListen(text){if(!useQuest())return;
+  (String(text).match(/\[\[([\s\S]+?)\]\]/g)||[]).slice(0,4).forEach(m=>{const p=m.slice(2,-2);if(RECORDED.has(p.trim()))return;
+    segments(romaToKana(cleanSpeech(p))).filter(sg=>sg.k==="ja").forEach(sg=>{const k=recKey(sg.t);if(!RECORDED.has(k))ryuseiClip(vvText(sg.t)).catch(()=>{});});});}
 function speakAI(text,opts){
   const segsN=segments(romaToKana(cleanSpeech(text))).filter(s=>s.k==="ja"||S.settings.speakEnglish||opts.forceEnglish);
   if(questPaused())questProbe(segsN);
@@ -2181,7 +2187,7 @@ async function send(display,apiText,mode){
     const {text,mem}=parseMem(t0.raw);
     try{applyMem(mem);}catch(e){console.warn("memory skipped",e);}
     const shown=stripHidden(text);
-    box.push({role:"assistant",text:shown||"…",say:say||undefined});save();
+    box.push({role:"assistant",text:shown||"…",say:say||undefined});save();setTimeout(()=>{try{prefetchListen(shown);}catch(e){}},300);   // after the reply's own voice requests
     try{trHarvest(shown,f0.fix);}catch(e){console.warn("bank skipped",e);}
     // A plan quiz or talk counts as done after a few back-and-forths with Yuki
     if(UI.planCtx&&++UI.planCtx.replies>=4){markNode(UI.planCtx.key);UI.planCtx=null;if(UI.tab==="chat"&&!UI.voice)rerenderChatHead();}
