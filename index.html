@@ -656,7 +656,7 @@ html.light #voice .btn{color:#2a1520}
 <script>
 "use strict";
 // Bump this on every change so phones can spot a new version and offer to update
-const APP_VERSION="2026.10.14-16";
+const APP_VERSION="2026.10.14-17";
 /* ============ DATA ============ */
 const LV = {
   n5:{label:"N5",name:"Beginner",color:"#9fd67c"},
@@ -4076,6 +4076,10 @@ function vPractice(){
   <div class="grid2" style="margin:-2px 0 4px"><button class="btn sm ghost" data-act="wodAdd">${inDeck?"✓ In flashcards":"＋ Flashcards"}</button><button class="btn sm ghost" data-act="wodYuki">💬 Use it with Yuki</button></div>
   ${isN5Path()?(()=>{const n=doneLessons().length;return`<div class="sec">🔁 Recaps of past lessons</div><p class="sub" style="margin:-4px 4px 10px">${n?"Test yourself on what you've already done · "+n+" lesson"+(n===1?"":"s")+" finished · free":"Finish your first lesson to unlock recaps."}</p>
    <div class="tags" style="margin-bottom:10px">${RECAPS.map(([v,ic,t])=>{const ok=n>=(v==="all"?1:+v);return`<button class="tg w" style="min-height:44px${ok?"":";opacity:.4"}" data-act="recap" data-v="${v}"${ok?"":" disabled"}>${ic} ${t}</button>`;}).join("")}</div>`;})():""}
+  ${(()=>{const ns=pathNodes().filter(n=>nodeDone(n)&&n.t!=="X");if(!ns.length)return"";const U=pathUnits(),by={};ns.forEach(n=>{(by[n.unit]=by[n.unit]||[]).push(n);});
+    return`<div class="sec">↩️ Redo past lessons</div><p class="sub" style="margin:-4px 4px 10px">Do any finished lesson, roleplay or test again · ${ns.length} done</p>
+    ${Object.keys(by).reverse().map(u=>`<details class="card" style="padding:2px 12px;margin-bottom:8px"><summary style="min-height:44px;display:flex;align-items:center;font-weight:800">${esc((U[u]||{}).e||"")} ${esc((U[u]||{}).sub||"Unit")} <span class="sub" style="margin-left:auto">${by[u].length}</span></summary>
+      ${by[u].map(n=>`<button class="row" data-act="brief" data-key="${esc(n.key)}"><span class="ri">${nodeIcon(n)}</span><span class="rt"><b>${esc(nodeLabel(n))}</b><span>${esc(nodeGoal(n)||"")}</span></span><span class="chev">↩️</span></button>`).join("")}</details>`).join("")}`;})()}
   <div class="sec">🤝 Making friends & small talk</div><p class="sub" style="margin:-4px 4px 10px">Learn the phrases for free, then chat with someone new. A 💡 phrase helper sits under the chat so you never freeze.</p>
   ${(()=>{const d=DECKS.talk,learned=d.ids.filter(i=>S.cards[i]).length,due=dueIds(d.ids).length;
     return`<div class="row kanarow"><span class="ri">💡</span><span class="rt"><b>Small-talk phrases</b><span>${learned}/${d.ids.length} learned${due?" · <b style='display:inline;color:var(--sakura)'>"+due+" due</b>":""} · free</span></span>

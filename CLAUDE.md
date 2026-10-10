@@ -107,6 +107,7 @@ Safari → Add to Home Screen.
   `S.plan.done`. Locking: `nodeLocked(n)` = not done and after the first unfinished step; tapping it (path, unit sheet,
   brief) only toasts `lockedToast()`; locked bubbles show a 🔒 badge. Finished steps can always be redone; "skip the
   unit" in the unit sheet still marks a whole unit done.
+  Practice → "↩️ Redo past lessons" (v2026.10.14-17): every finished path step, grouped by unit in folded cards, opens its brief.
 - **Tabs**: Path, Yuki (chat), Translate (`UI.tab="translate"`), Practice, Cards, Me (labels 10.5px). Progress (`UI.tab="progress"`) is opened from the top row of Me → You (and the Home goal ring / streak pill); it has a "‹ Me" back button and lights up the Me tab. Cards (`vCards`) lists only learned cards
   (`S.cards`), weakest first, filter chips (`UI.cardsF`), and practises them with the "mine" decks
   (`MINE`: mine / mine-words / mine-kana / mine-kanji = due first, then weakest, never new cards). Home's
