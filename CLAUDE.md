@@ -124,7 +124,8 @@ Safari → Add to Home Screen.
   turned into study days in the v21 migration. Progress tab (`vProgress`): today ring + goal picker,
   `calendarHTML()` month grid (tap a day → `daySheet`), `weekHTML()` 7-day bars, countdown, daily reminder
   (in-app "Study time!" on Home after `remind`, plus `addReminder()` = a repeating .ics event with an alert
-  for the iPhone Calendar), all-time stats, `BADGES` (16, `checkBadges`), word bank (`wordBankSheet`).
+  for the iPhone Calendar; v2026.10.14-18: title/alert "🔥 Lock in twin, do your Japanese" (owner's wording), Home row "🔔 Daily reminder" until
+  added (`ACT.remSetup` → time picker → `remGo` → `addReminder`, sets `S.daily.remAdded`); web push isn't possible without a server), all-time stats, `BADGES` (16, `checkBadges`), word bank (`wordBankSheet`).
   Home shows `todayStrip()` (goal ring, streak, cards due). Practice shows the word of the day
   (`wordOfDay()`, from VOCAB, same all day; add to flashcards / use it with Yuki).
 - **Me tab**: a profile header plus rows that open sub-pages (`UI.me` = profile, talk, voice, ai, memory,

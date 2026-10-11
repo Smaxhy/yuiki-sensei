@@ -656,7 +656,7 @@ html.light #voice .btn{color:#2a1520}
 <script>
 "use strict";
 // Bump this on every change so phones can spot a new version and offer to update
-const APP_VERSION="2026.10.14-17";
+const APP_VERSION="2026.10.14-18";
 /* ============ DATA ============ */
 const LV = {
   n5:{label:"N5",name:"Beginner",color:"#9fd67c"},
@@ -2807,8 +2807,9 @@ function todayStrip(){
   const d=S.days[isoDay()]||{xp:0},g=S.daily.goal,st=streakInfo(),due=dueIds(Object.keys(S.cards)).length;
   const late=S.daily.remind&&d.xp<g&&new Date().toTimeString().slice(0,5)>=S.daily.remind;
   return`<div id="todayRing" class="today"><button class="tmain" data-act="tab" data-tab="progress"><span class="tring">${ring(d.xp,g,46,6)}<i>${d.xp>=g?"✓":"🎯"}</i></span>
-    <span class="tt"><b>${d.xp>=g?"Goal done today!":late?"⏰ Study time!":"Daily goal"}</b><span>${d.xp}/${g} XP · ⏱️ ${fmtMin(d.sec)} · 🔥 ${st.n}${st.n&&!st.today?" · study today to keep it":""}</span></span></button>
-    ${due?`<button class="tdue" data-act="review"><b>${due}</b><span>to review</span></button>`:""}</div>`;
+    <span class="tt"><b>${d.xp>=g?"Goal done today!":late?"🔥 Lock in twin, do your Japanese":"Daily goal"}</b><span>${d.xp}/${g} XP · ⏱️ ${fmtMin(d.sec)} · 🔥 ${st.n}${st.n&&!st.today?" · study today to keep it":""}</span></span></button>
+    ${due?`<button class="tdue" data-act="review"><b>${due}</b><span>to review</span></button>`:""}</div>
+  ${S.daily.remAdded?"":`<button class="row" data-act="remSetup"><span class="ri">🔔</span><span class="rt"><b>Daily reminder: "Lock in twin, do your Japanese"</b><span>Tap to add a daily notification to your iPhone</span></span><span class="chev">›</span></button>`}`;
 }
 const fmtMin=s=>{const m=Math.round((s||0)/60);return m<60?m+" min":Math.floor(m/60)+" h "+(m%60)+" min";};
 const MONTHS=["January","February","March","April","May","June","July","August","September","October","November","December"];
@@ -2894,10 +2895,11 @@ function reminderICS(){
   return["BEGIN:VCALENDAR","VERSION:2.0","PRODID:-//Yuki Sensei//EN","CALSCALE:GREGORIAN","BEGIN:VEVENT",
     "UID:yuki-daily-"+Date.now()+"@yuki-sensei","DTSTAMP:"+stamp,
     "DTSTART:"+start.getFullYear()+p(start.getMonth()+1)+p(start.getDate())+"T"+p(h)+p(mi)+"00","DURATION:PT15M","RRULE:FREQ=DAILY",
-    "SUMMARY:🌸 Japanese with Yuki","DESCRIPTION:Keep your streak going! "+S.daily.goal+" XP a day.","URL:"+url,
-    "BEGIN:VALARM","TRIGGER:PT0M","ACTION:DISPLAY","DESCRIPTION:Time for Japanese with Yuki 🌸","END:VALARM","END:VEVENT","END:VCALENDAR"].join("\r\n");
+    "SUMMARY:🔥 Lock in twin, do your Japanese","DESCRIPTION:Open Yuki and do today's lesson. "+S.daily.goal+" XP a day keeps the streak alive.","URL:"+url,
+    "BEGIN:VALARM","TRIGGER:PT0M","ACTION:DISPLAY","DESCRIPTION:Lock in twin, do your Japanese 🔥","END:VALARM","END:VEVENT","END:VCALENDAR"].join("\r\n");
 }
 function addReminder(){
+  if(!S.daily.remind)S.daily.remind="19:00";S.daily.remAdded=1;save();
   const ics=reminderICS(),blob=new Blob([ics],{type:"text/calendar"});
   const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="yuki-reminder.ics";document.body.appendChild(a);a.click();a.remove();
   setTimeout(()=>sheet(`<div class="h2" style="margin-bottom:8px">📅 Daily alarm</div><p class="sub" style="margin-bottom:10px">Your iPhone should now offer <b>Add to Calendar</b> for a daily event at ${esc(S.daily.remind)} with an alert. Tap <b>Add All</b>.</p>
@@ -4491,6 +4493,10 @@ const ACT={
   calMove:el=>{const [y,m]=(UI.cal||isoDay().slice(0,7)).split("-").map(Number),d=new Date(y,m-1+(+el.dataset.n),1);UI.cal=isoDay(d).slice(0,7);rerender();},
   calDay:el=>daySheet(el.dataset.d),
   examClear:()=>{S.daily.exam="";S.daily.examName="";save();rerender();},
+  remSetup:()=>sheet(`<div class="h2" style="margin-bottom:8px">🔔 Daily reminder</div><p class="sub" style="margin-bottom:10px">Your iPhone will pop up <b>“Lock in twin, do your Japanese 🔥”</b> every day at this time:</p>
+    <input class="field" type="time" id="remT" value="${esc(S.daily.remind||"19:00")}"><button class="btn" data-act="remGo">🔔 Add it</button>
+    <p class="sub" style="margin-top:10px">Then tap <b>Add All</b> on the Calendar screen. The app also shows it on Home until your daily goal is done.</p>`),
+  remGo:()=>{const v=$("#remT");S.daily.remind=(v&&v.value)||"19:00";save();addReminder();rerender();},
   addReminder:()=>addReminder(),
   wordBank:()=>wordBankSheet(),
   meSec:el=>{UI.tab="me";UI.me=el.dataset.v||null;render();},
@@ -4680,7 +4686,7 @@ document.addEventListener("click",e=>{
   track();
   const el=e.target.closest("[data-act]");if(!el)return;
   const fn=ACT[el.dataset.act];if(!fn)return;
-  if(el.closest("#sheet")&&!["closeSheet","copyBackup","doImport","addSuggest","addLesson","copyDock","questTest","iphoneVoiceTest","trPlay","saveQuestKey2"].includes(el.dataset.act))closeSheet();
+  if(el.closest("#sheet")&&!["closeSheet","copyBackup","doImport","addSuggest","addLesson","copyDock","questTest","iphoneVoiceTest","trPlay","saveQuestKey2","remGo"].includes(el.dataset.act))closeSheet();
   fn(el,e);
 });
 document.addEventListener("change",e=>{
