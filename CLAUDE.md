@@ -254,6 +254,9 @@ Safari → Add to Home Screen.
   Mic mode self-heal (v2026.10.14-14, owner: "make it pick up my mic on calls"): `micCont()` (localStorage "yuki-micmode",
   "c" continuous / "s" one sentence at a time, restarted after each pause). A turn that ends with no words (`micFinish`)
   flips the mode (`micSwapMode`) and the call screen says "I didn't hear any words — tap 🎤 and try again".
+  Call typing fallback (v2026.10.14-19, owner: "it doesn't pick up my voice when I answer"): the call screen has a text box
+  (`#vTxt`, `voiceSendText`, ACT.vTypeSend, Enter sends) above the mic buttons; the iPhone keyboard's own 🎤 dictation works
+  there even when the web speech engine doesn't. The voice log's "mic start" line now says home-screen app vs Safari.
   Lesson audio (v2026.10.14-4, owner: "playing audios still isn't working during lessons"): `preloadRec(list)` downloads
   the recordings a lesson (`lpSay`: items + quiz) or quiz/test (`qzSayListen`, also on `startTest`) needs into memory
   (`recBlobs`, blob URLs), so `playRecorded` plays them from the phone; if a clip fails it tries once the other way

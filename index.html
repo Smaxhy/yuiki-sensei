@@ -630,6 +630,7 @@ html.light #voice .btn{color:#2a1520}
 #unitHead+.ubanner.fold{margin-top:30px}
 .ubanner.fin{opacity:.8}.ubanner.later{filter:saturate(.55);opacity:.85}
 .tbar{flex-wrap:wrap}.tbar .tgoal{flex-basis:100%}.tgoal{font-size:13.5px;font-weight:800;color:var(--sky,#3487dc);margin:0 0 4px}
+.vtype{display:flex;gap:8px;margin:0 auto 10px;max-width:420px;width:100%;padding:0 4px}.vtype .field{flex:1;margin:0}.vtype .mini{min-width:48px;min-height:44px}
 .vgoal{flex:0 0 auto;text-align:center;color:#9ccaf7;margin:6px 0 2px;font-size:14px}
 #main .node .bd.lk{background:var(--ink2,#1d2030);font-size:13px;filter:none}
 .memtg{min-height:36px}.memtg b{opacity:.55;margin-left:4px;font-weight:900}
@@ -656,7 +657,7 @@ html.light #voice .btn{color:#2a1520}
 <script>
 "use strict";
 // Bump this on every change so phones can spot a new version and offer to update
-const APP_VERSION="2026.10.14-18";
+const APP_VERSION="2026.10.14-19";
 /* ============ DATA ============ */
 const LV = {
   n5:{label:"N5",name:"Beginner",color:"#9fd67c"},
@@ -1882,7 +1883,7 @@ function micRun(){
     // try to carry on (iPhone may refuse outside a tap → then pause, keeping the words)
     try{micRun();}catch(e){micPause("iPhone stopped listening");}
   };
-  try{r.start();vlog("🎤 mic start ("+MIC.lang+")");}catch(e){vlog("✗ mic start refused: "+e.message);micPause("start refused");return;}
+  try{r.start();vlog("🎤 mic start ("+MIC.lang+") · "+(navigator.standalone?"home-screen app":"Safari")+" · "+(micCont()?"continuous":"one sentence"));}catch(e){vlog("✗ mic start refused: "+e.message);micPause("start refused");return;}
   // no sign of life after 4 s → pause (don't fight iPhone with restarts)
   // No sign of life: try once more by itself (iPhone sometimes refuses while Yuki's voice is still
   // winding down), and only then pause and ask for a tap.
@@ -4399,7 +4400,8 @@ function renderVoice(){
     ${MIC.paused?`<button class="micbtn ${UI.micLang==="ja-JP"?"ja":"en"}" data-act="vMic" data-v="${UI.micLang}" aria-label="Keep talking"><span>🎤</span>Continue</button>`:`<button class="micbtn ${other==="ja-JP"?"ja":"en"} alt" data-act="vMic" data-v="${other}" aria-label="Continue in ${other==="ja-JP"?"Japanese":"English"}"><span>⇄</span>${other==="ja-JP"?"+ 日本語":"+ English"}</button>`}
     <button class="micbtn send" data-act="vSend" aria-label="Send"><span>➤</span>Send</button>
     <button class="vbtn" data-act="closeVoice"><i class="vend">📞</i>End</button>
-   </div>`:`<div class="vctrl">
+   </div>`:`<div class="vtype"><input id="vTxt" class="field" placeholder="…or type, or tap 🎤 on keyboard" autocomplete="off" autocapitalize="off" enterkeyhint="send"><button class="mini" data-act="vTypeSend" aria-label="Send">➤</button></div>
+   <div class="vctrl">
     <button class="vbtn" data-act="vSlow"><i>🐢</i>Slower</button>
     <button class="micbtn ja" data-act="vMic" data-v="ja-JP" aria-label="Speak Japanese"><span>🎤</span>日本語</button>
     <button class="micbtn en" data-act="vMic" data-v="en-US" aria-label="Speak English"><span>🎤</span>English</button>
@@ -4407,6 +4409,10 @@ function renderVoice(){
    </div>`}`;
 }
 setInterval(()=>{if(UI.voice&&UI.vstate==="speaking"&&!isSpeaking()){UI.vstate="idle";renderVoice();afterYukiSpoke();}},400);
+// Typing (or the iPhone keyboard's own 🎤 dictation) always works, even when iPhone's speech engine doesn't answer
+function voiceSendText(){const i=$("#vTxt");const t=i?i.value.trim():"";if(!t||UI.busy)return;i.value="";stopSpeak();
+  UI.spoken={tidy:t,raw:t};UI.vyou=t;send(t,hasKanji(t)?t+"\n(typed or dictated on the phone's keyboard; I can't read kanji yet, please reply in kana)":null,"voice");}
+document.addEventListener("keydown",e=>{if(e.key==="Enter"&&e.target&&e.target.id==="vTxt"){e.preventDefault();voiceSendText();}});
 function voiceMic(lang){
   lang=lang||S.settings.micLang;
   if(UI.listening){if(MIC.paused||lang!==UI.micLang){resumeMic(lang);return;}stopMic();return;}
@@ -4607,6 +4613,7 @@ const ACT={
     // take the failed attempt out, then send the same words again
     const e=r.box[r.box.length-1];if(e&&e.err)r.box.pop();const i=r.box.lastIndexOf(r.um);if(i>=0)r.box.splice(i,1);
     if(S.chat===r.box&&UI.tab==="chat")render();send(r.display,r.apiText,r.mode);},
+  vTypeSend:()=>voiceSendText(),
   vRepeat:()=>sayAgain([...S.chat].reverse().find(m=>m.role==="assistant"&&!m.err)),
   vSlow:()=>sayAgain(lastReply(),0.6),
   micLang:el=>{S.settings.micLang=el.dataset.v;save();toast(el.dataset.v==="ja-JP"?"🎤 Listening for Japanese — speak Japanese and it types in Japanese":"🎤 Listening for English",2200);if(UI.voice)renderVoice();else rerender();},
