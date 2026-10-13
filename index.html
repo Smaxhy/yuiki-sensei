@@ -657,7 +657,7 @@ html.light #voice .btn{color:#2a1520}
 <script>
 "use strict";
 // Bump this on every change so phones can spot a new version and offer to update
-const APP_VERSION="2026.10.14-19";
+const APP_VERSION="2026.10.14-20";
 /* ============ DATA ============ */
 const LV = {
   n5:{label:"N5",name:"Beginner",color:"#9fd67c"},
@@ -4751,9 +4751,27 @@ function checkUpdate(manual){
     else if(!updPending){updPending=true;toast("✨ Update ready — it'll load next time you open Yuki",3000);}
   }).catch(()=>{if(manual)toast("Couldn't check — are you online?");});
 }
+// Leaving the app (another app, lock screen, a call, Siri) makes iOS kill the mic and cut the audio session. Before, the
+// app kept thinking it was listening/speaking and the unlock for sound was never redone, so calls and speaking broke
+// ("works for a bit, then breaks if I tab out"). Now: going away pauses the mic keeping your words and clears every
+// "busy" flag; coming back re-arms the audio player (next tap re-unlocks it) and resets the speech engine.
+function voiceLeave(){
+  stopSpeak();
+  if(MIC.on&&!MIC.paused){const r=rec;try{if(r){r.onend=null;r.abort();}}catch(e){}micPause("the app went to the background");}
+  if(qa){try{qa.pause();}catch(e){}qa.dataset.ok="";}
+  natBusy=natLoading=natPlaying=false;
+}
+function voiceBack(){
+  try{if(synth){synth.cancel();if(synth.paused)synth.resume();}}catch(e){}
+  if(qa)qa.dataset.ok="";if(actx&&actx.state!=="running")actx.resume().catch(()=>{});
+  natBusy=natLoading=natPlaying=false;spGen++;
+  if(UI.voice){if(UI.vstate==="speaking")UI.vstate="idle";renderVoice();}
+  vlog("↺ back in the app: audio and mic re-armed");
+}
+window.addEventListener("pageshow",e=>{if(e.persisted)voiceBack();});
 document.addEventListener("visibilitychange",()=>{
-  if(document.visibilityState==="visible"){lastAct=0;if(S.onboarded){checkFreeze();if(UI.tab==="home"||UI.tab==="progress")rerender();}}
-  if(document.visibilityState==="hidden"){stopSpeak();saveNow();if(updPending)applyUpdate();return;}
+  if(document.visibilityState==="visible"){voiceBack();lastAct=0;if(S.onboarded){checkFreeze();if(UI.tab==="home"||UI.tab==="progress")rerender();}}
+  if(document.visibilityState==="hidden"){voiceLeave();saveNow();if(updPending)applyUpdate();return;}
   if(updPending){if(applyUpdate())return;}
   if(Date.now()-lastCheck>60e3)checkUpdate(false);
 });

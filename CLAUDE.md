@@ -257,6 +257,10 @@ Safari → Add to Home Screen.
   Call typing fallback (v2026.10.14-19, owner: "it doesn't pick up my voice when I answer"): the call screen has a text box
   (`#vTxt`, `voiceSendText`, ACT.vTypeSend, Enter sends) above the mic buttons; the iPhone keyboard's own 🎤 dictation works
   there even when the web speech engine doesn't. The voice log's "mic start" line now says home-screen app vs Safari.
+  Background recovery (v2026.10.14-20, owner: "speaking works for a bit then breaks if I tab out or do anything else"):
+  `voiceLeave()` (page hidden) stops speech, aborts the mic and `micPause`s it keeping your words, clears `qa.dataset.ok` and the
+  nat* flags; `voiceBack()` (visible / pageshow) cancels+resumes the speech engine, clears the flags again, bumps `spGen`,
+  resumes AudioContext and redraws the call (the next tap re-runs `unlockPlayer`, since iOS drops the sound unlock when the app leaves).
   Lesson audio (v2026.10.14-4, owner: "playing audios still isn't working during lessons"): `preloadRec(list)` downloads
   the recordings a lesson (`lpSay`: items + quiz) or quiz/test (`qzSayListen`, also on `startTest`) needs into memory
   (`recBlobs`, blob URLs), so `playRecorded` plays them from the phone; if a clip fails it tries once the other way
