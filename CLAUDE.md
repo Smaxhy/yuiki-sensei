@@ -85,6 +85,11 @@ Safari → Add to Home Screen.
   carries over. Practice → "🔁 Recaps of past lessons" (`RECAPS`, `doneLessons()`, `recapSpec(v)`, `ACT.recap`): free
   tests on the last 1 / 2 / 6 / 12 finished lessons or everything; they're `test.free` (no path node, +10 XP, retry keeps
   the spec, closing returns to Practice). `nodeSub` for tests now reads counts from `testSpec`.
+- **Big recap of ALL lessons** (state v32, owner: "a super big test every 5 chapters over ALL past lessons, 30 questions, now at chapter 11"):
+  `endRecap(pos)` → "a" at chapter 5, 11 and then every 5 (16, 21, 26…) per level; `testSpec` "a" = 30 Qs, pass 75%, `groups` = one
+  group per chapter so `startTest` takes questions round-robin from EVERY chapter (each gets ≥1 until 30 are used). Other
+  unit-end recaps are unchanged (every 3rd "r", every 2nd "s"). v32 migrate marks the changed unit-end recap done in chapters you
+  already finished (not chapter 11, unless chapter 12 is started). Practice → Everything I've learned is also 30 Qs.
 - **Auto-update**: on open, on returning to the app, and every 15 min, `checkUpdate` fetches
   the live page and compares its `<script>`/`<style>` with the running ones. If different it
   reloads right away when idle (`canReloadNow`), otherwise when the app is next hidden. Loop
@@ -497,7 +502,7 @@ Safari → Add to Home Screen.
 - Pages use `.sec` category headings: Practice (Today / Quick practice / decks…), Me (You / Yuki / App).
 
 ## Technical notes
-- State object `S` (currently `v:31`) saved to localStorage key `yuki-sensei-v3`. Keep it backward
+- State object `S` (currently `v:32`) saved to localStorage key `yuki-sensei-v3`. Keep it backward
   compatible. Saved data (and restored backups) go through `migrate()`; if the shape
   changes, bump `DEFAULT.v` and add a step there instead of wiping progress.
 - Clicks route through `data-act` attributes to the `ACT` object.

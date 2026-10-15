@@ -657,7 +657,7 @@ html.light #voice .btn{color:#2a1520}
 <script>
 "use strict";
 // Bump this on every change so phones can spot a new version and offer to update
-const APP_VERSION="2026.10.14-20";
+const APP_VERSION="2026.10.14-21";
 /* ============ DATA ============ */
 const LV = {
   n5:{label:"N5",name:"Beginner",color:"#9fd67c"},
@@ -965,7 +965,7 @@ const KANJI_LV={none:"none yet",few:"under 50",some:"50–300",many:"300+"};
 /* ============ STATE ============ */
 const KEY="yuki-sensei-v3";
 const DEFAULT={
-  v:31,onboarded:false,name:"",level:"n5",goal:"",
+  v:32,onboarded:false,name:"",level:"n5",goal:"",
   about:{done:false,focus:[],hira:"",kata:"",kanji:"",location:"",native:"English",minutes:15,notes:""},
   placement:null,plan:null,course:null,
   profile:{facts:[],weak:[],strong:[],learned:[],teach:[],eps:[],str:{}},miss:{},
@@ -1163,6 +1163,12 @@ function migrate(st){
     if(st.threads&&st.threads["cr:13"]&&!st.threads["cr:23"]){st.threads["cr:23"]=st.threads["cr:13"];delete st.threads["cr:13"];if(st.chatId==="cr:13")st.chatId="cr:23";}}
   // v30 → v31: more recaps on the path (quick recap before each roleplay, last-6-lessons / everything-so-far at unit ends).
   // In units already finished they count as done, and an old "Big recap" where "Everything so far" now sits carries over.
+  // v31 → v32: the big recap moved (chapters 5, 11, 16, 21… and 30 Qs over ALL lessons). Recaps that changed in chapters you
+  // already finished count as done so the path doesn't jump back; chapter 11's stays open until you've started chapter 12.
+  if((st.v||0)<32&&st.plan&&st.plan.done){const d=st.plan.done;
+    ["n5","n4"].forEach(lv=>{const lu=levelUnits(lv);lu.forEach((ui,pos)=>{const ek=endRecap(pos);if(!ek)return;
+      const nx=lu[pos+1],moved=nx!=null&&COURSE[nx]&&(d["cl:"+COURSE[nx].ls[0].id]||d["cr:"+nx]);
+      if((d["cr:"+ui]&&pos+1!==11)||moved)d["cq:"+ui+":"+ek]=true;});});}
   if((st.v||0)<31&&st.plan&&st.plan.done){const d=st.plan.done;
     ["n5","n4"].forEach(lv=>levelUnits(lv).forEach((ui,pos)=>{const u=COURSE[ui],ek=endRecap(pos);
       if(d["cl:"+u.ls[2].id]||d["cr:"+ui])d["cq:"+ui+":q"]=true;
@@ -2228,7 +2234,8 @@ function pathUnits(){
   if(isN5Path())return COURSE.map((u,i)=>{const pos=levelUnits(unitLv(u)).indexOf(i);return{title:(unitLv(u)==="n4"?"N4 · ":"")+"Unit "+(pos+1),sub:u.t,e:u.e,c:ucol(u.c)};});
   return(CUR[S.level]||[]).map(([u],i)=>({title:LV[S.level].label+" · Unit "+(i+1),sub:u,e:"📘",c:ucol(UCOL[i%5])}));
 }
-const endRecap=pos=>(pos+1)%6===0?"a":(pos+1)%3===0?"r":(pos+1)%2===0?"s":"";
+// 🌏 Big recap of ALL past lessons (30 Qs): chapter 5, 11, then every 5 chapters (16, 21, 26…)
+const endRecap=pos=>(pos+1===5||(pos+1>=11&&(pos+1-11)%5===0))?"a":(pos+1)%3===0?"r":(pos+1)%2===0?"s":"";
 function pathNodes(){
   let nodes=[];
   if(isN5Path())levelUnits().forEach((ui,pos)=>{
@@ -2277,7 +2284,7 @@ function nodeLabel(n){
   if(n.t==="CR")return COURSE[n.k].rp==="FINAL"?"Your big conversation":"Roleplay: "+COURSE[n.k].t;
   if(n.t==="L"){const l=lessonById(n.k);return l?l.title:n.k;}
   if(n.t==="Q")return"Unit review";
-  if(n.t==="CQ")return{m:"Mini test",q:"Quick recap",s:"Recap: last 6 lessons",a:"Everything so far",x:"Recap",t:"Unit test",r:"Big recap",f:unitLv(COURSE[n.unit]||{}).toUpperCase()+" final test",c:"Card recap"}[n.k];
+  if(n.t==="CQ")return{m:"Mini test",q:"Quick recap",s:"Recap: last 6 lessons",a:"Big recap: ALL lessons",x:"Recap",t:"Unit test",r:"Big recap",f:unitLv(COURSE[n.unit]||{}).toUpperCase()+" final test",c:"Card recap"}[n.k];
   return n.title;
 }
 function nodeIcon(n){
@@ -2303,7 +2310,7 @@ function nodeGoal(n){
   if(n.t==="Q")return"Check everything from this unit";
   return"Learn: "+n.title;
 }
-const nodeMin=n=>n.t==="CL"||n.t==="CR"?8:n.t==="CK"?3:n.t==="CQ"?{m:3,q:3,s:5,a:8,t:5,r:6,f:10,c:4,x:4}[n.k]:n.t==="L"?10:6;
+const nodeMin=n=>n.t==="CL"||n.t==="CR"?8:n.t==="CK"?3:n.t==="CQ"?{m:3,q:3,s:5,a:12,t:5,r:6,f:10,c:4,x:4}[n.k]:n.t==="L"?10:6;
 const nodeKind=n=>n.t==="CL"?(isSpeakingKey(n.key)?"🎙️ Speaking lesson":"💬 Chat lesson"):n.t==="CK"?"あ Kana lesson":n.t==="CR"?(COURSE[n.k].rp==="FINAL"?"🎓 Final conversation":"🎭 Roleplay"):n.t==="CQ"?"📝 Test · free":n.t==="L"?"📖 Lesson":n.t==="Q"?"🏆 Review":"⭐ Your lesson";
 function unitStep(n){const ns=pathNodes().filter(x=>x.unit===n.unit);return[ns.findIndex(x=>x.key===n.key)+1,ns.length];}
 // The lesson plan: what you'll do, step by step, and what counts as passing
@@ -3937,7 +3944,7 @@ function testSpec(n){
   if(n.k==="m")return{title:"Mini test · "+COURSE[u].t,ids:COURSE[u].ls.slice(0,2).flatMap(l=>l.w.map(w=>"w:"+w[0])),count:10,pass:0.7};
   if(n.k==="q")return{title:"Quick recap · last 2 lessons",ids:COURSE[u].ls.slice(1,3).flatMap(l=>l.w.map(w=>"w:"+w[0])),count:8,pass:0.75};
   if(n.k==="s"||n.k==="a"){const lu=levelUnits(unitLv(COURSE[u])),pos=lu.indexOf(u),us=n.k==="s"?lu.slice(Math.max(0,pos-1),pos+1):lu.slice(0,pos+1);
-    return n.k==="s"?{title:"Recap · last 6 lessons",ids:us.flatMap(unitWords),count:14,pass:0.75}:{title:"Everything so far · units 1–"+(pos+1),ids:us.flatMap(i=>[...unitWords(i),...unitKana(i)]),count:25,pass:0.75};}
+    return n.k==="s"?{title:"Recap · last 6 lessons",ids:us.flatMap(unitWords),count:14,pass:0.75}:{title:"Big recap · ALL chapters 1–"+(pos+1),ids:us.flatMap(i=>[...unitWords(i),...unitKana(i)]),groups:us.map(i=>[...unitWords(i),...unitKana(i)]),count:30,pass:0.75};}
   if(n.k==="t")return{title:"Unit test · "+COURSE[u].t,ids:[...unitWords(u),...unitKana(u)],count:16,pass:0.8};
   if(n.k==="r"){const lu=levelUnits(unitLv(COURSE[u])),pos=lu.indexOf(u),from=Math.max(0,pos-2),us=lu.slice(from,pos+1);return{title:"Big recap · units "+(from+1)+"–"+(pos+1),ids:us.flatMap(i=>[...unitWords(i),...unitKana(i)]),count:20,pass:0.8};}
   if(n.k==="f"){const lv=unitLv(COURSE[u]);return{title:lv.toUpperCase()+" final test",ids:levelUnits(lv).flatMap(i=>[...unitWords(i),...unitKana(i)]),count:30,pass:0.8};}
@@ -3946,14 +3953,19 @@ function testSpec(n){
   return{title:"Card recap · "+(pathUnits()[u]||{sub:""}).sub,ids:mine.length>=6?mine:[...DECKS.vocab.ids,...DECKS.kanji.ids],count:15,pass:0.7};
 }
 // Free recaps from Practice: the words of your last 1 / 2 / 6 / 12 finished lessons, or every lesson so far
-const RECAPS=[["1","🔁","Last lesson",6],["2","🔁","Last 2 lessons",8],["6","🔁","Last 6 lessons",14],["12","🔁","Last 12 lessons",20],["all","🌏","Everything I've learned",25]];
+const RECAPS=[["1","🔁","Last lesson",6],["2","🔁","Last 2 lessons",8],["6","🔁","Last 6 lessons",14],["12","🔁","Last 12 lessons",20],["all","🌏","Everything I've learned",30]];
 function doneLessons(){return["n5","n4"].flatMap(lv=>levelUnits(lv)).flatMap(ui=>COURSE[ui].ls).filter(l=>doneMap()["cl:"+l.id]);}
 function recapSpec(v){const R=RECAPS.find(r=>r[0]===v);if(!R)return null;const L=doneLessons();if(!L.length)return null;
   const ls=v==="all"?L:L.slice(-(+v));return{title:"Recap · "+R[2].toLowerCase(),ids:ls.flatMap(l=>l.w.map(w=>"w:"+w[0])),count:R[3],pass:0.75,free:true};}
 function startTest(n,spec){
   spec=spec||testSpec(n);
   const ids=[...new Set(spec.ids)].filter(i=>CARDS[i]);
-  const qs=shuffle(ids.slice()).slice(0,spec.count).map(id=>makeQ(id,true,ids));
+  let pick;
+  if(spec.groups){   // spread over every chapter: one from each, then another from each…
+    const gs=spec.groups.map(g=>shuffle([...new Set(g)].filter(i=>CARDS[i])));pick=[];
+    for(let r=0;pick.length<spec.count&&gs.some(g=>g.length>r);r++)shuffle(gs.map((g,k)=>k)).forEach(k=>{const id=gs[k][r];if(id&&pick.length<spec.count&&!pick.includes(id))pick.push(id);});
+  }else pick=shuffle(ids.slice()).slice(0,spec.count);
+  const qs=shuffle(pick).map(id=>makeQ(id,true,ids));
   stopSpeak();UI.lp=null;UI.fc=null;
   UI.qz={kind:"test",qs,i:0,picked:null,right:0,missed:[],test:{key:n.key,title:spec.title,pass:spec.pass,ids,node:n,spec,free:!!spec.free},intro:true};render();qzSayListen();
 }
