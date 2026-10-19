@@ -90,6 +90,14 @@ Safari → Add to Home Screen.
   group per chapter so `startTest` takes questions round-robin from EVERY chapter (each gets ≥1 until 30 are used). Other
   unit-end recaps are unchanged (every 3rd "r", every 2nd "s"). v32 migrate marks the changed unit-end recap done in chapters you
   already finished (not chapter 11, unless chapter 12 is started). Practice → Everything I've learned is also 30 Qs.
+- **Upgrade v2026.10.19-1** (owner: "more good stuff, more interactive UI, more reason to learn, better recaps"): player level
+  (`lvOf/lvXp/lvName`, level = 1+floor(sqrt(totalXP/40)), 12 rank names, level-up toast + `confetti()` in `addXP`); Home card `questCard()`
+  (inside `todayStrip()`, one `#todayRing` root) with level bar, 3 daily quests derived from today's record (`quests()`: a lesson/test,
+  15 cards, 6 messages) and a chest `ACT.questClaim` (+30 XP once a day, `S.daily.qc`); 🧠 Smart review (`smartIds()`: keepsMissing +
+  due + random learned, free 10-Q test, also in Practice); test results show ⭐ stars (1/2/3 = pass/90%/100%), confetti on pass, +10 XP
+  perfect-score bonus, per-chapter % breakdown for big recaps (`spec.gTitles`, `z.res`) and "🔁 Retry only the ones I missed"
+  (`ACT.qzMissed`, `spec.pool` keeps good wrong options); right/wrong answers pop/shake. Mic: a failed turn (`UI.micFail`) highlights the
+  call's type/keyboard-dictation box and tells you to use the keyboard 🎤.
 - **Auto-update**: on open, on returning to the app, and every 15 min, `checkUpdate` fetches
   the live page and compares its `<script>`/`<style>` with the running ones. If different it
   reloads right away when idle (`canReloadNow`), otherwise when the app is next hidden. Loop
