@@ -281,6 +281,9 @@ Safari → Add to Home Screen.
   "playback" back to "auto" (playback blocks the mic). Safety net: if an iPhone-voice line fails to start while in "playback",
   `sayChunk` stores localStorage "yuki-asess"="auto" and switches to auto for good. A mic that never starts also lights the
   keyboard box (`UI.micFail`). The voice log's mic-start line shows the audio session type.
+  v2026.10.24-2 (owner: "playing audios now has a huge delay"): the audio-session switch to "playback" after the mic is REMOVED
+  (it made sounds start late); the app sets "auto" on load and `micRun` only turns a leftover "playback" back to "auto". Walkie-talkie
+  mode stays. `playUrl` logs how long each clip took to start ("✓ playing … (N ms)").
   Lesson audio (v2026.10.14-4, owner: "playing audios still isn't working during lessons"): `preloadRec(list)` downloads
   the recordings a lesson (`lpSay`: items + quiz) or quiz/test (`qzSayListen`, also on `startTest`) needs into memory
   (`recBlobs`, blob URLs), so `playRecorded` plays them from the phone; if a clip fails it tries once the other way

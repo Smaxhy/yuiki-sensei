@@ -673,7 +673,7 @@ html.light #voice .btn{color:#2a1520}
 <script>
 "use strict";
 // Bump this on every change so phones can spot a new version and offer to update
-const APP_VERSION="2026.10.24-1";
+const APP_VERSION="2026.10.24-2";
 /* ============ DATA ============ */
 const LV = {
   n5:{label:"N5",name:"Beginner",color:"#9fd67c"},
@@ -1426,7 +1426,7 @@ async function sayChunk(t,lang,rate){
   const g=spGen;
   if(await sayChunkOnce(t,lang,rate)||g!==spGen)return;
   vlog("↺ trying that line again");try{synth.cancel();if(synth.paused)synth.resume();}catch(e){}
-  try{if(navigator.audioSession&&navigator.audioSession.type==="playback"){localStorage.setItem("yuki-asess","auto");setAudioMode("auto");vlog("↺ iPhone voice didn't start in speaker mode: using auto from now on");}}catch(e){}
+  try{if(navigator.audioSession&&navigator.audioSession.type==="playback"){setAudioMode("auto");vlog("↺ audio session reset to auto");}}catch(e){}
   await new Promise(r=>setTimeout(r,150));if(g===spGen)await sayChunkOnce(t,lang,rate);
 }
 function sayChunkOnce(t,lang,rate){return new Promise(res=>{
@@ -1587,7 +1587,7 @@ async function questUrl(text){
 let playId=0,clipEndAt=0,synthEndAt=0;
 function playUrl(url,my,rate,maxStart){return new Promise((res,rej)=>{
   if(my!==natSeq)return res();
-  const a=questPlayer(),id=++playId,name=url.split("/").slice(-2).join("/");
+  const a=questPlayer(),id=++playId,name=url.split("/").slice(-2).join("/"),tp=Date.now();
   let done=false,started=false,lastT=-1,lastMove=Date.now();
   const fin=ok=>{if(done)return;done=true;clearInterval(iv);clearTimeout(t);clearTimeout(t2);
     if(playId===id){a.onended=a.onerror=a.onplaying=a.ontimeupdate=null;natPlaying=false;clipEndAt=Date.now();}
@@ -1601,7 +1601,7 @@ function playUrl(url,my,rate,maxStart){return new Promise((res,rej)=>{
     if(started){if(a.currentTime!==lastT){lastT=a.currentTime;lastMove=Date.now();}
       else if(Date.now()-lastMove>3000){vlog("… audio stalled, counting it as finished");try{a.pause();}catch(e){}fin(true);}}
   },300);
-  a.onplaying=()=>{if(!started)vlog("✓ playing "+name);started=true;lastMove=Date.now();};
+  a.onplaying=()=>{if(!started)vlog("✓ playing "+name+" ("+(Date.now()-tp)+" ms)");started=true;lastMove=Date.now();};
   a.ontimeupdate=()=>{if(a.currentTime>0.15)started=true;};
   a.onended=()=>fin(true);
   a.onerror=()=>{vlog((started?"… audio glitch after playing (not repeating): ":"✗ audio error "+(a.error?a.error.code:"?")+": ")+name);fin(false);};
@@ -1975,11 +1975,11 @@ const IS_IOS=/iPhone|iPad|iPod/.test(navigator.userAgent)||(navigator.platform==
 const micCont=()=>{try{const v=localStorage.getItem("yuki-micmode");return v?v!=="s":!IS_IOS;}catch(e){return !IS_IOS;}};
 // After the mic, iOS can leave audio on the quiet earpiece / in record mode, so sounds came out faint or not at all.
 // Mic start = back to "auto" ("playback" would block the mic); mic end = "playback" (loud speaker). If the iPhone voice then fails to start, the app
-// remembers to use "auto" instead (localStorage "yuki-asess"), so this can never silence speech for good.
-const audioAfterMic=()=>{try{return localStorage.getItem("yuki-asess")||"playback";}catch(e){return"playback";}};
+// (v2026.10.24-2: switching to "playback" after the mic made every sound start late, so the app no longer changes the
+// audio session; it only puts a leftover "playback" back to "auto" before the mic starts.)
 function micSwapMode(){const nx=micCont()?"s":"c";try{localStorage.setItem("yuki-micmode",nx);}catch(e){}vlog("🎤 no words came back, next time listening "+(nx==="s"?"one sentence at a time":"continuously"));}
 function micFinish(cancelled){
-  if(!MIC.on)return;MIC.on=false;MIC.paused=false;setAudioMode(audioAfterMic());
+  if(!MIC.on)return;MIC.on=false;MIC.paused=false;
   const text=micText().replace(/\s*[、,]\s*$/,""),done=MIC.onDone,cancel=cancelled||MIC.cancel;
   if(!cancel&&!text.trim()){micSwapMode();UI.micFail=(UI.micFail||0)+1;
     if(UI.voice){UI.vstate="idle";setTimeout(()=>{const v=$(".vstat");if(v)v.textContent="🎤 Mic heard nothing. Tap the box below and use the keyboard's 🎤, or tap 🎤 again (speak right after tapping)";},60);}
@@ -4855,6 +4855,7 @@ if("serviceWorker" in navigator&&location.protocol==="https:")navigator.serviceW
 try{matchMedia("(prefers-color-scheme: light)").addEventListener("change",()=>{if(S.settings&&S.settings.theme==="auto"){applyTheme();rerender();}});}catch(e){}
 // ElevenLabs was removed: free the space its saved clips used on the phone
 try{if(window.caches)caches.delete("yuki-eleven");localStorage.removeItem("yuki-elvoices");}catch(e){}
+setAudioMode("auto");
 loadState().then(()=>{if(S.memClean){try{cleanMemory();}catch(e){}delete S.memClean;save();}applyTheme();if(S.onboarded){checkFreeze();if(!S.daily.init){checkBadges(true);S.daily.init=true;save();}}fitViewport();render();setTimeout(()=>checkUpdate(false),1500);});
 </script>
 </body>
