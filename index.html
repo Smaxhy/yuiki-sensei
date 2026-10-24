@@ -673,7 +673,7 @@ html.light #voice .btn{color:#2a1520}
 <script>
 "use strict";
 // Bump this on every change so phones can spot a new version and offer to update
-const APP_VERSION="2026.10.19-1";
+const APP_VERSION="2026.10.24-1";
 /* ============ DATA ============ */
 const LV = {
   n5:{label:"N5",name:"Beginner",color:"#9fd67c"},
@@ -1426,6 +1426,7 @@ async function sayChunk(t,lang,rate){
   const g=spGen;
   if(await sayChunkOnce(t,lang,rate)||g!==spGen)return;
   vlog("↺ trying that line again");try{synth.cancel();if(synth.paused)synth.resume();}catch(e){}
+  try{if(navigator.audioSession&&navigator.audioSession.type==="playback"){localStorage.setItem("yuki-asess","auto");setAudioMode("auto");vlog("↺ iPhone voice didn't start in speaker mode: using auto from now on");}}catch(e){}
   await new Promise(r=>setTimeout(r,150));if(g===spGen)await sayChunkOnce(t,lang,rate);
 }
 function sayChunkOnce(t,lang,rate){return new Promise(res=>{
@@ -1882,12 +1883,13 @@ function micPause(why){
 }
 function micRun(){
   const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  try{if(navigator.audioSession&&navigator.audioSession.type==="playback")navigator.audioSession.type="auto";}catch(e){}   // "playback" blocks the mic
   let r;try{r=new SR();}catch(e){vlog("✗ mic: can't create ("+e.message+")");micHelp("blocked");micFinish(true);return;}
   const first=!MIC.base&&!MIC.sess;
   rec=r;MIC.paused=false;MIC.sess="";MIC.audioOk=false;MIC.marks=[];MIC.lastRaw="";MIC.lastAt=0;
   if(!first){const v=$(".vstat");if(v&&UI.voice)v.textContent="🎤 Still listening…";}
   r.lang=MIC.lang;r.interimResults=true;r.continuous=micCont();r.maxAlternatives=1;
-  const ok=ev=>{if(rec!==r)return;if(!MIC.audioOk)vlog("🎤 mic "+ev);MIC.audioOk=true;MIC.retried=false;const v=$(".vstat");if(v&&UI.voice)v.textContent="🎤 Hearing you · tap ➤ Send when you're done";};
+  const ok=ev=>{if(rec!==r)return;if(!MIC.audioOk)vlog("🎤 mic "+ev);MIC.audioOk=true;MIC.retried=false;const v=$(".vstat");if(v&&UI.voice)v.textContent=micCont()?"🎤 Hearing you · tap ➤ Send when you're done":"🎤 Talk now · it sends when you stop";};
   r.onstart=()=>ok("started");r.onaudiostart=()=>ok("hearing audio");r.onspeechstart=()=>{MIC.speech=true;ok("hearing speech");};
   r.onresult=e=>{if(rec!==r)return;const t0=joinResults(e.results),now=Date.now();
     // a pause of ~1 s before more words → remember where, and put a comma there
@@ -1901,17 +1903,18 @@ function micRun(){
   r.onend=()=>{if(rec!==r)return;vlog("■ mic ended"+(MIC.stopReq?" (you tapped)":" by itself"));
     MIC.base=micText();MIC.sess="";
     if(MIC.stopReq||!MIC.on){micFinish();return;}
+    if(!micCont()&&MIC.base.trim()){vlog("➤ sentence done, sending");micFinish();return;}
     if(Date.now()-MIC.heardAt>30000){micPause("nothing heard for 30 s");return;}
     // try to carry on (iPhone may refuse outside a tap → then pause, keeping the words)
     try{micRun();}catch(e){micPause("iPhone stopped listening");}
   };
-  try{r.start();vlog("🎤 mic start ("+MIC.lang+") · "+(navigator.standalone?"home-screen app":"Safari")+" · "+(micCont()?"continuous":"one sentence"));}catch(e){vlog("✗ mic start refused: "+e.message);micPause("start refused");return;}
+  try{r.start();vlog("🎤 mic start ("+MIC.lang+") · "+(navigator.standalone?"home-screen app":"Safari")+" · "+(micCont()?"continuous":"one sentence")+" · audio "+((navigator.audioSession&&navigator.audioSession.type)||"n/a"));}catch(e){vlog("✗ mic start refused: "+e.message);micPause("start refused");return;}
   // no sign of life after 4 s → pause (don't fight iPhone with restarts)
   // No sign of life: try once more by itself (iPhone sometimes refuses while Yuki's voice is still
   // winding down), and only then pause and ask for a tap.
   setTimeout(()=>{if(rec===r&&MIC.on&&!MIC.stopReq&&!MIC.audioOk){try{r.onend=null;r.abort();}catch(e){}
     if(!MIC.retried){MIC.retried=true;vlog("↺ mic didn't start, trying again");try{if(synth)synth.cancel();}catch(e){}releasePlayer();setTimeout(()=>{if(MIC.on&&!MIC.stopReq)micRun();},250);return;}
-    vlog("✗ mic never started");micPause("the mic didn't start");}},first?5500:3500);
+    vlog("✗ mic never started");UI.micFail=(UI.micFail||0)+1;micPause("the mic didn't start");}},first?5500:3500);
 }
 function startMic(onText,onDone,lang){
   const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
@@ -1966,10 +1969,17 @@ function stopMic(cancel){
 // Some iPhones give nothing back in "continuous" listening (the mic is on, you talk, no words arrive). When a turn
 // ends with no words, the next turn uses the other mode (continuous ↔ one sentence at a time, restarted after each
 // pause), and the choice that works is remembered (localStorage "yuki-micmode").
-const micCont=()=>{try{return localStorage.getItem("yuki-micmode")!=="s";}catch(e){return true;}};
+// iPhone: "one sentence" (walkie-talkie) is the default: iOS's continuous listening is what kept dying. Tap 🎤, talk,
+// it sends by itself when you stop. Other devices keep continuous. A turn with no words still flips the mode.
+const IS_IOS=/iPhone|iPad|iPod/.test(navigator.userAgent)||(navigator.platform==="MacIntel"&&navigator.maxTouchPoints>1);
+const micCont=()=>{try{const v=localStorage.getItem("yuki-micmode");return v?v!=="s":!IS_IOS;}catch(e){return !IS_IOS;}};
+// After the mic, iOS can leave audio on the quiet earpiece / in record mode, so sounds came out faint or not at all.
+// Mic start = back to "auto" ("playback" would block the mic); mic end = "playback" (loud speaker). If the iPhone voice then fails to start, the app
+// remembers to use "auto" instead (localStorage "yuki-asess"), so this can never silence speech for good.
+const audioAfterMic=()=>{try{return localStorage.getItem("yuki-asess")||"playback";}catch(e){return"playback";}};
 function micSwapMode(){const nx=micCont()?"s":"c";try{localStorage.setItem("yuki-micmode",nx);}catch(e){}vlog("🎤 no words came back, next time listening "+(nx==="s"?"one sentence at a time":"continuously"));}
 function micFinish(cancelled){
-  if(!MIC.on)return;MIC.on=false;MIC.paused=false;
+  if(!MIC.on)return;MIC.on=false;MIC.paused=false;setAudioMode(audioAfterMic());
   const text=micText().replace(/\s*[、,]\s*$/,""),done=MIC.onDone,cancel=cancelled||MIC.cancel;
   if(!cancel&&!text.trim()){micSwapMode();UI.micFail=(UI.micFail||0)+1;
     if(UI.voice){UI.vstate="idle";setTimeout(()=>{const v=$(".vstat");if(v)v.textContent="🎤 Mic heard nothing. Tap the box below and use the keyboard's 🎤, or tap 🎤 again (speak right after tapping)";},60);}

@@ -274,6 +274,13 @@ Safari → Add to Home Screen.
   `voiceLeave()` (page hidden) stops speech, aborts the mic and `micPause`s it keeping your words, clears `qa.dataset.ok` and the
   nat* flags; `voiceBack()` (visible / pageshow) cancels+resumes the speech engine, clears the flags again, bumps `spGen`,
   resumes AudioContext and redraws the call (the next tap re-runs `unlockPlayer`, since iOS drops the sound unlock when the app leaves).
+  Walkie-talkie mic + speaker after mic (v2026.10.24-1, owner: "the mic keeps breaking… sounds should always play"): `IS_IOS`;
+  `micCont()` defaults to one-sentence mode on iPhone (no localStorage value yet); in that mode `onend` with words = auto-send
+  ("➤ sentence done, sending"), status "Talk now · it sends when you stop". `micFinish` sets `navigator.audioSession.type` to
+  `audioAfterMic()` ("playback" = loud speaker, iOS otherwise leaves output quiet/earpiece after recognition); `micRun` first puts
+  "playback" back to "auto" (playback blocks the mic). Safety net: if an iPhone-voice line fails to start while in "playback",
+  `sayChunk` stores localStorage "yuki-asess"="auto" and switches to auto for good. A mic that never starts also lights the
+  keyboard box (`UI.micFail`). The voice log's mic-start line shows the audio session type.
   Lesson audio (v2026.10.14-4, owner: "playing audios still isn't working during lessons"): `preloadRec(list)` downloads
   the recordings a lesson (`lpSay`: items + quiz) or quiz/test (`qzSayListen`, also on `startTest`) needs into memory
   (`recBlobs`, blob URLs), so `playRecorded` plays them from the phone; if a clip fails it tries once the other way
