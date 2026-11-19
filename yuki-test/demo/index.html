@@ -26,6 +26,7 @@
 <div id="root"></div>
 <script>
 (function () {
+  var store = null; try { store = window.localStorage; } catch (x) {}
   var KEY = "ytest.pw", f = document.getElementById("f"), pw = document.getElementById("pw"), go = document.getElementById("go"), msg = document.getElementById("msg");
   var clean = function (s) { return s.trim().toLowerCase().replace(/\s+/g, ""); };
   async function open(password, typed) {
@@ -36,17 +37,17 @@
       var key = await crypto.subtle.deriveKey({ name: "PBKDF2", salt: buf.slice(0, 16), iterations: 600000, hash: "SHA-256" }, material, { name: "AES-GCM", length: 256 }, false, ["decrypt"]);
       var plain;
       try { plain = await crypto.subtle.decrypt({ name: "AES-GCM", iv: buf.slice(16, 28) }, key, buf.slice(28)); }
-      catch (e) { try { localStorage.removeItem(KEY); } catch (x) {} throw new Error(typed ? "That password isn't right." : ""); }
+      catch (e) { try { store.removeItem(KEY); } catch (x) {} throw new Error(typed ? "That password isn't right." : ""); }
       var text = await new Response(new Blob([plain]).stream().pipeThrough(new DecompressionStream("gzip"))).text();
       var app = JSON.parse(text);
-      try { localStorage.setItem(KEY, password); } catch (x) {}
+      try { store.setItem(KEY, password); } catch (x) {}
       document.getElementById("lock").remove(); document.getElementById("lock-css").remove();
       var st = document.createElement("style"); st.textContent = app.css; document.head.appendChild(st);
       var sc = document.createElement("script"); sc.type = "module"; sc.src = URL.createObjectURL(new Blob([app.js], { type: "text/javascript" })); document.body.appendChild(sc);
     } catch (e) { go.disabled = false; go.textContent = "Open"; msg.textContent = e && e.message ? (/password/.test(e.message) ? e.message : "Couldn't open it. Check your connection and try again.") : ""; }
   }
   f.addEventListener("submit", function (e) { e.preventDefault(); var p = clean(pw.value); if (p) open(p, true); });
-  var saved = null; try { saved = localStorage.getItem(KEY); } catch (x) {}
+  var saved = null; try { saved = store.getItem(KEY); } catch (x) {}
   if (saved) open(saved, false);
 })();
 </script>
