@@ -7,7 +7,7 @@ self.addEventListener("activate",e=>e.waitUntil((async()=>{try{await caches.dele
 self.addEventListener("fetch",e=>{
   const req=e.request,u=new URL(req.url);
   if(req.method!=="GET"||u.origin!==location.origin)return;
-  if(u.pathname.includes("/yuki-test/"))return; // the separate test page in that folder looks after itself (never saved as this app's offline page)
+  if(u.pathname.includes("/yuki-test/")||u.pathname.includes("/yuki-staff/"))return; // the separate pages in those folders look after themselves (never saved as this app's offline page)
   if(u.pathname.includes("/audio/")){e.respondWith(audio(req,u));return;}
   if(req.mode==="navigate")e.respondWith(page(req));
 });
